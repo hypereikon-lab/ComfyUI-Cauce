@@ -1,0 +1,19 @@
+{
+  "schema": "cauce.execution-profile/1",
+  "name": "h3-5090-fl2va-640",
+  "family": "FL2VA",
+  "width": 640,
+  "height": 640,
+  "fps": 24,
+  "precision": "fp8-pruned/nvfp4",
+  "tiled_vae": false,
+  "vae_tile_size": 256,
+  "vae_overlap": 64,
+  "vae_temporal_size": 32,
+  "vae_temporal_overlap": 8,
+  "shift_video": 12.0,
+  "shift_audio": 3.0,
+  "minimum_free_reserve_gib": 35,
+  "minimum_vram_gib": 30,
+  "status": "candidate-requires-current-lab-validation"
+}

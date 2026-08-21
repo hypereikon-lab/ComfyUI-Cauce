@@ -1,0 +1,34 @@
+[project]
+name = "comfyui-cauce"
+version = "0.1.0"
+description = "Media, time, and continuity for audiovisual generation in ComfyUI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Hypereikon" }
+]
+dependencies = []
+
+[project.scripts]
+cauce = "cauce.runner:main"
+
+[project.urls]
+Homepage = "https://hypereikon.online"
+Repository = "https://github.com/hypereikon-lab/ComfyUI-Cauce"
+
+[tool.comfy]
+PublisherId = "hypereikon-lab"
+DisplayName = "CAUCE"
+Icon = ""
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["cauce", "cauce_nodes"]

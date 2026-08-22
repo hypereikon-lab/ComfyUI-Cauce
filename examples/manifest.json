@@ -1,0 +1,56 @@
+{
+  "schema": "cauce.examples/1",
+  "comfy_workflow_schema": 0.4,
+  "frontend_checked": "1.48.7",
+  "generated_by": "tools/build_workflows.py",
+  "assets": [
+    "assets/cauce_forest_a.jpg",
+    "assets/cauce_forest_b.jpg",
+    "assets/cauce_forest_c.jpg",
+    "assets/cauce_motion_reference.mp4"
+  ],
+  "workflows": [
+    {
+      "id": "plate-sketch-handoff",
+      "path": "workflows/00_plate_sketch_handoff.json",
+      "tier": "starter",
+      "samples": 0,
+      "requires": ["ComfyUI-Cauce"]
+    },
+    {
+      "id": "h3-fl2va-first-last",
+      "path": "workflows/10_h3_fl2va_first_last.json",
+      "tier": "starter",
+      "samples": 1,
+      "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
+    },
+    {
+      "id": "h3-ref2va-motion-reference",
+      "path": "workflows/20_h3_ref2va_motion_reference.json",
+      "tier": "production-candidate",
+      "samples": 1,
+      "requires": ["ComfyUI-Cauce", "MiniMax H3 Ref2VA"]
+    },
+    {
+      "id": "h3-timed-guide",
+      "path": "workflows/30_h3_timed_guide.json",
+      "tier": "production-candidate",
+      "samples": 1,
+      "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
+    },
+    {
+      "id": "h3-two-window-continuation",
+      "path": "workflows/40_h3_two_window_continuation.json",
+      "tier": "advanced",
+      "samples": 2,
+      "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
+    },
+    {
+      "id": "h3-latent-bridge",
+      "path": "workflows/50_h3_latent_bridge.json",
+      "tier": "advanced",
+      "samples": 1,
+      "requires": ["two CAUCE AV parent latents"]
+    }
+  ]
+}

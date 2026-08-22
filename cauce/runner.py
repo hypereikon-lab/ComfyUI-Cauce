@@ -127,8 +127,7 @@ def run_project(
     project = read_json(project_path)
     if project.get("schema") != "cauce.project/1":
         raise ValueError("project schema must be cauce.project/1")
-    root, workflow_path, state_path, receipts_dir = project_paths(project_path, project)
-    workflow_template = read_json(workflow_path)
+    root, _workflow_path, state_path, receipts_dir = project_paths(project_path, project)
     state = load_state(state_path)
     client = None if dry_run else ComfyClient(project.get("server_url", "http://127.0.0.1:8188"))
     receipts_dir.mkdir(parents=True, exist_ok=True)
@@ -138,6 +137,13 @@ def run_project(
         current = state["windows"].get(window_id, {})
         if resume and current.get("status") == "complete":
             continue
+        selected_template = str(
+            window.get("workflow_template", project["workflow_template"])
+        )
+        selected_template_path = (root / selected_template).resolve()
+        if root not in selected_template_path.parents:
+            raise ValueError("workflow_template escapes the project directory")
+        workflow_template = read_json(selected_template_path)
         context = {"project": project, "window": window}
         workflow = materialize(workflow_template, context)
         workflow_snapshot = receipts_dir / f"{window_id}.workflow.json"
@@ -146,6 +152,7 @@ def run_project(
             state["windows"][window_id] = {
                 "status": "materialized",
                 "workflow": str(workflow_snapshot.relative_to(root)),
+                "workflow_template": selected_template,
             }
             write_json_atomic(state_path, state)
             if once:
@@ -156,6 +163,7 @@ def run_project(
         state["windows"][window_id] = {
             "status": "submitting",
             "workflow": str(workflow_snapshot.relative_to(root)),
+            "workflow_template": selected_template,
         }
         write_json_atomic(state_path, state)
         prompt_id = client.submit(workflow)

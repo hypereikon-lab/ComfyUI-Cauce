@@ -10,11 +10,16 @@ resumes at the next incomplete window.
 {
   "schema": "cauce.project/1",
   "server_url": "http://127.0.0.1:8188",
-  "workflow_template": "workflow-template.json",
+  "workflow_template": "api/h3_fl2va_window.template.json",
   "state_path": ".cauce/state.json",
   "receipts_dir": ".cauce/runs",
   "windows": [
-    {"id": "w001", "frames": 124, "seed": 1, "prompt": "..."}
+    {"id": "w001", "seed": 1, "prompt": "..."},
+    {
+      "id": "w002",
+      "workflow_template": "api/h3_continuation_window.template.json",
+      "parent_latent": "cauce/latents/w001_00001.safetensors"
+    }
   ]
 }
 ```
@@ -33,6 +38,9 @@ appear anywhere:
 ```
 
 When the entire string is one placeholder, its native JSON type is preserved.
+`workflow_template` is a project default; an individual window can override it.
+This lets one project use an FL2VA parent template for its first window and a
+continuation template for later windows without branching the runner itself.
 
 ## Commands
 

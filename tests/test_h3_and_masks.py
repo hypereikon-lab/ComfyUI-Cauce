@@ -1,12 +1,40 @@
 from fractions import Fraction
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from cauce.contracts import append_field_span, make_window
-from cauce.h3 import append_reference, empty_reference_set, frame_index_in_window
+from cauce.h3 import (
+    append_reference,
+    empty_reference_set,
+    execute_add_guide,
+    frame_index_in_window,
+    official_h3_nodes,
+)
 from cauce.masks import compile_audio_field, compile_video_field
 
 
 class H3AndMaskTests(unittest.TestCase):
+    def test_official_fl2va_and_ref2va_do_not_require_add_guide(self):
+        module = SimpleNamespace(
+            MiniMaxH3ImageToVideo=object(),
+            MiniMaxH3ReferenceToVideo=object(),
+        )
+        with patch("cauce.h3.importlib.import_module", return_value=module):
+            image_to_video, reference_to_video, add_guide = official_h3_nodes()
+        self.assertIs(image_to_video, module.MiniMaxH3ImageToVideo)
+        self.assertIs(reference_to_video, module.MiniMaxH3ReferenceToVideo)
+        self.assertIsNone(add_guide)
+
+    def test_timed_guide_reports_optional_runtime_gap(self):
+        with patch(
+            "cauce.h3.official_h3_nodes", return_value=(object(), object(), None)
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "does not provide MiniMaxH3AddGuide"
+            ):
+                execute_add_guide()
+
     def test_reference_limits_are_fail_closed(self):
         refs = empty_reference_set()
         for index in range(9):

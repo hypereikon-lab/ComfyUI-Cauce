@@ -22,10 +22,11 @@ media
 
 ## Current status
 
-The greenfield core and 35 ComfyUI nodes are implemented. Pure clock, contract,
-field, runner, and profile tests run without a GPU. Actual FL2VA/Ref2VA sampling,
-nested masks, latent continuation, VAE decoding, memory profiles, and exported
-workflow JSON still require the laboratory RTX 5090 validation pass.
+The greenfield core and 35 ComfyUI nodes are implemented. Six visual workflows,
+two API templates, bounded demo assets, and a restartable two-window project are
+included. Their graphs and API sockets have been checked against the live lab
+ComfyUI build; model-quality and continuity comparisons remain empirical GPU
+validation work.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.
@@ -48,6 +49,7 @@ layer is included.
 - A current ComfyUI build containing:
   - `MiniMaxH3ImageToVideo`
   - `MiniMaxH3ReferenceToVideo`
+- Optional for `CAUCE · H3 Timed Guide`:
   - `MiniMaxH3AddGuide`
 - The official H3 video/audio VAEs, text encoder, and selected diffusion model.
 - The packages already shipped with a current ComfyUI portable runtime:
@@ -60,13 +62,13 @@ CAUCE introduces no pip dependency of its own.
 Place or symlink this repository under `ComfyUI/custom_nodes/ComfyUI-Cauce`,
 then restart ComfyUI once.
 
-The future Manager URL will be:
+Manager URL:
 
 ```text
 https://github.com/hypereikon-lab/ComfyUI-Cauce
 ```
 
-The repository has not been published by this local implementation pass yet.
+The laboratory installation is tracked by ComfyUI Manager under this URL.
 
 ## Node groups
 
@@ -87,6 +89,7 @@ The repository has not been published by this local implementation pass yet.
 See [Node catalog](docs/NODE_CATALOG.md),
 [architecture](docs/ARCHITECTURE.md),
 [H3 wiring](docs/H3_WIRING.md), and
+[workflow guide](docs/WORKFLOWS.md),
 [validation matrix](docs/VALIDATION.md). The current upstream and community
 comparison is recorded in [research notes](docs/RESEARCH.md).
 

@@ -7,6 +7,7 @@ load the current official nodes only when a graph executes inside ComfyUI.
 from __future__ import annotations
 
 import copy
+import importlib
 from typing import Any
 
 from .contracts import WINDOW_SCHEMA, range_fraction
@@ -150,16 +151,16 @@ def pixel_frames_from_video_latent(video: Any) -> int:
 
 def official_h3_nodes():
     try:
-        from comfy_extras.nodes_minimax_h3 import (  # type: ignore
-            MiniMaxH3AddGuide,
-            MiniMaxH3ImageToVideo,
-            MiniMaxH3ReferenceToVideo,
-        )
-    except ImportError as exc:  # pragma: no cover - exercised inside ComfyUI
+        module = importlib.import_module("comfy_extras.nodes_minimax_h3")
+        image_to_video = getattr(module, "MiniMaxH3ImageToVideo")
+        reference_to_video = getattr(module, "MiniMaxH3ReferenceToVideo")
+        add_guide = getattr(module, "MiniMaxH3AddGuide", None)
+    except (ImportError, AttributeError) as exc:  # pragma: no cover - inside ComfyUI
         raise RuntimeError(
-            "CAUCE requires a current ComfyUI build with native MiniMax H3 nodes"
+            "CAUCE requires native MiniMaxH3ImageToVideo and "
+            f"MiniMaxH3ReferenceToVideo nodes ({type(exc).__name__}: {exc})"
         ) from exc
-    return MiniMaxH3ImageToVideo, MiniMaxH3ReferenceToVideo, MiniMaxH3AddGuide
+    return image_to_video, reference_to_video, add_guide
 
 
 def unwrap_node_output(value: Any) -> tuple[Any, ...]:
@@ -207,6 +208,12 @@ def execute_ref2va(reference_set: dict[str, Any] | None = None, **kwargs: Any) -
 
 def execute_add_guide(**kwargs: Any) -> Any:
     _, _, add_guide = official_h3_nodes()
+    if add_guide is None:
+        raise RuntimeError(
+            "this ComfyUI build does not provide MiniMaxH3AddGuide; "
+            "FL2VA and Ref2VA remain available, but timed guides require a "
+            "newer official H3 runtime"
+        )
     result = unwrap_node_output(add_guide.execute(**kwargs))
     if len(result) != 1:
         raise RuntimeError("unexpected output from the official H3 AddGuide node")

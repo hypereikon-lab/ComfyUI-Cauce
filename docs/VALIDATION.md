@@ -1,8 +1,10 @@
 # Laboratory validation matrix
 
-Local unit tests establish contracts and clocks; they cannot establish model
-quality or GPU feasibility. Validate the following on the RTX 5090 before a
-production release.
+Local unit tests establish contracts, clocks, generated workflow integrity, and
+runner materialization; they cannot establish model quality. The six visual
+graphs load without unknown nodes in the live lab frontend, and both API
+templates match the live `/object_info` signatures. Validate the following on
+the RTX 5090 before promoting advanced workflows to production defaults.
 
 ## Gate 1 — load and compatibility
 

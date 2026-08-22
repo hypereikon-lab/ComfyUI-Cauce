@@ -16,7 +16,7 @@ de 32 GB y 64 GB de RAM. CAUCE no modificó CUDA, PyTorch, ComfyUI ni modelos.
 | Timed Guide | bloqueado por capability | — | — | falta `MiniMaxH3AddGuide` oficial |
 | Bridge | graph validado | — | — | pendiente GPU |
 | Confluence v1, máscara estándar | runtime sintético verificado; gesto real rechazado | 124 f working → 120 f join / 48 f patch | 42,8 s a 4 steps | previews temporales, prompt `5ea6dc99-...` |
-| Confluence v2, LanPaint + campos continuos | implementación local completa; prueba live pendiente | 124 f working / 48 f aceptación dura | pendiente | workflow 60 actualizado |
+| Confluence v2, LanPaint + campos continuos | código publicado; activación live de CAUCE pendiente | 124 f working / 48 f aceptación dura | pendiente | LanPaint 2.1.0 activo; CAUCE `fec2d5e` pendiente de pull/restart |
 
 ## Lectura de los resultados
 
@@ -59,6 +59,15 @@ la máscara central, el sampler a 4 steps, el decode y el splice terminaron en
 42,8 s. El preview final reportó 120 frames y el preview del parche 48, por lo
 que la duración y el rango de reemplazo pasan el gate estructural. La calidad
 temporal no se promueve hasta repetir con pares heterogéneos de gestos reales.
+
+LanPaint 2.1.0 quedó instalado, habilitado y reiniciado correctamente en la
+portable el 2026-08-22. El nodo nuevo `CAUCE · Confluence Fields` aún no aparece
+en la instancia: ComfyUI Manager reconoce la carpeta Git de CAUCE, pero su
+actualización global queda detenida en la preparación del catálogo y no llega a
+ejecutar el pull. El commit `fec2d5e` está publicado tanto en `main` como en
+`feat/cauce-greenfield`; el único paso operativo pendiente es actualizar esa
+carpeta y reiniciar ComfyUI. No se modificaron ComfyUI, CUDA, PyTorch, drivers ni
+pesos durante este intento.
 
 Receipt Ref2VA landscape:
 `357751bc96407eda0532dcc7b7a2b459c25838106a7a1a654f56daff219d6bc1`.

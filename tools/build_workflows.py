@@ -751,7 +751,14 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
     right_parts = wf.add("GetVideoComponents", (330, 340))
     left_scale = wf.add("ImageScale", (590, 0), ["lanczos", 640, 640, "center"])
     right_scale = wf.add("ImageScale", (590, 340), ["lanczos", 640, 640, "center"])
-    seam = wf.add("CauceBuildSeamWindow", (930, 150), [2.5, 1.0, 0.5, 362])
+    # Comfy preserves the original FLOAT widgets for left_fps/right_fps even
+    # after those inputs are converted to links.  Keep their serialized values
+    # so the remaining widgets do not shift left when the workflow is loaded.
+    seam = wf.add(
+        "CauceBuildSeamWindow",
+        (930, 150),
+        [24.0, 24.0, 2.5, 1.0, 0.5, 362],
+    )
     first = wf.add("CauceSelectImageFrame", (1320, 0), [0], title="Working first frame")
     last = wf.add("CauceSelectImageFrame", (1320, 340), [-1], title="Working last frame")
     profile = wf.add("CauceExecutionProfile", (1680, 650), ["h3-5090-fl2va-640"])

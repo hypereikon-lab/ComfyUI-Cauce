@@ -93,7 +93,10 @@ class VisualWorkflowTests(unittest.TestCase):
         build = next(
             node for node in workflow["nodes"] if node["type"] == "CauceBuildSeamWindow"
         )
-        self.assertEqual(build["widgets_values"], [2.5, 1.0, 0.5, 362])
+        self.assertEqual(
+            build["widgets_values"],
+            [24.0, 24.0, 2.5, 1.0, 0.5, 362],
+        )
         scales = [node for node in workflow["nodes"] if node["type"] == "ImageScale"]
         self.assertEqual(len(scales), 2)
         self.assertTrue(

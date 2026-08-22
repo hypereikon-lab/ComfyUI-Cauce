@@ -115,9 +115,12 @@ different conditioning layout.
 3. Copies the video/audio tail into the new latent head.
 4. Preserves video with mask zero and optionally releases audio through a short
    half-cosine feather.
-5. Uses masked continuation alone by default; `mask_plus_guide` is retained as
-   an explicit experimental combination.
-6. Returns the exact decoded head trim.
+5. Uses masked continuation as the runtime-compatible latent baseline.
+6. Can pair that baseline with the previous decoded endpoint as FL2VA's native
+   `first_frame`; this is the shipped compatibility path for ComfyUI 0.33.1.
+7. Exposes `mask_plus_guide` only when the runtime contains the official H3
+   clip-guide implementation; older runtimes fail with a targeted message.
+8. Returns the exact decoded head trim.
 
 `Resolve Parent Latent` crops only the post-accept tail. It retains the causal
 origin and context head, producing another legal H3 latent from which the next

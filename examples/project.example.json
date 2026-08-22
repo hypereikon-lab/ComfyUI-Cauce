@@ -22,7 +22,7 @@
       "id": "forest_window_002",
       "workflow_template": "api/h3_continuation_window.template.json",
       "accepted_start_seconds": 5.166666667,
-      "accepted_duration_seconds": 5,
+      "accepted_duration_seconds": 3.541666667,
       "context_frames": "39",
       "duplicate_prefix_frames": "0",
       "accept_mode": "nearest_run",

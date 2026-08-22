@@ -202,6 +202,15 @@ def prepare_continuation(
 
     conditioned = positive
     if conditioning_mode == "mask_plus_guide":
+        from .h3 import official_h3_nodes
+
+        _, _, add_guide = official_h3_nodes()
+        if add_guide is None:
+            raise RuntimeError(
+                "mask_plus_guide needs a ComfyUI H3 runtime with the official "
+                "MiniMaxH3AddGuide clip-keyframe implementation; use mask_only or "
+                "the decoded-endpoint continuation workflow on this runtime"
+            )
         try:
             import node_helpers  # type: ignore
         except ImportError as exc:  # pragma: no cover - requires ComfyUI
@@ -211,8 +220,10 @@ def prepare_continuation(
             "latent": tail_video,
             "audio_latent": tail_audio,
         }
+        keyframes = list(positive[0][1].get("minimax_keyframes", []))
+        keyframes.append(keyframe)
         conditioned = node_helpers.conditioning_set_values(
-            positive, {"minimax_keyframes": [keyframe]}, append=True
+            positive, {"minimax_keyframes": keyframes}
         )
     out = dict(target_latent)
     out["samples"] = _nested_tensor((video, audio))
@@ -285,28 +296,37 @@ def prepare_bridge(
 
     conditioned = positive
     if conditioning_mode == "mask_plus_guide":
+        from .h3 import official_h3_nodes
+
+        _, _, add_guide = official_h3_nodes()
+        if add_guide is None:
+            raise RuntimeError(
+                "mask_plus_guide needs a ComfyUI H3 runtime with the official "
+                "MiniMaxH3AddGuide clip-keyframe implementation; use mask_only or "
+                "decoded endpoint guides on this runtime"
+            )
         try:
             import node_helpers  # type: ignore
         except ImportError as exc:  # pragma: no cover - requires ComfyUI
             raise RuntimeError("H3 bridge can only be built inside ComfyUI") from exc
         target_frames = pixel_frames_from_video_latent(target_video)
+        keyframes = list(positive[0][1].get("minimax_keyframes", []))
+        keyframes.extend(
+            [
+                {
+                    "resolved_frame_index": 0,
+                    "latent": left_video,
+                    "audio_latent": left_audio,
+                },
+                {
+                    "resolved_frame_index": target_frames - context_frames,
+                    "latent": right_video,
+                    "audio_latent": right_audio,
+                },
+            ]
+        )
         conditioned = node_helpers.conditioning_set_values(
-            positive,
-            {
-                "minimax_keyframes": [
-                    {
-                        "resolved_frame_index": 0,
-                        "latent": left_video,
-                        "audio_latent": left_audio,
-                    },
-                    {
-                        "resolved_frame_index": target_frames - context_frames,
-                        "latent": right_video,
-                        "audio_latent": right_audio,
-                    },
-                ]
-            },
-            append=True,
+            positive, {"minimax_keyframes": keyframes}
         )
     out = dict(target_latent)
     out["samples"] = _nested_tensor((video, audio))

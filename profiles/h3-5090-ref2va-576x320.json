@@ -1,9 +1,9 @@
 {
   "schema": "cauce.execution-profile/1",
-  "name": "h3-5090-ref2va-448",
+  "name": "h3-5090-ref2va-576x320",
   "family": "Ref2VA",
-  "width": 448,
-  "height": 448,
+  "width": 576,
+  "height": 320,
   "fps": 24,
   "precision": "fp8-pruned/nvfp4",
   "tiled_vae": false,
@@ -15,5 +15,5 @@
   "shift_audio": 3.0,
   "minimum_free_reserve_gib": 35,
   "minimum_vram_gib": 30,
-  "status": "verified-lab-2026-08-22-aspect-unsuitable-for-landscape-demo"
+  "status": "candidate-requires-current-lab-validation"
 }

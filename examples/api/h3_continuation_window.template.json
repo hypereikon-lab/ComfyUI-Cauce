@@ -75,6 +75,10 @@
       "profile": [
         "2",
         0
+      ],
+      "first_frame": [
+        "26",
+        0
       ]
     }
   },
@@ -293,6 +297,29 @@
         0
       ],
       "relative_path": "cauce/receipts/{{window.id}}.json"
+    }
+  },
+  "25": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "vae": [
+        "6",
+        0
+      ]
+    }
+  },
+  "26": {
+    "class_type": "CauceSelectImageFrame",
+    "inputs": {
+      "images": [
+        "25",
+        0
+      ],
+      "frame_index": -1
     }
   }
 }

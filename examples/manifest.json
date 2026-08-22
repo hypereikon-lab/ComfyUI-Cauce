@@ -14,6 +14,7 @@
       "id": "plate-sketch-handoff",
       "path": "workflows/00_plate_sketch_handoff.json",
       "tier": "starter",
+      "status": "verified-live",
       "samples": 0,
       "requires": ["ComfyUI-Cauce"]
     },
@@ -21,6 +22,7 @@
       "id": "h3-fl2va-first-last",
       "path": "workflows/10_h3_fl2va_first_last.json",
       "tier": "starter",
+      "status": "verified-live",
       "samples": 1,
       "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
     },
@@ -28,6 +30,7 @@
       "id": "h3-ref2va-motion-reference",
       "path": "workflows/20_h3_ref2va_motion_reference.json",
       "tier": "production-candidate",
+      "status": "landscape-profile-awaits-live-validation",
       "samples": 1,
       "requires": ["ComfyUI-Cauce", "MiniMax H3 Ref2VA"]
     },
@@ -35,6 +38,7 @@
       "id": "h3-timed-guide",
       "path": "workflows/30_h3_timed_guide.json",
       "tier": "production-candidate",
+      "status": "blocked-missing-official-add-guide",
       "samples": 1,
       "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
     },
@@ -42,6 +46,7 @@
       "id": "h3-two-window-continuation",
       "path": "workflows/40_h3_two_window_continuation.json",
       "tier": "advanced",
+      "status": "hybrid-continuation-awaits-live-validation",
       "samples": 2,
       "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
     },
@@ -49,6 +54,7 @@
       "id": "h3-latent-bridge",
       "path": "workflows/50_h3_latent_bridge.json",
       "tier": "advanced",
+      "status": "graph-only",
       "samples": 1,
       "requires": ["two CAUCE AV parent latents"]
     }

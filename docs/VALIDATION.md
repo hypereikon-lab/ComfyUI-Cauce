@@ -9,7 +9,7 @@ the RTX 5090 before promoting advanced workflows to production defaults.
 ## Gate 1 — load and compatibility
 
 - CAUCE imports with no startup exception.
-- All 35 nodes appear under `CAUCE/*`.
+- All 36 nodes appear under `CAUCE/*`.
 - Preflight identifies the existing models without modifying files.
 - FL2VA and Ref2VA wrappers locate current official Comfy H3 classes.
 - No CUDA, PyTorch, ComfyUI, Manager, or model update is triggered.
@@ -70,6 +70,11 @@ For `39`, `90`, and `141` frame contexts where the target is long enough:
 
 The production default should remain 39 only after these tests confirm it on
 the current model/runtime.
+
+The first live `mask_only` run completed but failed the visible-seam gate. The
+next required comparison is the shipped hybrid: identical 39-frame latent mask
+plus the decoded last accepted frame connected as native FL2VA `first_frame`.
+Completion alone is not a pass.
 
 For the two-ended bridge, confirm that both copied endpoint tensors are
 byte-identical before sampling, neither context overlaps the middle, and the

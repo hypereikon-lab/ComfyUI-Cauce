@@ -1,5 +1,13 @@
 # Node catalog
 
+## Media
+
+- `CAUCE · Select Image Frame`
+
+Selects one opaque frame from any `IMAGE` batch while retaining a one-frame
+batch. Negative indices count from the end, so `-1` is a generated segment's
+endpoint. No image analysis or semantic label is introduced.
+
 ## Timeline
 
 - `CAUCE · Project`
@@ -72,6 +80,10 @@ Window` exposes `nearest_run`, `floor_run`, `ceil_run`, `exact_frames`, and
 
 CAUCE intentionally does not expose latent concatenation: independent H3
 latents have incompatible causal token phases at a naïve join.
+
+For runtimes predating H3 clip guides, a continuation can decode its parent,
+select the final accepted image, and connect it as the next FL2VA `first_frame`.
+The image endpoint and the inherited latent tail are complementary constraints.
 
 The bridge node copies a left parent tail and a right parent head into the
 target, protects both endpoints, and leaves only the middle denoisable. It is

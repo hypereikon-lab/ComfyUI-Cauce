@@ -71,6 +71,9 @@ PROFILES = {
         "h3-5090-fl2va-800-tiled", "FL2VA", 800, 800, True
     ),
     "h3-5090-ref2va-448": _profile("h3-5090-ref2va-448", "Ref2VA", 448, 448, False),
+    "h3-5090-ref2va-576x320": _profile(
+        "h3-5090-ref2va-576x320", "Ref2VA", 576, 320, False
+    ),
 }
 
 

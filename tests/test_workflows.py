@@ -50,6 +50,29 @@ class VisualWorkflowTests(unittest.TestCase):
                 self.assertEqual(workflow["last_link_id"], max(link_ids, default=0))
                 self.assertEqual(workflow["last_node_id"], max(nodes, default=0))
 
+    def test_continuation_uses_decoded_endpoint_and_constant_render_envelope(self):
+        workflow = json.loads(
+            (WORKFLOW_DIR / "40_h3_two_window_continuation.json").read_text()
+        )
+        nodes = workflow["nodes"]
+        self.assertIn("CauceSelectImageFrame", {node["type"] for node in nodes})
+        windows = [
+            node for node in nodes if node["type"] == "CauceGenerationWindow"
+        ]
+        second = next(
+            node for node in windows if node["widgets_values"][0] == "continuation_window_b"
+        )
+        self.assertAlmostEqual(second["widgets_values"][2], 3.541666667)
+
+    def test_ref2va_demo_uses_landscape_profile(self):
+        workflow = json.loads(
+            (WORKFLOW_DIR / "20_h3_ref2va_motion_reference.json").read_text()
+        )
+        profile = next(
+            node for node in workflow["nodes"] if node["type"] == "CauceExecutionProfile"
+        )
+        self.assertEqual(profile["widgets_values"], ["h3-5090-ref2va-576x320"])
+
     def test_demo_assets_exist_and_are_bounded(self):
         assets = ROOT / "examples" / "assets"
         expected = {
@@ -101,6 +124,14 @@ class APIWorkflowTests(unittest.TestCase):
                 state["windows"]["forest_window_002"]["workflow_template"],
                 "api/h3_continuation_window.template.json",
             )
+
+    def test_continuation_template_derives_first_frame_from_parent(self):
+        template = json.loads(
+            (API_DIR / "h3_continuation_window.template.json").read_text()
+        )
+        self.assertEqual(template["8"]["inputs"]["first_frame"], ["26", 0])
+        self.assertEqual(template["25"]["inputs"]["samples"], ["9", 0])
+        self.assertEqual(template["26"]["class_type"], "CauceSelectImageFrame")
 
 
 if __name__ == "__main__":

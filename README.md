@@ -22,11 +22,12 @@ media
 
 ## Current status
 
-The greenfield core and 35 ComfyUI nodes are implemented. Six visual workflows,
+The greenfield core and 36 ComfyUI nodes are implemented. Six visual workflows,
 two API templates, bounded demo assets, and a restartable two-window project are
-included. Their graphs and API sockets have been checked against the live lab
-ComfyUI build; model-quality and continuity comparisons remain empirical GPU
-validation work.
+included. Plate export, FL2VA first/last, and Ref2VA have executed successfully
+on the live lab RTX 5090. Mask-only continuation also executes, but its first
+visual seam failed the quality gate; the shipped continuation workflow therefore
+adds a decoded endpoint guide and remains an explicit validation candidate.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.
@@ -74,6 +75,8 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
 
 - **CAUCE / Timeline** — project, points, spans, exact H3 windows, timelines,
   and decode domains.
+- **CAUCE / Media** — minimal opaque-batch operations such as exact frame
+  selection.
 - **CAUCE / Plates** — canvas, layers, masks, dome preview, point versions, and
   PNG/prompt handoff.
 - **CAUCE / H3** — native FL2VA, ordered Ref2VA references, and absolute-time
@@ -90,7 +93,8 @@ See [Node catalog](docs/NODE_CATALOG.md),
 [architecture](docs/ARCHITECTURE.md),
 [H3 wiring](docs/H3_WIRING.md), and
 [workflow guide](docs/WORKFLOWS.md),
-[validation matrix](docs/VALIDATION.md). The current upstream and community
+[validation matrix](docs/VALIDATION.md), and
+[laboratory results](docs/LAB_RESULTS.md). The current upstream and community
 comparison is recorded in [research notes](docs/RESEARCH.md).
 
 ## Tests

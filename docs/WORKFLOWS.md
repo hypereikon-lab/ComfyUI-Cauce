@@ -37,15 +37,16 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 |---|---|---:|---|
 | 00 | `00_plate_sketch_handoff.json` | CPU | Componer un plate, asociarlo a tiempo/prompt y exportar PNG + sidecars. |
 | 10 | `10_h3_fl2va_first_last.json` | 1 sample | Baseline first/last con MP4, parent latent y receipt. |
-| 20 | `20_h3_ref2va_motion_reference.json` | 1 sample | Referencias visuales + video de movimiento sin semantizarlo. |
-| 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia a tiempo absoluto. |
-| 40 | `40_h3_two_window_continuation.json` | 2 samples | Heredar 39 frames AV y producir dos ventanas aceptadas. |
-| 50 | `50_h3_latent_bridge.json` | 1 sample | Generar sólo el centro entre dos parents existentes. |
+| 20 | `20_h3_ref2va_motion_reference.json` | 1 sample | Referencias visuales + video de movimiento; profile landscape. |
+| 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
+| 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; candidato de validación. |
+| 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
-ningún graph contiene nodos desconocidos ni depende de los packs legacy.
-“Graph validado” no equivale a “calidad visual aprobada”: Ref2VA, guide,
-continuación y bridge todavía requieren comparación empírica sobre la GPU.
+ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
+resultados ejecutados, sus tiempos y los gates pendientes están en
+[`LAB_RESULTS.md`](LAB_RESULTS.md). “Graph validado” no equivale a “calidad
+visual aprobada”.
 
 ## 00 · Plate sketch y handoff
 
@@ -106,6 +107,12 @@ El MP4 de demo dura 2,333 s y contiene 56 frames, una longitud válida `17k+5`.
 Para reemplazarlo, el video debe estar a 24 fps y durar entre 2 y 15 s. El total
 temporal de referencias video/audio no puede exceder 15 s.
 
+El workflow usa `h3-5090-ref2va-576x320`: mantiene un costo cercano al profile
+cuadrado de 448, pero ofrece un canvas landscape más apropiado para referencias
+panorámicas. El profile 448 permanece disponible para material realmente
+cuadrado; cambiar de aspect ratio es una decisión de output, no una propiedad
+semántica de las referencias.
+
 ## 30 · Guide en tiempo absoluto
 
 `CAUCE · H3 Timed Guide` resuelve `master_seconds` contra el inicio real de la
@@ -125,10 +132,17 @@ audio guide, conectar también el audio VAE.
 La segunda ventana declara `context_frames = 39`. El graph:
 
 1. genera y resuelve el parent A;
-2. copia exactamente su tail AV al head del target B;
-3. coloca máscara cero sobre esa región heredada;
-4. genera únicamente lo desconocido;
-5. acepta y guarda A y B por separado.
+2. decodifica A y selecciona su último frame aceptado de forma opaca;
+3. usa ese endpoint como `first_frame` oficial de FL2VA para B;
+4. copia exactamente el tail AV de A al head del target B;
+5. coloca máscara cero sobre esa región heredada;
+6. genera únicamente lo desconocido;
+7. acepta y guarda A y B por separado.
+
+La ventana B solicita `85` frames nuevos (`3,541666667 s`). Con los `39`
+heredados, el render vuelve a sumar `124` frames: el mismo envelope ya verificado
+para el baseline. Esto evita que la demostración de continuidad cambie duración
+y algoritmo al mismo tiempo.
 
 No se concatenan latents H3 independientes antes del VAE. Cada parent se
 decodifica dentro de su propia fase causal y sólo las regiones aceptadas se
@@ -137,6 +151,12 @@ montan después sobre el reloj maestro.
 `39` es el primer boundary compartido entre la fase visual H3 y el grid de
 audio. `90`, `141` y siguientes quedan disponibles para experimentos más
 largos, pero aumentan el costo heredado y reducen el intervalo nuevo.
+
+En el runtime 0.33.1, el latent tail por sí solo ejecutó pero produjo un salto
+visual fuerte. La guía de clip latente pertenece a un core H3 posterior y CAUCE
+la bloquea explícitamente cuando no está disponible. El endpoint decodificado
+es la estrategia compatible que ahora debe pasar el gate comparativo; no se
+declara continuidad “resuelta” sólo porque el sampler termine.
 
 ## 50 · Bridge
 
@@ -167,6 +187,9 @@ python cauce_cli.py resume examples/project.example.json --dry-run
 python cauce_cli.py resume examples/project.example.json
 python cauce_cli.py status examples/project.example.json
 ```
+
+La plantilla de continuación carga el parent guardado, lo decodifica y deriva
+automáticamente su `first_frame`; no exige exportar manualmente un PNG de borde.
 
 Los assets nombrados por una plantilla API deben existir previamente en
 `ComfyUI/input/`. El modo recomendado es ejecutar el runner en la torre contra
@@ -202,6 +225,8 @@ sin perder qué parent produjo la rama anterior.
   solicitado.
 - **Continuation antes de cero:** el tiempo aceptado debe dejar espacio para el
   context heredado.
+- **`mask_plus_guide` no disponible:** usar el workflow 40 con endpoint
+  decodificado; no actualizar ComfyUI automáticamente desde CAUCE.
 - **Bridge sin archivo:** usar el path exacto entregado por `Save AV Latent`.
 - **El túnel cae:** el proceso de Comfy puede continuar en la torre; consultar
   history al reconectar antes de volver a encolar.

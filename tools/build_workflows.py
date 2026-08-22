@@ -204,6 +204,10 @@ SPECS = {
         [L("images", "IMAGE"), L("window", "CAUCE_WINDOW"), L("audio", "AUDIO", True)],
         [("images", "IMAGE"), ("audio", "AUDIO"), ("accepted_frames", "INT")], [270, 66],
     ),
+    "CauceSelectImageFrame": (
+        [L("images", "IMAGE"), W("frame_index", "INT")],
+        [("image", "IMAGE"), ("resolved_frame_index", "INT")], [260, 58],
+    ),
     "CreateVideo": (
         [L("images", "IMAGE"), L("audio", "AUDIO", True), W("fps", "FLOAT"), W("bit_depth", "INT")],
         [("VIDEO", "VIDEO")], [270, 102],
@@ -392,7 +396,13 @@ def add_sample_decode(wf, x, y, stack, conditioning, latent, window, *, seed, pr
     wf.connect(accept, "images", video, "images")
     wf.connect(accept, "audio", video, "audio")
     wf.connect(video, "VIDEO", save, "video")
-    return {"noise": noise, "sample": sample, "parent": parent, "save": save}
+    return {
+        "noise": noise,
+        "sample": sample,
+        "parent": parent,
+        "accept": accept,
+        "save": save,
+    }
 
 
 def build_plate():
@@ -504,7 +514,7 @@ Los tags compilados son `<Picture 1>`, `<Picture 2>`, `<Video 1>`.""", size=(720
     ref_b = wf.add("CauceH3ReferenceImage", (620, 220))
     ref_v = wf.add("CauceH3ReferenceVideo", (620, 500))
     window = wf.add("CauceGenerationWindow", (980, 0), ["ref_motion_001", 0.0, 5.0, "0", "0", "ceil", "nearest_run", 362])
-    profile = wf.add("CauceExecutionProfile", (980, 430), ["h3-5090-ref2va-448"])
+    profile = wf.add("CauceExecutionProfile", (980, 430), ["h3-5090-ref2va-576x320"])
     preflight = wf.add("CaucePreflight", (980, 720), [35.0])
     stack = add_model_stack(wf, 1390, 0, "Ref2VA")
     h3 = wf.add("CauceH3Ref2VA", (2390, 0), [
@@ -573,16 +583,17 @@ def build_continuation():
     wf = Workflow("40_h3_two_window_continuation", scale=0.22, offset=(100, 180))
     note(wf, (-50, -500), """# CAUCE 40 · Two-window AV continuation
 
-La ventana B copia y preserva 39 frames AV phase-aligned del parent A; sólo el
-resto se genera. Cada ventana produce su propio accepted MP4 y su parent latent.
-Este workflow ejecuta dos samples: úsalo después de validar CAUCE 10.""", size=(760, 260))
+La ventana B hereda 39 frames AV phase-aligned del parent A y usa además el
+último frame decodificado de A como first-frame guide oficial. El latent asegura
+contexto causal; la imagen refuerza la continuidad perceptual en runtimes H3 que
+aún no incluyen clip guides. Ejecuta dos samples: valida primero CAUCE 10.""", size=(790, 280))
     first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
     prompt_a = wf.add("CauceTimelinePoint", (320, 0), [
         "continuation_a", 0.0,
         "A single slow passage through humid Valdivian forest, beginning exactly from the image. Forward motion remains calm and coherent. Audio: running water and distant forest ambience, no music, no speech.",
     ])
     window_a = wf.add("CauceGenerationWindow", (760, 0), ["continuation_window_a", 0.0, 5.0, "0", "0", "ceil", "nearest_run", 362])
-    window_b = wf.add("CauceGenerationWindow", (760, 440), ["continuation_window_b", 5.166666667, 5.0, "39", "0", "ceil", "nearest_run", 362])
+    window_b = wf.add("CauceGenerationWindow", (760, 440), ["continuation_window_b", 5.166666667, 3.541666667, "39", "0", "ceil", "nearest_run", 362])
     profile = wf.add("CauceExecutionProfile", (1120, 0), ["h3-5090-fl2va-640"])
     stack = add_model_stack(wf, 1480, 0, "FL2VA")
     cond_a = wf.add("CauceH3FL2VA", (2480, 0), [""])
@@ -598,6 +609,9 @@ Este workflow ejecuta dos samples: úsalo después de validar CAUCE 10.""", size
         wf, 3000, 0, stack, (cond_a, "positive"), (cond_a, "latent"), (window_a, "window"),
         seed=2026082104, prefix="cauce/demos/continuation_a",
     )
+    endpoint = wf.add("CauceSelectImageFrame", (2480, 840), [-1])
+    wf.connect(result_a["accept"], "images", endpoint, "images")
+    wf.connect(endpoint, "image", cond_b, "first_frame")
     prepare_b = wf.add("CaucePrepareContinuation", (3000, 840), ["39", 8, "mask_only"])
     wf.connect(cond_b, "positive", prepare_b, "positive")
     wf.connect(cond_b, "latent", prepare_b, "target_latent")
@@ -706,7 +720,7 @@ def api_continuation():
         "7": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_audio_vae_fp32.safetensors"}},
         "8": {"class_type": "CauceH3FL2VA", "inputs": {
             "clip": ["5", 0], "vae": ["6", 0], "prompt": "{{window.prompt}}",
-            "window": ["1", 0], "profile": ["2", 0]
+            "window": ["1", 0], "profile": ["2", 0], "first_frame": ["26", 0]
         }},
         "9": {"class_type": "CauceLoadAVLatent", "inputs": {"path_or_folder": "{{window.parent_latent}}", "artifact_index": 0}},
         "10": {"class_type": "CaucePrepareContinuation", "inputs": {
@@ -731,7 +745,9 @@ def api_continuation():
             "steps": 20, "cfg": 1.0, "parents_json": "{{window.parents_json}}"
         }},
         "23": {"class_type": "CauceSaveAVLatent", "inputs": {"latent": ["16", 0], "filename_prefix": "cauce/latents/{{window.id}}", "artifact_index": 1, "receipt": ["22", 0]}},
-        "24": {"class_type": "CauceSaveReceipt", "inputs": {"receipt": ["22", 0], "relative_path": "cauce/receipts/{{window.id}}.json"}}
+        "24": {"class_type": "CauceSaveReceipt", "inputs": {"receipt": ["22", 0], "relative_path": "cauce/receipts/{{window.id}}.json"}},
+        "25": {"class_type": "VAEDecode", "inputs": {"samples": ["9", 0], "vae": ["6", 0]}},
+        "26": {"class_type": "CauceSelectImageFrame", "inputs": {"images": ["25", 0], "frame_index": -1}}
     }
 
 

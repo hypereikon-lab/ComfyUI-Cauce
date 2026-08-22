@@ -15,7 +15,7 @@ de 32 GB y 64 GB de RAM. CAUCE no modificó CUDA, PyTorch, ComfyUI ni modelos.
 | Continuation tail + endpoint | seam visual verificado; escucha pendiente | 85 f aceptados, 640×640, 3,542 s | 104,1 s | `cauce/sequence/forest_window_002_hybrid_00001_.mp4` |
 | Timed Guide | bloqueado por capability | — | — | falta `MiniMaxH3AddGuide` oficial |
 | Bridge | graph validado | — | — | pendiente GPU |
-| Confluence seam repair | graph local + tests sintéticos | 124 f working / 48 f patch | — | runtime GPU y material real pendientes |
+| Confluence seam repair, sintético | runtime verificado; gesto real pendiente | 124 f working → 120 f join / 48 f patch | 42,8 s a 4 steps | previews temporales, prompt `5ea6dc99-...` |
 
 ## Lectura de los resultados
 
@@ -54,6 +54,14 @@ El borde de audio fue decodificado a 44,1 kHz estéreo. En una ventana de 250 ms
 el RMS cambió de `0,0119` a `0,0246`, el salto de muestra fue `0,0102` y la
 correlación normalizada fue `-0,0144`. No aparece un impulso extremo, pero esas
 métricas no prueban continuidad perceptual; queda una escucha crítica pendiente.
+
+Confluence se ejecutó además con dos campos de color de 60 frames generados en
+memoria, sin subir assets ni escribir un MP4 permanente. El build produjo el
+dominio H3 esperado de 124 frames; `VAEEncode`, la inyección del video latent,
+la máscara central, el sampler a 4 steps, el decode y el splice terminaron en
+42,8 s. El preview final reportó 120 frames y el preview del parche 48, por lo
+que la duración y el rango de reemplazo pasan el gate estructural. La calidad
+temporal no se promueve hasta repetir con pares heterogéneos de gestos reales.
 
 Receipt Ref2VA landscape:
 `357751bc96407eda0532dcc7b7a2b459c25838106a7a1a654f56daff219d6bc1`.

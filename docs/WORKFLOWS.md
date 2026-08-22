@@ -41,7 +41,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
-| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Reparación local del salto entre dos videos; template sin assets reales. |
+| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Reparación local del salto; recorrido sintético verificado, material real pendiente. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
 ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
@@ -202,6 +202,12 @@ validación cualitativa deberá cubrir gestos con distinta posición, velocidad 
 aceleración en el corte; probar 0,5, 1 y 1,5 s por lado antes de adoptar 1 s como
 preset definitivo. La resolución queda normalizada a 640×640 para el envelope
 verificado de la 5090.
+
+El recorrido completo ya se validó en la instancia del lab con dos batches
+sintéticos de 60 frames: H3 recibió 124 frames, el sampler de prueba terminó,
+el output unido devolvió 120 frames y el parche exactamente 48. Esa prueba
+confirma sockets, shapes, máscaras, decode y splice; no evalúa si un gesto real
+se vuelve perceptualmente continuo.
 
 El workflow es intencionalmente video-only. No regenera audio y no debe
 reemplazar la música sincronizada del master; ésta se conserva o se monta con

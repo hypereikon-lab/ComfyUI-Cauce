@@ -28,7 +28,9 @@ included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
 continuation have executed successfully on the live lab RTX 5090. Mask-only
 continuation also executes, but its first visual seam failed the quality gate;
 the shipped hybrid workflow passed that visual comparison. Its audio seam still
-requires a listening gate before production promotion.
+requires a listening gate before production promotion. Confluence seam repair
+has completed end-to-end with synthetic inputs; heterogeneous real gesture
+pairs remain the qualitative promotion gate.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.

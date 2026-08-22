@@ -22,7 +22,7 @@ media
 
 ## Current status
 
-The greenfield core and 36 ComfyUI nodes are implemented. Six visual workflows,
+The greenfield core and 39 ComfyUI nodes are implemented. Seven visual workflows,
 two API templates, bounded demo assets, and a restartable two-window project are
 included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
 continuation have executed successfully on the live lab RTX 5090. Mask-only
@@ -87,6 +87,8 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
   authoritative audio.
 - **CAUCE / Continuity** — phase-safe latent parents, masked AV continuation,
   and exact decoded AV acceptance.
+- **CAUCE / Seams** — decoded-domain confluence windows, central H3 video
+  inpainting, and duration-preserving local replacement.
 - **CAUCE / Artifacts** — receipts and atomic nested AV latent save/load.
 - **CAUCE / Runtime** — bounded 5090 profiles and read-only preflight.
 

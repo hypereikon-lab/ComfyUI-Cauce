@@ -90,6 +90,25 @@ target, protects both endpoints, and leaves only the middle denoisable. It is
 the native latent path for temporal gap filling between already-generated
 states.
 
+## Seams
+
+- `CAUCE · Build Confluence Window`
+- `CAUCE · Prepare H3 Seam Repair`
+- `CAUCE · Apply Confluence Patch`
+
+Confluence operates on two already-decoded, opaque video batches. The first
+node extracts equal tail/head contexts, adds symmetric duplicate guards until
+the batch is an exact H3 run, and returns both the seam plan and its matching
+`CAUCE_WINDOW`. At the default 24 fps settings this is
+`2 guards + 60 A + 60 B + 2 guards = 124` frames.
+
+The prepare node VAE-encodes that one composite domain and sets H3's video
+noise mask to generate only the central interval. The audio stream is fully
+preserved/silent; production audio remains authoritative outside this workflow.
+The apply node accepts only the repaired inner patch, blends its decoded edges,
+and returns `A + B` with exactly the original combined frame count. Frames
+outside the replacement interval are copied without interpretation or change.
+
 ## Artifacts
 
 - `CAUCE · Run Receipt`

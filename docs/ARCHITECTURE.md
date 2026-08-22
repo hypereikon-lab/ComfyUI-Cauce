@@ -136,6 +136,34 @@ Generated-audio continuation still needs empirical decoder-duration conformance
 and seam testing. Final master music should use `Authoritative Audio`, which
 bypasses AudioVAE drift.
 
+## Local seam repair / Confluence
+
+Continuation generates an unknown future from one parent. Confluence instead
+receives two already-decoded clips and repairs their visible join. It does not
+concatenate independent H3 latents. The source pixels are first assembled into
+one causal VAE domain:
+
+```text
+duplicate guard + tail(A) + head(B) + duplicate guard
+  → one H3 video latent
+  → central generate mask / outer preserve mask
+  → decode one repaired working domain
+  → accept only the central patch
+  → unchanged A prefix + patch + unchanged B suffix
+```
+
+At the default 24 fps geometry, 2.5 seconds from each side gives 120 real
+frames. Two duplicate guards at each edge make a legal 124-frame H3 run. The
+cut is frame 62 of that working domain and the repair spans `[38,86)`: the last
+24 frames of A plus the first 24 of B. Latent and decoded feathers smooth only
+the patch boundary. The final frame count is always `len(A) + len(B)`.
+
+This is video-only by design. H3's nested audio stream is held at zero and the
+source audio is not silently regenerated or discarded into the master mix.
+Music and production audio remain on CAUCE's authoritative sample clock. Long
+masters should not be loaded as one image batch; repair local clips and place
+their accepted outputs on the timeline.
+
 ## Persistence
 
 AV latent files store two tensors in one safetensors file:

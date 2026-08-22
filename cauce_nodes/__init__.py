@@ -1,9 +1,20 @@
 """Aggregate CAUCE legacy-node mappings without any web UI."""
 
-from . import artifacts, audio, continuity, h3, masks, media, plates, profiles, timeline
+from . import artifacts, audio, continuity, h3, masks, media, plates, profiles, seams, timeline
 
 
-MODULES = (timeline, media, plates, h3, masks, audio, continuity, artifacts, profiles)
+MODULES = (
+    timeline,
+    media,
+    plates,
+    h3,
+    masks,
+    audio,
+    continuity,
+    seams,
+    artifacts,
+    profiles,
+)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

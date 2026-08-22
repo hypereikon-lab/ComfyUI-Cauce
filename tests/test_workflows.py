@@ -20,6 +20,7 @@ class VisualWorkflowTests(unittest.TestCase):
             "30_h3_timed_guide.json",
             "40_h3_two_window_continuation.json",
             "50_h3_latent_bridge.json",
+            "60_h3_confluence_seam_repair.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
         self.assertEqual({path.name for path in paths}, expected)
@@ -72,6 +73,29 @@ class VisualWorkflowTests(unittest.TestCase):
             node for node in workflow["nodes"] if node["type"] == "CauceExecutionProfile"
         )
         self.assertEqual(profile["widgets_values"], ["h3-5090-ref2va-576x320"])
+
+    def test_confluence_demo_owns_its_exact_h3_window(self):
+        workflow = json.loads(
+            (WORKFLOW_DIR / "60_h3_confluence_seam_repair.json").read_text()
+        )
+        types = {node["type"] for node in workflow["nodes"]}
+        self.assertTrue(
+            {
+                "CauceBuildSeamWindow",
+                "CaucePrepareH3SeamRepair",
+                "CauceApplySeamPatch",
+            }.issubset(types)
+        )
+        self.assertNotIn("CauceGenerationWindow", types)
+        build = next(
+            node for node in workflow["nodes"] if node["type"] == "CauceBuildSeamWindow"
+        )
+        self.assertEqual(build["widgets_values"], [2.5, 1.0, 362])
+        scales = [node for node in workflow["nodes"] if node["type"] == "ImageScale"]
+        self.assertEqual(len(scales), 2)
+        self.assertTrue(
+            all(node["widgets_values"][1:3] == [640, 640] for node in scales)
+        )
 
     def test_demo_assets_exist_and_are_bounded(self):
         assets = ROOT / "examples" / "assets"

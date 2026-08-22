@@ -1,7 +1,7 @@
 # Laboratory validation matrix
 
 Local unit tests establish contracts, clocks, generated workflow integrity, and
-runner materialization; they cannot establish model quality. The six visual
+runner materialization; they cannot establish model quality. The seven visual
 graphs load without unknown nodes in the live lab frontend, and both API
 templates match the live `/object_info` signatures. Validate the following on
 the RTX 5090 before promoting advanced workflows to production defaults.
@@ -9,7 +9,7 @@ the RTX 5090 before promoting advanced workflows to production defaults.
 ## Gate 1 — load and compatibility
 
 - CAUCE imports with no startup exception.
-- All 36 nodes appear under `CAUCE/*`.
+- All 39 nodes appear under `CAUCE/*`.
 - Preflight identifies the existing models without modifying files.
 - FL2VA and Ref2VA wrappers locate current official Comfy H3 classes.
 - No CUDA, PyTorch, ComfyUI, Manager, or model update is triggered.
@@ -111,3 +111,20 @@ are committed as receipts and documented measurements.
 - Confirm complete windows are skipped.
 - Confirm failed windows remain explicitly failed.
 - Confirm remote mode fails closed without a valid Cloudflare service token.
+
+## Gate 9 — local seam repair / Confluence
+
+- Reject either input unless its reported frame rate is exactly 24 fps.
+- Reject either input when it is shorter than the requested context.
+- Confirm the default plan is 124 working frames, cut 62, repair `[38,86)`.
+- Confirm the VAE-encoded composite and FL2VA target have identical shapes.
+- Confirm outer video-mask tokens are zero and only central tokens are nonzero.
+- Confirm the H3 audio mask is all zero and no generated audio is accepted.
+- Confirm the splice replaces 48 frames and returns exactly `len(A) + len(B)`.
+- Checksum every frame outside the replacement range.
+- Compare position, velocity, acceleration, optical flow, and perceptual seam
+  energy over five frames on both patch edges and around the original cut.
+- Compare repair widths of 0,5, 1 and 1,5 s per side with fixed source, prompt,
+  seed, profile, sampler, and steps.
+- Verify graph execution synthetically, then promote only after heterogeneous
+  real gesture pairs pass visual inspection.

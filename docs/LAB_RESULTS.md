@@ -15,6 +15,7 @@ de 32 GB y 64 GB de RAM. CAUCE no modificó CUDA, PyTorch, ComfyUI ni modelos.
 | Continuation tail + endpoint | seam visual verificado; escucha pendiente | 85 f aceptados, 640×640, 3,542 s | 104,1 s | `cauce/sequence/forest_window_002_hybrid_00001_.mp4` |
 | Timed Guide | bloqueado por capability | — | — | falta `MiniMaxH3AddGuide` oficial |
 | Bridge | graph validado | — | — | pendiente GPU |
+| Confluence seam repair | graph local + tests sintéticos | 124 f working / 48 f patch | — | runtime GPU y material real pendientes |
 
 ## Lectura de los resultados
 

@@ -35,6 +35,7 @@ WINDOW_SCHEMA = "cauce.window/1"
 DECODE_DOMAIN_SCHEMA = "cauce.decode-domain/1"
 RECEIPT_SCHEMA = "cauce.receipt/1"
 PROFILE_SCHEMA = "cauce.execution-profile/1"
+SEAM_SCHEMA = "cauce.seam/1"
 
 MEDIA_KINDS = ("image", "video", "audio", "mask", "latent")
 FIELD_CHANNELS = ("video", "audio", "both")

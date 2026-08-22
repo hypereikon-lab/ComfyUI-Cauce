@@ -41,6 +41,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
+| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Reparación local del salto entre dos videos; template sin assets reales. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
 ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
@@ -170,6 +171,43 @@ El bridge copia 39 frames desde cada extremo y conserva ambos bloques. La
 intersección central permanece generable. Si los contexts se solapan, el nodo
 falla cerrado en vez de inventar un join ambiguo.
 
+## 60 · Confluence: reparar un corte entre dos gestos
+
+Este recorrido parte de dos videos ya existentes, no de parents latentes. Los
+normaliza al profile FL2VA 640, toma 2,5 s de contexto a cada lado y entrega el
+tail de A y el head de B al VAE como un único dominio causal. El nodo de build
+produce también la ventana H3 exacta, de modo que no existe un segundo widget
+de duración que pueda quedar desincronizado.
+
+Con los defaults:
+
+```text
+A: últimos 60 frames ┐
+                     ├─ + 2 guards por lado → working domain de 124 frames
+B: primeros 60 frames┘
+
+corte working: frame 62
+región generable: [38, 86) = 48 frames = 2 s
+output: len(A) + len(B), sin cambio de duración
+```
+
+H3 ve first/last frames del working domain y el prompt arbitrario, pero su
+`noise_mask` abre únicamente la zona central. Después del decode, CAUCE acepta
+sólo ese parche y repone el resto desde los inputs originales; modificar el
+exterior no es una solicitud al modelo, sino una imposibilidad topológica.
+
+El JSON contiene `gesture_a.mp4` y `gesture_b.mp4` como placeholders. Cada clip
+debe tener al menos 60 frames y ambos deben ser exactamente 24 fps. La primera
+validación cualitativa deberá cubrir gestos con distinta posición, velocidad y
+aceleración en el corte; probar 0,5, 1 y 1,5 s por lado antes de adoptar 1 s como
+preset definitivo. La resolución queda normalizada a 640×640 para el envelope
+verificado de la 5090.
+
+El workflow es intencionalmente video-only. No regenera audio y no debe
+reemplazar la música sincronizada del master; ésta se conserva o se monta con
+los nodos de audio autoritativo. Para una pieza larga se corrigen clips locales,
+no se carga el master completo como un único batch de imágenes.
+
 ## Runner: secuencia reiniciable
 
 Los JSON visuales sirven para diseño e inspección. Para dejar varias ventanas
@@ -231,5 +269,10 @@ sin perder qué parent produjo la rama anterior.
 - **`mask_plus_guide` no disponible:** usar el workflow 40 con endpoint
   decodificado; no actualizar ComfyUI automáticamente desde CAUCE.
 - **Bridge sin archivo:** usar el path exacto entregado por `Save AV Latent`.
+- **Confluence rechaza el input:** ambos videos deben ser 24 fps, tener al menos
+  el contexto solicitado y normalizarse al mismo profile antes del VAE.
+- **Confluence carga pero no corrige el gesto:** ampliar gradualmente la región
+  reparada o cambiar el prompt/seed; no ampliar contexto, reparación y
+  resolución simultáneamente.
 - **El túnel cae:** el proceso de Comfy puede continuar en la torre; consultar
   history al reconectar antes de volver a encolar.

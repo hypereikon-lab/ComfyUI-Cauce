@@ -41,6 +41,14 @@ SPECS = {
         [("images", "IMAGE"), ("audio", "AUDIO"), ("fps", "FLOAT"), ("bit_depth", "INT")],
         [220, 82],
     ),
+    "ImageScale": (
+        [
+            L("image", "IMAGE"), W("upscale_method", "COMBO"),
+            W("width", "INT"), W("height", "INT"), W("crop", "COMBO"),
+        ],
+        [("IMAGE", "IMAGE")],
+        [270, 130],
+    ),
     "CaucePlateCanvas": (
         [W("width", "INT"), W("height", "INT"), W("background", "STRING")],
         [("IMAGE", "IMAGE")],
@@ -207,6 +215,39 @@ SPECS = {
     "CauceSelectImageFrame": (
         [L("images", "IMAGE"), W("frame_index", "INT")],
         [("image", "IMAGE"), ("resolved_frame_index", "INT")], [260, 58],
+    ),
+    "VAEEncode": (
+        [L("pixels", "IMAGE"), L("vae", "VAE")],
+        [("LATENT", "LATENT")], [160, 46],
+    ),
+    "CauceBuildSeamWindow": (
+        [
+            L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
+            L("left_fps", "FLOAT"), L("right_fps", "FLOAT"),
+            W("context_seconds_per_side", "FLOAT"),
+            W("repair_seconds_per_side", "FLOAT"), W("maximum_frames", "INT"),
+        ],
+        [
+            ("working_images", "IMAGE"), ("seam", "CAUCE_SEAM"),
+            ("window", "CAUCE_WINDOW"), ("seam_json", "STRING"),
+        ],
+        [360, 154],
+    ),
+    "CaucePrepareH3SeamRepair": (
+        [
+            L("target_latent", "LATENT"), L("encoded_video_latent", "LATENT"),
+            L("seam", "CAUCE_SEAM"), W("latent_feather_frames", "INT"),
+        ],
+        [("masked_latent", "LATENT"), ("mask_report", "STRING")], [350, 118],
+    ),
+    "CauceApplySeamPatch": (
+        [
+            L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
+            L("repaired_working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
+            W("decoded_feather_frames", "INT"),
+        ],
+        [("joined_images", "IMAGE"), ("repair_patch", "IMAGE"), ("splice_report", "STRING")],
+        [360, 138],
     ),
     "CreateVideo": (
         [L("images", "IMAGE"), L("audio", "AUDIO", True), W("fps", "FLOAT"), W("bit_depth", "INT")],
@@ -664,6 +705,94 @@ ejecutar, ajusta ambos paths/índices a artifacts existentes.""", size=(700, 240
     return wf.data()
 
 
+def build_confluence():
+    wf = Workflow("60_h3_confluence_seam_repair", scale=0.22, offset=(90, 170))
+    note(wf, (-50, -520), """# CAUCE 60 · Confluence seam repair
+
+Template para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade
+guards simétricos para formar 124 frames H3 y regenera sólo el último segundo de
+A + el primer segundo de B. El output reemplaza exactamente esos 48 frames:
+duración y frames exteriores permanecen intactos.
+
+Antes de ejecutar, sube `gesture_a.mp4` y `gesture_b.mp4` o selecciónalos en los
+dos Load Video. Ambos necesitan al menos 60 frames a 24 fps.""", size=(820, 310))
+    left_video = wf.add("LoadVideo", (0, 0), ["gesture_a.mp4", "image"], title="Gesture A")
+    right_video = wf.add("LoadVideo", (0, 340), ["gesture_b.mp4", "image"], title="Gesture B")
+    left_parts = wf.add("GetVideoComponents", (330, 0))
+    right_parts = wf.add("GetVideoComponents", (330, 340))
+    left_scale = wf.add("ImageScale", (590, 0), ["lanczos", 640, 640, "center"])
+    right_scale = wf.add("ImageScale", (590, 340), ["lanczos", 640, 640, "center"])
+    seam = wf.add("CauceBuildSeamWindow", (930, 150), [2.5, 1.0, 362])
+    first = wf.add("CauceSelectImageFrame", (1320, 0), [0], title="Working first frame")
+    last = wf.add("CauceSelectImageFrame", (1320, 340), [-1], title="Working last frame")
+    profile = wf.add("CauceExecutionProfile", (1680, 650), ["h3-5090-fl2va-640"])
+    stack = add_model_stack(wf, 1720, 0, "FL2VA")
+    condition = wf.add("CauceH3FL2VA", (2730, 0), [
+        "Repair only the masked temporal join. Preserve framing, visual content, and motion outside it. Generate one continuous gesture whose position, velocity, and acceleration connect the left state to the right state without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Audio is not part of this repair."
+    ])
+    encode = wf.add("VAEEncode", (2730, 390))
+    prepare = wf.add("CaucePrepareH3SeamRepair", (3100, 230), [6])
+    noise = wf.add("RandomNoise", (3490, 0), [2026082201, "fixed"])
+    guider = wf.add("BasicGuider", (3490, 150))
+    sample = wf.add("SamplerCustomAdvanced", (3810, 100))
+    decode = wf.add("VAEDecode", (4100, 100))
+    apply = wf.add("CauceApplySeamPatch", (4370, 100), [6])
+    joined_video = wf.add("CreateVideo", (4780, 0), [24.0, 8])
+    joined_save = wf.add("SaveVideo", (5110, 0), [
+        "cauce/demos/confluence_repaired_join", "mp4", "auto",
+    ])
+    patch_video = wf.add("CreateVideo", (4780, 260), [24.0, 8])
+    patch_save = wf.add("SaveVideo", (5110, 260), [
+        "cauce/demos/confluence_patch", "mp4", "auto",
+    ])
+
+    wf.connect(left_video, "VIDEO", left_parts, "video")
+    wf.connect(right_video, "VIDEO", right_parts, "video")
+    wf.connect(left_parts, "images", left_scale, "image")
+    wf.connect(right_parts, "images", right_scale, "image")
+    wf.connect(left_scale, "IMAGE", seam, "left_frames")
+    wf.connect(right_scale, "IMAGE", seam, "right_frames")
+    wf.connect(left_parts, "fps", seam, "left_fps")
+    wf.connect(right_parts, "fps", seam, "right_fps")
+    wf.connect(seam, "working_images", first, "images")
+    wf.connect(seam, "working_images", last, "images")
+    wf.connect(stack["clip"], "CLIP", condition, "clip")
+    wf.connect(stack["video_vae"], "VAE", condition, "vae")
+    wf.connect(seam, "window", condition, "window")
+    wf.connect(profile, "profile", condition, "profile")
+    wf.connect(first, "image", condition, "first_frame")
+    wf.connect(last, "image", condition, "last_frame")
+    wf.connect(seam, "working_images", encode, "pixels")
+    wf.connect(stack["video_vae"], "VAE", encode, "vae")
+    wf.connect(condition, "latent", prepare, "target_latent")
+    wf.connect(encode, "LATENT", prepare, "encoded_video_latent")
+    wf.connect(seam, "seam", prepare, "seam")
+    wf.connect(stack["model"], "MODEL", guider, "model")
+    wf.connect(condition, "positive", guider, "conditioning")
+    wf.connect(noise, "NOISE", sample, "noise")
+    wf.connect(guider, "GUIDER", sample, "guider")
+    wf.connect(stack["sampler"], "SAMPLER", sample, "sampler")
+    wf.connect(stack["scheduler"], "SIGMAS", sample, "sigmas")
+    wf.connect(prepare, "masked_latent", sample, "latent_image")
+    wf.connect(sample, "output", decode, "samples")
+    wf.connect(stack["video_vae"], "VAE", decode, "vae")
+    wf.connect(left_scale, "IMAGE", apply, "left_frames")
+    wf.connect(right_scale, "IMAGE", apply, "right_frames")
+    wf.connect(decode, "IMAGE", apply, "repaired_working_images")
+    wf.connect(seam, "seam", apply, "seam")
+    wf.connect(apply, "joined_images", joined_video, "images")
+    wf.connect(joined_video, "VIDEO", joined_save, "video")
+    wf.connect(apply, "repair_patch", patch_video, "images")
+    wf.connect(patch_video, "VIDEO", patch_save, "video")
+
+    wf.group("SOURCES · NORMALIZE", (-40, -40, 890, 760))
+    wf.group("CONFLUENCE WINDOW", (880, -40, 760, 600))
+    wf.group("H3 MODEL + WORKING DOMAIN", (1640, -40, 1420, 960))
+    wf.group("MASKED SEAM REPAIR", (3060, -40, 1280, 620))
+    wf.group("DURATION-PRESERVING SPLICE", (4330, -40, 1110, 620))
+    return wf.data()
+
+
 def api_fl2va():
     return {
         "1": {"class_type": "CauceGenerationWindow", "inputs": {
@@ -764,6 +893,7 @@ def main():
         "30_h3_timed_guide.json": build_timed_guide(),
         "40_h3_two_window_continuation.json": build_continuation(),
         "50_h3_latent_bridge.json": build_bridge(),
+        "60_h3_confluence_seam_repair.json": build_confluence(),
     }
     for filename, data in visual.items():
         write_json(WORKFLOWS / filename, data)

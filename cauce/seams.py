@@ -1,0 +1,344 @@
+"""Local, duration-preserving temporal seam repair for opaque video batches."""
+
+from __future__ import annotations
+
+import copy
+from typing import Any
+
+from .contracts import SEAM_SCHEMA, content_hash, make_window
+from .h3 import get_av_streams, pixel_frames_from_video_latent
+from .timebase import (
+    H3_FPS,
+    H3_TRAINED_MIN_FRAMES,
+    frames_to_seconds,
+    h3_visual_latent_frames,
+    is_h3_frame_count,
+    seconds_to_frames,
+    visual_token_spans,
+)
+
+
+def _concat_image_batches(parts: list[Any]):
+    parts = [part for part in parts if int(part.shape[0]) > 0]
+    if not parts:
+        raise ValueError("cannot concatenate an empty set of image batches")
+    try:
+        import torch
+
+        if isinstance(parts[0], torch.Tensor):
+            return torch.cat(parts, dim=0)
+    except ImportError:  # pragma: no cover - torch ships with ComfyUI
+        pass
+    import numpy
+
+    return numpy.concatenate(parts, axis=0)
+
+
+def _blend_patch(patch: Any, original: Any, feather_frames: int):
+    feather = min(max(0, int(feather_frames)), int(patch.shape[0]) // 2)
+    if feather == 0:
+        return patch
+    weights = [1.0] * int(patch.shape[0])
+    for index in range(feather):
+        value = float(index + 1) / float(feather + 1)
+        weights[index] = value
+        weights[-index - 1] = value
+    try:
+        import torch
+
+        if isinstance(patch, torch.Tensor):
+            alpha = torch.tensor(weights, dtype=patch.dtype, device=patch.device)
+            alpha = alpha.view((-1,) + (1,) * (patch.ndim - 1))
+            return original.to(patch) * (1.0 - alpha) + patch * alpha
+    except ImportError:  # pragma: no cover
+        pass
+    import numpy
+
+    alpha = numpy.asarray(weights, dtype=patch.dtype).reshape(
+        (-1,) + (1,) * (patch.ndim - 1)
+    )
+    return original.astype(patch.dtype) * (1.0 - alpha) + patch * alpha
+
+
+def make_seam_plan(
+    left_frame_count: int,
+    right_frame_count: int,
+    *,
+    context_seconds_per_side: float = 2.5,
+    repair_seconds_per_side: float = 1.0,
+    maximum_frames: int = 362,
+) -> dict[str, Any]:
+    """Resolve a symmetric decoded seam window onto an exact H3 frame run."""
+
+    left_count = int(left_frame_count)
+    right_count = int(right_frame_count)
+    context = seconds_to_frames(context_seconds_per_side, H3_FPS, "nearest")
+    repair = seconds_to_frames(repair_seconds_per_side, H3_FPS, "nearest")
+    if context < 1 or repair < 1:
+        raise ValueError("context and repair durations must resolve to at least one frame")
+    if repair >= context:
+        raise ValueError("repair duration per side must be shorter than context per side")
+    if left_count < context or right_count < context:
+        raise ValueError(
+            "each source needs at least "
+            f"{context} frames ({float(frames_to_seconds(context)):.3f}s)"
+        )
+
+    real_frames = context * 2
+    working_frames = None
+    for candidate in range(
+        max(real_frames, H3_TRAINED_MIN_FRAMES), int(maximum_frames) + 1
+    ):
+        if is_h3_frame_count(candidate) and (candidate - real_frames) % 2 == 0:
+            working_frames = candidate
+            break
+    if working_frames is None:
+        raise ValueError(
+            "no symmetric H3 guard-frame solution fits the requested context and maximum"
+        )
+    guard = (working_frames - real_frames) // 2
+    cut = guard + context
+    repair_start = cut - repair
+    repair_end = cut + repair
+    accepted_start = guard
+    accepted_end = guard + real_frames
+    plan = {
+        "schema": SEAM_SCHEMA,
+        "fps": int(H3_FPS),
+        "left_total_frames": left_count,
+        "right_total_frames": right_count,
+        "context_frames_per_side": context,
+        "repair_frames_per_side": repair,
+        "working_frames": working_frames,
+        "guard_frames_per_side": guard,
+        "cut_frame": cut,
+        "repair_start_frame": repair_start,
+        "repair_end_frame": repair_end,
+        "repair_total_frames": repair * 2,
+        "accepted_start_frame": accepted_start,
+        "accepted_end_frame": accepted_end,
+        "accepted_frames": real_frames,
+        "working_duration_seconds": float(frames_to_seconds(working_frames)),
+        "accepted_duration_seconds": float(frames_to_seconds(real_frames)),
+        "repair_duration_seconds": float(frames_to_seconds(repair * 2)),
+        "left_source_start_frame": left_count - context,
+        "right_source_end_frame": context,
+    }
+    plan["hash"] = content_hash(plan)
+    return plan
+
+
+def make_seam_window(plan: dict[str, Any]) -> dict[str, Any]:
+    """Compile the working seam domain into the matching exact H3 window."""
+
+    _validate_seam(plan)
+    working_frames = int(plan["working_frames"])
+    window = make_window(
+        f"confluence-{str(plan['hash'])[:12]}",
+        0,
+        frames_to_seconds(working_frames),
+        context_frames=0,
+        duplicate_prefix_frames=0,
+        snap_mode="nearest",
+        accept_mode="full_render",
+        maximum_frames=working_frames,
+    )
+    if int(window["shape"]["pixel_frames"]) != working_frames:
+        raise RuntimeError("seam plan and generated H3 window disagree")
+    return window
+
+
+def _validate_seam(plan: dict[str, Any]) -> None:
+    if plan.get("schema") != SEAM_SCHEMA:
+        raise ValueError(f"seam schema must be {SEAM_SCHEMA}")
+    if not is_h3_frame_count(int(plan["working_frames"])):
+        raise ValueError("seam working frame count is not a legal H3 run")
+
+
+def build_seam_window(left_frames: Any, right_frames: Any, plan: dict[str, Any]):
+    """Take an opaque tail/head pair and add symmetric H3 guard frames."""
+
+    _validate_seam(plan)
+    if int(left_frames.shape[0]) != int(plan["left_total_frames"]):
+        raise ValueError("left image batch no longer matches the seam plan")
+    if int(right_frames.shape[0]) != int(plan["right_total_frames"]):
+        raise ValueError("right image batch no longer matches the seam plan")
+    if tuple(left_frames.shape[1:]) != tuple(right_frames.shape[1:]):
+        raise ValueError("left and right videos must share resolution and channel layout")
+    context = int(plan["context_frames_per_side"])
+    guard = int(plan["guard_frames_per_side"])
+    left_tail = left_frames[-context:]
+    right_head = right_frames[:context]
+    parts: list[Any] = []
+    if guard:
+        parts.extend([left_tail[:1]] * guard)
+    parts.extend([left_tail, right_head])
+    if guard:
+        parts.extend([right_head[-1:]] * guard)
+    working = _concat_image_batches(parts)
+    if int(working.shape[0]) != int(plan["working_frames"]):
+        raise RuntimeError("constructed seam window has an unexpected frame count")
+    return working
+
+
+def seam_video_token_values(
+    plan: dict[str, Any], feather_frames: int = 6
+) -> tuple[float, ...]:
+    """Project the central decoded repair interval onto H3 visual tokens."""
+
+    _validate_seam(plan)
+    start = int(plan["repair_start_frame"])
+    end = int(plan["repair_end_frame"])
+    feather = min(max(0, int(feather_frames)), (end - start) // 2)
+    strengths = [0.0] * int(plan["working_frames"])
+    for frame in range(start, end):
+        if feather and frame < start + feather:
+            value = float(frame - start + 1) / float(feather + 1)
+        elif feather and frame >= end - feather:
+            value = float(end - frame) / float(feather + 1)
+        else:
+            value = 1.0
+        strengths[frame] = value
+    values = []
+    for token_start, token_end in visual_token_spans(
+        h3_visual_latent_frames(int(plan["working_frames"]))
+    ):
+        values.append(max(strengths[token_start:token_end], default=0.0))
+    if visual_token_spans(len(values))[-1][1] != int(plan["working_frames"]):
+        raise RuntimeError("seam mask and H3 token geometry disagree")
+    return tuple(values)
+
+
+def seam_splice_ranges(plan: dict[str, Any]) -> dict[str, tuple[int, int]]:
+    """Return the exact source/patch ranges used by the duration-preserving splice."""
+
+    _validate_seam(plan)
+    repair = int(plan["repair_frames_per_side"])
+    left_count = int(plan["left_total_frames"])
+    right_count = int(plan["right_total_frames"])
+    return {
+        "left_keep": (0, left_count - repair),
+        "working_patch": (
+            int(plan["repair_start_frame"]),
+            int(plan["repair_end_frame"]),
+        ),
+        "right_keep": (repair, right_count),
+    }
+
+
+def _video_samples(video_latent: dict[str, Any]):
+    samples = video_latent.get("samples")
+    if samples is None:
+        raise ValueError("encoded video latent has no samples")
+    if getattr(samples, "is_nested", False):
+        streams = list(samples.unbind())
+        if not streams:
+            raise ValueError("encoded nested latent is empty")
+        samples = streams[0]
+    if getattr(samples, "ndim", 0) != 5:
+        raise ValueError("encoded H3 video latent must have five dimensions")
+    return samples
+
+
+def prepare_h3_seam_repair(
+    target_latent: dict[str, Any],
+    encoded_video_latent: dict[str, Any],
+    plan: dict[str, Any],
+    *,
+    feather_frames: int = 6,
+):
+    """Inject one encoded video domain and denoise only its central seam."""
+
+    import torch
+
+    try:
+        import comfy.nested_tensor  # type: ignore
+    except ImportError as exc:  # pragma: no cover - requires ComfyUI
+        raise RuntimeError("H3 seam repair can only be prepared inside ComfyUI") from exc
+
+    _validate_seam(plan)
+    target_video, target_audio = get_av_streams(target_latent)
+    encoded_video = _video_samples(encoded_video_latent)
+    if pixel_frames_from_video_latent(target_video) != int(plan["working_frames"]):
+        raise ValueError("target H3 latent length does not match the seam working domain")
+    if tuple(encoded_video.shape) != tuple(target_video.shape):
+        raise ValueError(
+            "encoded video latent geometry does not match the H3 target; normalize both clips "
+            "to the execution profile before building the seam"
+        )
+    video = encoded_video.to(device=target_video.device, dtype=target_video.dtype).clone()
+    audio = target_audio.clone()
+    token_values = seam_video_token_values(plan, feather_frames)
+    video_mask = torch.tensor(
+        token_values, dtype=torch.float32, device=video.device
+    ).view(1, 1, int(video.shape[2]), 1, 1)
+    video_mask = video_mask.expand(
+        int(video.shape[0]), 1, int(video.shape[2]), int(video.shape[3]), int(video.shape[4])
+    ).clone()
+    audio_mask = torch.zeros(
+        (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[-1])),
+        dtype=torch.float32,
+        device=audio.device,
+    )
+    out = copy.copy(target_latent)
+    out["samples"] = comfy.nested_tensor.NestedTensor((video, audio))
+    out["noise_mask"] = comfy.nested_tensor.NestedTensor((video_mask, audio_mask))
+    report = {
+        "schema": "cauce.seam-mask-report/1",
+        "seam_hash": plan["hash"],
+        "working_frames": int(plan["working_frames"]),
+        "repair_start_frame": int(plan["repair_start_frame"]),
+        "repair_end_frame": int(plan["repair_end_frame"]),
+        "feather_frames": int(feather_frames),
+        "video_generate_tokens": sum(value > 0.0 for value in token_values),
+        "video_token_values": list(token_values),
+        "audio_mode": "preserve",
+    }
+    return out, report
+
+
+def splice_seam_patch(
+    left_frames: Any,
+    right_frames: Any,
+    repaired_working_frames: Any,
+    plan: dict[str, Any],
+    *,
+    feather_frames: int = 6,
+):
+    """Replace only the inner tail/head frames and preserve total duration."""
+
+    _validate_seam(plan)
+    if int(left_frames.shape[0]) != int(plan["left_total_frames"]):
+        raise ValueError("left image batch no longer matches the seam plan")
+    if int(right_frames.shape[0]) != int(plan["right_total_frames"]):
+        raise ValueError("right image batch no longer matches the seam plan")
+    if int(repaired_working_frames.shape[0]) != int(plan["working_frames"]):
+        raise ValueError("repaired image batch does not match the seam working domain")
+    if tuple(left_frames.shape[1:]) != tuple(right_frames.shape[1:]) or tuple(
+        left_frames.shape[1:]
+    ) != tuple(repaired_working_frames.shape[1:]):
+        raise ValueError("source and repaired videos must share resolution and channels")
+    repair = int(plan["repair_frames_per_side"])
+    ranges = seam_splice_ranges(plan)
+    start, end = ranges["working_patch"]
+    patch = repaired_working_frames[start:end]
+    original = _concat_image_batches([left_frames[-repair:], right_frames[:repair]])
+    patch = _blend_patch(patch, original, feather_frames)
+    left_start, left_end = ranges["left_keep"]
+    right_start, right_end = ranges["right_keep"]
+    joined = _concat_image_batches(
+        [left_frames[left_start:left_end], patch, right_frames[right_start:right_end]]
+    )
+    expected = int(left_frames.shape[0]) + int(right_frames.shape[0])
+    if int(joined.shape[0]) != expected:
+        raise RuntimeError("duration-preserving seam splice changed the frame count")
+    report = {
+        "schema": "cauce.seam-splice-report/1",
+        "seam_hash": plan["hash"],
+        "left_frames": int(left_frames.shape[0]),
+        "right_frames": int(right_frames.shape[0]),
+        "output_frames": int(joined.shape[0]),
+        "replacement_frames": int(patch.shape[0]),
+        "decoded_feather_frames": int(feather_frames),
+    }
+    return joined, patch, report

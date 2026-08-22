@@ -50,12 +50,6 @@
       "vae_name": "minimax_h3_video_vae_fp16.safetensors"
     }
   },
-  "7": {
-    "class_type": "VAELoader",
-    "inputs": {
-      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
-    }
-  },
   "8": {
     "class_type": "CauceH3FL2VA",
     "inputs": {
@@ -105,7 +99,6 @@
         0
       ],
       "context_frames": "{{window.context_frames}}",
-      "audio_feather_ticks": 8,
       "conditioning_mode": "mask_only"
     }
   },
@@ -197,19 +190,6 @@
       ]
     }
   },
-  "18": {
-    "class_type": "VAEDecodeAudio",
-    "inputs": {
-      "samples": [
-        "16",
-        0
-      ],
-      "vae": [
-        "7",
-        0
-      ]
-    }
-  },
   "19": {
     "class_type": "CauceAcceptDecodedWindow",
     "inputs": {
@@ -220,10 +200,6 @@
       "window": [
         "1",
         0
-      ],
-      "audio": [
-        "18",
-        0
       ]
     }
   },
@@ -233,10 +209,6 @@
       "images": [
         "19",
         0
-      ],
-      "audio": [
-        "19",
-        1
       ],
       "fps": 24.0,
       "bit_depth": 8

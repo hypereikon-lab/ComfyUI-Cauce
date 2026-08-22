@@ -1,10 +1,12 @@
 # CAUCE
 
-**Media, time, and continuity for audiovisual generation in ComfyUI.**
+**Media, time, and visual continuity against a fixed master clock in ComfyUI.**
 
 CAUCE is a native ComfyUI custom-node pack developed by Hypereikon. It treats
-images, video, audio, masks, prompts, and latents as opaque media placed on one
+images, video, masks, prompts, and latents as opaque media placed against one
 exact clock, then compiles that structure into current MiniMax H3 workflows.
+Production audio is an immutable master track: CAUCE may slice or mux it for
+delivery, but visual generation never replaces it with H3-generated audio.
 
 CAUCE does not describe subjects, infer actions, or impose a shot ontology. The
 model interprets media; CAUCE controls timing, topology, conditioning,
@@ -22,15 +24,16 @@ media
 
 ## Current status
 
-The greenfield core and 39 ComfyUI nodes are implemented. Seven visual workflows,
+The greenfield core and 40 ComfyUI nodes are implemented. Seven visual workflows,
 two API templates, bounded demo assets, and a restartable two-window project are
 included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
 continuation have executed successfully on the live lab RTX 5090. Mask-only
 continuation also executes, but its first visual seam failed the quality gate;
-the shipped hybrid workflow passed that visual comparison. Its audio seam still
-requires a listening gate before production promotion. Confluence seam repair
-has completed end-to-end with synthetic inputs; heterogeneous real gesture
-pairs remain the qualitative promotion gate.
+the shipped hybrid workflow passed that visual comparison. The original
+standard-masked Confluence completed end-to-end synthetically but failed on
+real gesture pairs. Confluence now uses separate continuous sampling/output
+fields and the training-free LanPaint conditional sampler; live promotion is
+pending on the same gesture pairs.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.
@@ -46,7 +49,8 @@ layer is included.
 - H3 integration through the current official ComfyUI nodes, not a copied fork.
 - No automatic CUDA, PyTorch, driver, ComfyUI, or model installation.
 - Retry-safe atomic latent and receipt persistence.
-- Dense H3 is the production baseline; research accelerators remain optional.
+- Generated audio, training, LoRAs, acceleration, and streaming are outside the
+  current production scope.
 
 ## Requirements
 
@@ -55,6 +59,8 @@ layer is included.
   - `MiniMaxH3ReferenceToVideo`
 - Optional for `CAUCE · H3 Timed Guide`:
   - `MiniMaxH3AddGuide`
+- Required only for workflow 60 / Confluence:
+  - [LanPaint v2.1.0 or later](https://github.com/scraed/LanPaint)
 - The official H3 video/audio VAEs, text encoder, and selected diffusion model.
 - The packages already shipped with a current ComfyUI portable runtime:
   PyTorch, Pillow, NumPy, torchaudio, and safetensors.
@@ -85,12 +91,12 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
 - **CAUCE / H3** — native FL2VA, ordered Ref2VA references, and absolute-time
   AddGuide.
 - **CAUCE / Masks** — rational time fields and nested H3 video/audio masks.
-- **CAUCE / Audio** — sample-exact slicing, placement, mixing, and final
-  authoritative audio.
-- **CAUCE / Continuity** — phase-safe latent parents, masked AV continuation,
-  and exact decoded AV acceptance.
-- **CAUCE / Seams** — decoded-domain confluence windows, central H3 video
-  inpainting, and duration-preserving local replacement.
+- **CAUCE / Audio** — sample-exact handling of the fixed, authoritative master;
+  never a source of generative audio.
+- **CAUCE / Continuity** — phase-safe visual parents, masked continuation, and
+  exact decoded acceptance; H3 audio rows stay frozen.
+- **CAUCE / Seams** — decoded-domain confluence windows, continuous confidence
+  fields, conditional H3 video inpainting, and duration-preserving replacement.
 - **CAUCE / Artifacts** — receipts and atomic nested AV latent save/load.
 - **CAUCE / Runtime** — bounded 5090 profiles and read-only preflight.
 
@@ -127,6 +133,6 @@ not read or reused.
 ## License
 
 CAUCE code is MIT licensed. Model weights retain their own licenses. GPL
-research packs are not copied into this repository; future integration with
-them must remain an optional external dependency or be an independent
-paper-derived implementation.
+research packs are not copied into this repository. LanPaint remains a
+separately installed optional dependency used through its public ComfyUI node
+interface; CAUCE itself remains MIT licensed.

@@ -1,4 +1,4 @@
-"""Latent continuation, acceptance, and exact decoded AV trimming."""
+"""Visual latent continuation, acceptance, and exact decoded trimming."""
 
 from __future__ import annotations
 
@@ -7,19 +7,15 @@ from typing import Any
 from .contracts import WINDOW_SCHEMA
 from .h3 import get_av_streams, pixel_frames_from_video_latent
 from .timebase import (
-    H3_AUDIO_LATENT_HZ,
-    H3_FPS,
     frame_to_sample,
     h3_audio_latent_frames,
-    h3_av_boundaries,
     h3_visual_latent_frames,
-    is_h3_av_boundary,
     is_h3_frame_count,
     visual_token_count_for_span,
 )
 
 
-VALID_CONTEXT_FRAMES = h3_av_boundaries(345)
+VALID_CONTEXT_FRAMES = tuple(range(5, 346, 17))
 
 
 def _nested_tensor(streams):
@@ -30,21 +26,18 @@ def _nested_tensor(streams):
     return comfy.nested_tensor.NestedTensor(streams)
 
 
-def extract_av_tail(latent: dict[str, Any], context_frames: int):
-    video, audio = get_av_streams(latent)
+def extract_video_tail(latent: dict[str, Any], context_frames: int):
+    video, _ = get_av_streams(latent)
     context_frames = int(context_frames)
-    if not is_h3_av_boundary(context_frames):
+    if not is_h3_frame_count(context_frames):
         raise ValueError(
-            "AV context must end on a shared H3 boundary: 39, 90, 141, 192, ... frames"
+            "visual context must use the H3 grid: 5, 22, 39, 56, ... frames"
         )
     source_frames = pixel_frames_from_video_latent(video)
     if not is_h3_frame_count(source_frames):
         raise ValueError(
             "continuation source is phase-shifted; use a full H3 latent or CAUCE parent latent"
         )
-    expected_audio = h3_audio_latent_frames(source_frames)
-    if int(audio.shape[-1]) != expected_audio:
-        raise ValueError("continuation source video/audio latent clocks disagree")
     tokens = visual_token_count_for_span(context_frames)
     total_tokens = int(video.shape[2])
     if tokens >= total_tokens:
@@ -54,40 +47,25 @@ def extract_av_tail(latent: dict[str, Any], context_frames: int):
         raise ValueError(
             "the requested tail does not begin at H3 token-cycle position zero"
         )
-    audio_position = context_frames / H3_FPS * H3_AUDIO_LATENT_HZ
-    if audio_position.denominator != 1:
-        raise ValueError("context ends between H3 audio latent ticks")
-    audio_steps = int(audio_position)
-    if audio_steps >= int(audio.shape[-1]):
-        raise ValueError("context must be shorter than the source audio latent")
-    return (
-        video[:, :, start:].clone(),
-        audio[..., -audio_steps:].clone(),
-    )
+    return video[:, :, start:].clone()
 
 
-def extract_av_head(latent: dict[str, Any], context_frames: int):
-    video, audio = get_av_streams(latent)
+def extract_video_head(latent: dict[str, Any], context_frames: int):
+    video, _ = get_av_streams(latent)
     context_frames = int(context_frames)
-    if not is_h3_av_boundary(context_frames):
+    if not is_h3_frame_count(context_frames):
         raise ValueError(
-            "AV context must end on a shared H3 boundary: 39, 90, 141, 192, ... frames"
+            "visual context must use the H3 grid: 5, 22, 39, 56, ... frames"
         )
     source_frames = pixel_frames_from_video_latent(video)
     if not is_h3_frame_count(source_frames):
         raise ValueError(
             "bridge source is phase-shifted; use a full H3 latent or CAUCE parent latent"
         )
-    if int(audio.shape[-1]) != h3_audio_latent_frames(source_frames):
-        raise ValueError("bridge source video/audio latent clocks disagree")
     video_steps = visual_token_count_for_span(context_frames)
-    audio_steps = int(context_frames / H3_FPS * H3_AUDIO_LATENT_HZ)
-    if video_steps >= int(video.shape[2]) or audio_steps >= int(audio.shape[-1]):
-        raise ValueError("bridge context must be shorter than its source AV latent")
-    return (
-        video[:, :, :video_steps].clone(),
-        audio[..., :audio_steps].clone(),
-    )
+    if video_steps >= int(video.shape[2]):
+        raise ValueError("bridge context must be shorter than its source video latent")
+    return video[:, :, :video_steps].clone()
 
 
 def _base_masks(target_latent: dict[str, Any], video: Any, audio: Any):
@@ -118,55 +96,15 @@ def _base_masks(target_latent: dict[str, Any], video: Any, audio: Any):
     )
 
 
-def _feather_audio_prefix(audio_mask: Any, audio_steps: int, feather_ticks: int):
-    import torch
-
-    feather = max(0, min(int(feather_ticks), int(audio_steps)))
-    hard = int(audio_steps) - feather
-    if hard:
-        audio_mask[..., :hard] = 0.0
-    if feather:
-        index = torch.arange(
-            1, feather + 1, device=audio_mask.device, dtype=audio_mask.dtype
-        )
-        ramp = 0.5 - 0.5 * torch.cos(torch.pi * index / float(feather))
-        view_shape = [1] * audio_mask.ndim
-        view_shape[-1] = feather
-        audio_mask[..., hard:audio_steps] = torch.minimum(
-            audio_mask[..., hard:audio_steps], ramp.view(*view_shape)
-        )
-
-
-def _feather_audio_suffix(audio_mask: Any, audio_steps: int, feather_ticks: int):
-    import torch
-
-    feather = max(0, min(int(feather_ticks), int(audio_steps)))
-    hard = int(audio_steps) - feather
-    if hard:
-        audio_mask[..., -hard:] = 0.0
-    if feather:
-        index = torch.arange(
-            feather, 0, -1, device=audio_mask.device, dtype=audio_mask.dtype
-        )
-        ramp = 0.5 - 0.5 * torch.cos(torch.pi * index / float(feather))
-        view_shape = [1] * audio_mask.ndim
-        view_shape[-1] = feather
-        start = int(audio_mask.shape[-1]) - int(audio_steps)
-        audio_mask[..., start : start + feather] = torch.minimum(
-            audio_mask[..., start : start + feather], ramp.view(*view_shape)
-        )
-
-
 def prepare_continuation(
     positive: Any,
     target_latent: dict[str, Any],
     previous_latent: dict[str, Any],
     *,
     context_frames: int = 39,
-    audio_feather_ticks: int = 8,
     conditioning_mode: str = "mask_only",
 ) -> tuple[Any, dict[str, Any], int]:
-    """Pin a previous AV latent tail into the head of a new H3 window."""
+    """Pin a previous visual latent tail while freezing H3's audio scaffolding."""
 
     context_frames = int(context_frames)
     if context_frames not in VALID_CONTEXT_FRAMES:
@@ -174,31 +112,23 @@ def prepare_continuation(
     if conditioning_mode not in {"mask_only", "mask_plus_guide"}:
         raise ValueError("conditioning_mode must be mask_only or mask_plus_guide")
     target_video, target_audio = get_av_streams(target_latent)
-    tail_video, tail_audio = extract_av_tail(previous_latent, context_frames)
-    if int(target_video.shape[0]) != int(tail_video.shape[0]) or int(
-        target_audio.shape[0]
-    ) != int(tail_audio.shape[0]):
-        raise ValueError("previous and target H3 AV latent batch sizes differ")
+    tail_video = extract_video_tail(previous_latent, context_frames)
+    if int(target_video.shape[0]) != int(tail_video.shape[0]):
+        raise ValueError("previous and target H3 video latent batch sizes differ")
     if tuple(target_video.shape[1:2] + target_video.shape[3:]) != tuple(
         tail_video.shape[1:2] + tail_video.shape[3:]
     ):
         raise ValueError("previous and target H3 video latents have different geometry")
-    if tuple(target_audio.shape[1:3]) != tuple(tail_audio.shape[1:3]):
-        raise ValueError("previous and target H3 audio latents have different geometry")
     if int(tail_video.shape[2]) >= int(target_video.shape[2]):
         raise ValueError("target window is too short for the requested video context")
-    if int(tail_audio.shape[-1]) >= int(target_audio.shape[-1]):
-        raise ValueError("target window is too short for the requested audio context")
 
     video = target_video.clone()
     audio = target_audio.clone()
     video[:, :, : tail_video.shape[2]] = tail_video.to(video)
-    audio[..., : tail_audio.shape[-1]] = tail_audio.to(audio)
 
     video_mask, audio_mask = _base_masks(target_latent, video, audio)
     video_mask[:, :, : tail_video.shape[2]] = 0.0
-    audio_steps = int(tail_audio.shape[-1])
-    _feather_audio_prefix(audio_mask, audio_steps, audio_feather_ticks)
+    audio_mask.zero_()
 
     conditioned = positive
     if conditioning_mode == "mask_plus_guide":
@@ -218,7 +148,6 @@ def prepare_continuation(
         keyframe = {
             "resolved_frame_index": 0,
             "latent": tail_video,
-            "audio_latent": tail_audio,
         }
         keyframes = list(positive[0][1].get("minimax_keyframes", []))
         keyframes.append(keyframe)
@@ -238,10 +167,9 @@ def prepare_bridge(
     right_parent: dict[str, Any],
     *,
     context_frames: int = 39,
-    audio_feather_ticks: int = 8,
     conditioning_mode: str = "mask_only",
 ) -> tuple[Any, dict[str, Any], int]:
-    """Protect phase-aligned AV endpoints and generate only their middle."""
+    """Protect phase-aligned visual endpoints and generate only their middle."""
 
     context_frames = int(context_frames)
     if context_frames not in VALID_CONTEXT_FRAMES:
@@ -250,49 +178,36 @@ def prepare_bridge(
         raise ValueError("conditioning_mode must be mask_only or mask_plus_guide")
 
     target_video, target_audio = get_av_streams(target_latent)
-    left_video, left_audio = extract_av_tail(left_parent, context_frames)
-    right_video, right_audio = extract_av_head(right_parent, context_frames)
+    left_video = extract_video_tail(left_parent, context_frames)
+    right_video = extract_video_head(right_parent, context_frames)
     if len(
         {
             int(target_video.shape[0]),
-            int(target_audio.shape[0]),
             int(left_video.shape[0]),
-            int(left_audio.shape[0]),
             int(right_video.shape[0]),
-            int(right_audio.shape[0]),
         }
     ) != 1:
-        raise ValueError("bridge parent and target H3 AV latent batch sizes differ")
+        raise ValueError("bridge parent and target H3 video latent batch sizes differ")
     if tuple(left_video.shape[1:2] + left_video.shape[3:]) != tuple(
         target_video.shape[1:2] + target_video.shape[3:]
     ) or tuple(right_video.shape[1:2] + right_video.shape[3:]) != tuple(
         target_video.shape[1:2] + target_video.shape[3:]
     ):
         raise ValueError("bridge parent and target video latent geometry differs")
-    if tuple(left_audio.shape[1:3]) != tuple(target_audio.shape[1:3]) or tuple(
-        right_audio.shape[1:3]
-    ) != tuple(target_audio.shape[1:3]):
-        raise ValueError("bridge parent and target audio latent geometry differs")
     video_steps = int(left_video.shape[2])
-    audio_steps = int(left_audio.shape[-1])
-    if int(right_video.shape[2]) != video_steps or int(right_audio.shape[-1]) != audio_steps:
-        raise ValueError("bridge endpoints resolved to different AV context lengths")
+    if int(right_video.shape[2]) != video_steps:
+        raise ValueError("bridge endpoints resolved to different visual context lengths")
     if video_steps * 2 >= int(target_video.shape[2]):
         raise ValueError("bridge video contexts leave no generable latent middle")
-    if audio_steps * 2 >= int(target_audio.shape[-1]):
-        raise ValueError("bridge audio contexts leave no generable latent middle")
 
     video = target_video.clone()
     audio = target_audio.clone()
     video[:, :, :video_steps] = left_video.to(video)
     video[:, :, -video_steps:] = right_video.to(video)
-    audio[..., :audio_steps] = left_audio.to(audio)
-    audio[..., -audio_steps:] = right_audio.to(audio)
     video_mask, audio_mask = _base_masks(target_latent, video, audio)
     video_mask[:, :, :video_steps] = 0.0
     video_mask[:, :, -video_steps:] = 0.0
-    _feather_audio_prefix(audio_mask, audio_steps, audio_feather_ticks)
-    _feather_audio_suffix(audio_mask, audio_steps, audio_feather_ticks)
+    audio_mask.zero_()
 
     conditioned = positive
     if conditioning_mode == "mask_plus_guide":
@@ -316,12 +231,10 @@ def prepare_bridge(
                 {
                     "resolved_frame_index": 0,
                     "latent": left_video,
-                    "audio_latent": left_audio,
                 },
                 {
                     "resolved_frame_index": target_frames - context_frames,
                     "latent": right_video,
-                    "audio_latent": right_audio,
                 },
             ]
         )

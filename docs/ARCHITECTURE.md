@@ -6,6 +6,12 @@ CAUCE is a media/time compiler. It does not know what an image depicts. It
 stores only information required to place, condition, preserve, generate,
 accept, decode, and reproduce media.
 
+The production soundtrack is a fixed master clock and delivery asset. It is
+not a generative target, latent parent, or mandatory H3 reference. When H3
+requires a nested audiovisual latent internally, CAUCE supplies and preserves
+an empty audio stream as structural scaffolding and discards it after sampling.
+The master soundtrack is never encoded through AudioVAE by Confluence.
+
 ```text
 MediaAsset / actual Comfy media tensors
               |
@@ -78,10 +84,11 @@ Four ranges are distinct:
 Context and duplicate prefix can overlap. CAUCE uses the longest hidden head,
 not their sum.
 
-A joint AV continuation boundary must satisfy both clocks: a valid H3 video
-run (`17k+5`) and an integer position on the 40 Hz audio grid. The resulting
-sequence is `39, 90, 141, 192, ...` frames. Video-only boundaries such as 22 or
-56 are deliberately rejected for copied AV context.
+A production continuation boundary only needs to satisfy the visual H3 grid:
+`5, 22, 39, 56, ...` frames. Earlier CAUCE versions additionally required the
+40 Hz audio grid and therefore admitted only `39, 90, 141, ...`; that constraint
+was removed when generated audio left the production contract. H3's internal
+audio rows are frozen rather than inherited.
 
 Every window also declares an acceptance policy:
 
@@ -110,11 +117,11 @@ different conditioning layout.
 
 `Prepare H3 Continuation`:
 
-1. Validates that previous and target AV latent geometry match.
-2. Extracts a phase-aligned `39/90/141/...` frame AV tail.
-3. Copies the video/audio tail into the new latent head.
-4. Preserves video with mask zero and optionally releases audio through a short
-   half-cosine feather.
+1. Validates that previous and target visual latent geometry match.
+2. Extracts a phase-aligned `5/22/39/56/...` frame visual tail.
+3. Copies only the video tail into the new latent head.
+4. Preserves that visual context with mask zero and freezes the complete
+   internal audio stream with mask zero.
 5. Uses masked continuation as the runtime-compatible latent baseline.
 6. Can pair that baseline with the previous decoded endpoint as FL2VA's native
    `first_frame`; this is the shipped compatibility path for ComfyUI 0.33.1.
@@ -132,9 +139,8 @@ Every parent latent is decoded in its own causal domain; `Accept Decoded
 Window` then removes the repeated head and snapped tail on exact frame/sample
 boundaries. Accepted decoded spans are assembled afterward.
 
-Generated-audio continuation still needs empirical decoder-duration conformance
-and seam testing. Final master music should use `Authoritative Audio`, which
-bypasses AudioVAE drift.
+Generated H3 audio is not accepted into production. The fixed master soundtrack
+uses `Authoritative Audio` and bypasses AudioVAE entirely.
 
 ## Local seam repair / Confluence
 
@@ -146,7 +152,8 @@ one causal VAE domain:
 ```text
 duplicate guard + tail(A) + head(B) + duplicate guard
   → one H3 video latent
-  → central generate mask / outer preserve mask
+  → continuous generation-strength field
+  → training-free conditional sampler
   → decode one repaired working domain
   → accept only the central patch
   → unchanged A prefix + patch + unchanged B suffix
@@ -155,14 +162,48 @@ duplicate guard + tail(A) + head(B) + duplicate guard
 At the default 24 fps geometry, 2.5 seconds from each side gives 120 real
 frames. Two duplicate guards at each edge make a legal 124-frame H3 run. The
 cut is frame 62 of that working domain and the repair spans `[38,86)`: the last
-24 frames of A plus the first 24 of B. Latent and decoded feathers smooth only
-the patch boundary. The final frame count is always `len(A) + len(B)`.
+24 frames of A plus the first 24 of B. The final frame count is always
+`len(A) + len(B)`.
 
-This is video-only by design. H3's nested audio stream is held at zero and the
-source audio is not silently regenerated or discarded into the master mix.
-Music and production audio remain on CAUCE's authoritative sample clock. Long
-masters should not be loaded as one image batch; repair local clips and place
-their accepted outputs on the timeline.
+Confluence deliberately separates three fields:
+
+1. `generation_strength` is continuous in `[0,1]` and controls conditional
+   sampling. Its default is a raised cosine with 12-frame transitions.
+2. `hard_acceptance` is binary and defines the only decoded interval that can
+   enter the result. It is not passed as an opacity heuristic.
+3. `output_opacity` is a second continuous field used after decode to merge the
+   accepted patch against the two original clips. Its default transition is
+   eight frames.
+
+For a transition of `r` frames, the default field is
+
+```text
+w(d) = 0.5 - 0.5 cos(pi * clamp(d / r, 0, 1))
+```
+
+where `d` is distance from the nearest repair boundary. The first and last
+accepted frames therefore have opacity zero, the interior reaches one, and the
+derivative vanishes at both ends.
+
+Visible strengths are projected onto each causal visual-token support using
+mean coverage rather than `amax`. `amax` remains an explicit `peak` diagnostic
+mode, but it expands a small visible value across an entire four-frame token
+and destroys much of the intended gradient. An arbitrary connected Comfy
+`MASK` may replace the default field; it is still multiplied by the binary
+repair interval before latent projection.
+
+The old standard masked sampler proved only that the graph could execute and
+failed the first heterogeneous real-gesture test. Workflow 60 now delegates
+conditional sampling to the separately installed LanPaint node. CAUCE owns the
+time geometry, fields, latent assembly, accepted interval, and splice; LanPaint
+owns the training-free Langevin sampler. No GPL implementation code is copied
+into CAUCE.
+
+This is video-only by design. H3's structurally required nested audio stream is
+zero-masked and its output is discarded. The fixed soundtrack remains on
+CAUCE's authoritative sample clock. Long masters should not be encoded or
+loaded into Confluence; repair local clips and place their accepted outputs on
+the visual timeline.
 
 ## Persistence
 

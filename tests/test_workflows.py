@@ -33,6 +33,7 @@ class VisualWorkflowTests(unittest.TestCase):
                 self.assertEqual(len(nodes), len(workflow["nodes"]))
                 self.assertNotIn("MiniMaxH3MotionContext", {n["type"] for n in nodes.values()})
                 self.assertNotIn("HypereikonH3Production", {n["type"] for n in nodes.values()})
+                self.assertNotIn("VAEDecodeAudio", {n["type"] for n in nodes.values()})
 
                 link_ids = set()
                 for link in workflow["links"]:
@@ -82,8 +83,10 @@ class VisualWorkflowTests(unittest.TestCase):
         self.assertTrue(
             {
                 "CauceBuildSeamWindow",
+                "CauceConfluenceFields",
                 "CaucePrepareH3SeamRepair",
                 "CauceApplySeamPatch",
+                "LanPaint_SamplerCustomAdvanced",
             }.issubset(types)
         )
         self.assertNotIn("CauceGenerationWindow", types)
@@ -96,6 +99,16 @@ class VisualWorkflowTests(unittest.TestCase):
         self.assertTrue(
             all(node["widgets_values"][1:3] == [640, 640] for node in scales)
         )
+        fields = next(
+            node for node in workflow["nodes"] if node["type"] == "CauceConfluenceFields"
+        )
+        self.assertEqual(fields["widgets_values"], [12, 8, "cosine"])
+        prepare = next(
+            node
+            for node in workflow["nodes"]
+            if node["type"] == "CaucePrepareH3SeamRepair"
+        )
+        self.assertEqual(prepare["widgets_values"], [12, "cosine", "coverage"])
 
     def test_demo_assets_exist_and_are_bounded(self):
         assets = ROOT / "examples" / "assets"

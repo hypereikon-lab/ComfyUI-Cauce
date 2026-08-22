@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import math
 from typing import Any
 
 from .contracts import SEAM_SCHEMA, content_hash, make_window
@@ -34,21 +35,91 @@ def _concat_image_batches(parts: list[Any]):
     return numpy.concatenate(parts, axis=0)
 
 
-def _blend_patch(patch: Any, original: Any, feather_frames: int):
-    feather = min(max(0, int(feather_frames)), int(patch.shape[0]) // 2)
-    if feather == 0:
-        return patch
-    weights = [1.0] * int(patch.shape[0])
-    for index in range(feather):
-        value = float(index + 1) / float(feather + 1)
-        weights[index] = value
-        weights[-index - 1] = value
+MASK_CURVES = ("cosine", "smoothstep", "linear")
+TOKEN_PROJECTIONS = ("coverage", "peak")
+
+
+def _curve_value(value: float, curve: str) -> float:
+    value = min(1.0, max(0.0, float(value)))
+    if curve == "cosine":
+        return 0.5 - 0.5 * math.cos(math.pi * value)
+    if curve == "smoothstep":
+        return value * value * (3.0 - 2.0 * value)
+    if curve == "linear":
+        return value
+    raise ValueError(f"mask curve must be one of {', '.join(MASK_CURVES)}")
+
+
+def _symmetric_weights(length: int, transition_frames: int, curve: str) -> tuple[float, ...]:
+    """Return a symmetric opacity field with exact zero-valued endpoints."""
+
+    length = int(length)
+    transition = min(max(0, int(transition_frames)), max(0, length // 2))
+    if length < 1:
+        return ()
+    if transition == 0:
+        return (1.0,) * length
+    values = []
+    for index in range(length):
+        distance = min(index, length - 1 - index)
+        values.append(_curve_value(min(1.0, distance / float(transition)), curve))
+    return tuple(values)
+
+
+def _resize_visible_mask(mask: Any, frames: int, height: int, width: int):
+    """Normalize a Comfy MASK to [frames,height,width] without binarizing it."""
+
+    import torch
+    import torch.nn.functional as functional
+
+    if not isinstance(mask, torch.Tensor):
+        mask = torch.as_tensor(mask)
+    if mask.ndim == 2:
+        mask = mask.unsqueeze(0)
+    if mask.ndim == 4 and int(mask.shape[1]) == 1:
+        mask = mask[:, 0]
+    if mask.ndim != 3:
+        raise ValueError("generation/blend mask must have shape [frames,height,width]")
+    if int(mask.shape[0]) not in {1, int(frames)}:
+        raise ValueError(
+            f"generation/blend mask has {mask.shape[0]} frames; expected 1 or {frames}"
+        )
+    mask = mask.to(dtype=torch.float32).clamp(0.0, 1.0)
+    if tuple(mask.shape[-2:]) != (int(height), int(width)):
+        mask = functional.interpolate(
+            mask.unsqueeze(1),
+            size=(int(height), int(width)),
+            mode="bilinear",
+            align_corners=False,
+        )[:, 0]
+    if int(mask.shape[0]) == 1:
+        mask = mask.expand(int(frames), -1, -1)
+    return mask
+
+
+def _blend_patch(
+    patch: Any,
+    original: Any,
+    feather_frames: int,
+    curve: str,
+    blend_strength: Any = None,
+):
+    weights = _symmetric_weights(int(patch.shape[0]), feather_frames, curve)
     try:
         import torch
 
         if isinstance(patch, torch.Tensor):
-            alpha = torch.tensor(weights, dtype=patch.dtype, device=patch.device)
-            alpha = alpha.view((-1,) + (1,) * (patch.ndim - 1))
+            if blend_strength is None:
+                alpha = torch.tensor(weights, dtype=patch.dtype, device=patch.device)
+                alpha = alpha.view((-1,) + (1,) * (patch.ndim - 1))
+            else:
+                alpha = _resize_visible_mask(
+                    blend_strength,
+                    int(patch.shape[0]),
+                    int(patch.shape[1]),
+                    int(patch.shape[2]),
+                ).to(device=patch.device, dtype=patch.dtype)
+                alpha = alpha.unsqueeze(-1)
             return original.to(patch) * (1.0 - alpha) + patch * alpha
     except ImportError:  # pragma: no cover
         pass
@@ -182,31 +253,160 @@ def build_seam_window(left_frames: Any, right_frames: Any, plan: dict[str, Any])
 
 
 def seam_video_token_values(
-    plan: dict[str, Any], feather_frames: int = 6
+    plan: dict[str, Any],
+    feather_frames: int = 12,
+    curve: str = "cosine",
+    projection: str = "coverage",
 ) -> tuple[float, ...]:
-    """Project the central decoded repair interval onto H3 visual tokens."""
+    """Project a continuous temporal generation field onto H3 visual tokens."""
 
     _validate_seam(plan)
+    if projection not in TOKEN_PROJECTIONS:
+        raise ValueError(f"token projection must be one of {', '.join(TOKEN_PROJECTIONS)}")
     start = int(plan["repair_start_frame"])
     end = int(plan["repair_end_frame"])
-    feather = min(max(0, int(feather_frames)), (end - start) // 2)
     strengths = [0.0] * int(plan["working_frames"])
-    for frame in range(start, end):
-        if feather and frame < start + feather:
-            value = float(frame - start + 1) / float(feather + 1)
-        elif feather and frame >= end - feather:
-            value = float(end - frame) / float(feather + 1)
-        else:
-            value = 1.0
-        strengths[frame] = value
+    strengths[start:end] = _symmetric_weights(end - start, feather_frames, curve)
     values = []
     for token_start, token_end in visual_token_spans(
         h3_visual_latent_frames(int(plan["working_frames"]))
     ):
-        values.append(max(strengths[token_start:token_end], default=0.0))
+        support = strengths[token_start:token_end]
+        if projection == "peak":
+            values.append(max(support, default=0.0))
+        else:
+            values.append(sum(support) / len(support) if support else 0.0)
     if visual_token_spans(len(values))[-1][1] != int(plan["working_frames"]):
         raise RuntimeError("seam mask and H3 token geometry disagree")
     return tuple(values)
+
+
+def seam_visible_frame_values(
+    plan: dict[str, Any],
+    *,
+    latent_transition_frames: int = 12,
+    decoded_blend_frames: int = 8,
+    curve: str = "cosine",
+) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
+    """Return the three one-dimensional Confluence fields without tensors."""
+
+    _validate_seam(plan)
+    frames = int(plan["working_frames"])
+    start = int(plan["repair_start_frame"])
+    end = int(plan["repair_end_frame"])
+
+    sampling_values = [0.0] * frames
+    sampling_values[start:end] = _symmetric_weights(
+        end - start, latent_transition_frames, curve
+    )
+    acceptance_values = [0.0] * frames
+    acceptance_values[start:end] = [1.0] * (end - start)
+    blend_values = [0.0] * frames
+    blend_values[start:end] = _symmetric_weights(end - start, decoded_blend_frames, curve)
+    return tuple(sampling_values), tuple(acceptance_values), tuple(blend_values)
+
+
+def seam_visible_fields(
+    working_images: Any,
+    plan: dict[str, Any],
+    *,
+    latent_transition_frames: int = 12,
+    decoded_blend_frames: int = 8,
+    curve: str = "cosine",
+):
+    """Build visible sampling, acceptance, and output-opacity fields."""
+
+    _validate_seam(plan)
+    frames = int(plan["working_frames"])
+    if int(working_images.shape[0]) != frames:
+        raise ValueError("working image batch does not match the seam plan")
+    height, width = int(working_images.shape[1]), int(working_images.shape[2])
+    start = int(plan["repair_start_frame"])
+    end = int(plan["repair_end_frame"])
+    sampling_values, acceptance_values, blend_values = seam_visible_frame_values(
+        plan,
+        latent_transition_frames=latent_transition_frames,
+        decoded_blend_frames=decoded_blend_frames,
+        curve=curve,
+    )
+
+    shape = (frames, 1, 1)
+    try:
+        import torch
+
+        if isinstance(working_images, torch.Tensor):
+            device = working_images.device
+            sampling = torch.tensor(sampling_values, dtype=torch.float32, device=device)
+            acceptance = torch.tensor(
+                acceptance_values, dtype=torch.float32, device=device
+            )
+            blend = torch.tensor(blend_values, dtype=torch.float32, device=device)
+            sampling = sampling.view(shape).expand(frames, height, width).clone()
+            acceptance = acceptance.view(shape).expand(frames, height, width).clone()
+            blend = blend.view(shape).expand(frames, height, width).clone()
+            sampling_mean = float(sampling.mean().item())
+        else:
+            raise TypeError
+    except (ImportError, TypeError):
+        import numpy
+
+        sampling = numpy.broadcast_to(
+            numpy.asarray(sampling_values, dtype=numpy.float32).reshape(shape),
+            (frames, height, width),
+        ).copy()
+        acceptance = numpy.broadcast_to(
+            numpy.asarray(acceptance_values, dtype=numpy.float32).reshape(shape),
+            (frames, height, width),
+        ).copy()
+        blend = numpy.broadcast_to(
+            numpy.asarray(blend_values, dtype=numpy.float32).reshape(shape),
+            (frames, height, width),
+        ).copy()
+        sampling_mean = float(sampling.mean())
+    report = {
+        "schema": "cauce.confluence-fields/1",
+        "seam_hash": plan["hash"],
+        "curve": curve,
+        "latent_transition_frames": int(latent_transition_frames),
+        "decoded_blend_frames": int(decoded_blend_frames),
+        "sampling_mean": sampling_mean,
+        "acceptance_frames": end - start,
+        "hard_acceptance_range": [start, end],
+    }
+    return sampling, acceptance, blend, report
+
+
+def _project_visible_strength(
+    strength: Any,
+    plan: dict[str, Any],
+    video: Any,
+    projection: str,
+):
+    """Project an arbitrary visible MASK while keeping the repair interval closed."""
+
+    import torch
+
+    if projection not in TOKEN_PROJECTIONS:
+        raise ValueError(f"token projection must be one of {', '.join(TOKEN_PROJECTIONS)}")
+    frames = int(plan["working_frames"])
+    mask = _resize_visible_mask(
+        strength,
+        frames,
+        int(video.shape[3]),
+        int(video.shape[4]),
+    ).to(device=video.device, dtype=torch.float32)
+    hard = torch.zeros((frames, 1, 1), dtype=torch.float32, device=video.device)
+    hard[
+        int(plan["repair_start_frame"]) : int(plan["repair_end_frame"])
+    ] = 1.0
+    mask = mask * hard
+    reduced = []
+    for token_start, token_end in visual_token_spans(int(video.shape[2])):
+        support = mask[token_start:token_end]
+        reduced.append(
+            support.amax(dim=0) if projection == "peak" else support.mean(dim=0)
+        )
+    return torch.stack(reduced, dim=0)
 
 
 def seam_splice_ranges(plan: dict[str, Any]) -> dict[str, tuple[int, int]]:
@@ -245,7 +445,10 @@ def prepare_h3_seam_repair(
     encoded_video_latent: dict[str, Any],
     plan: dict[str, Any],
     *,
-    feather_frames: int = 6,
+    feather_frames: int = 12,
+    curve: str = "cosine",
+    projection: str = "coverage",
+    generation_strength: Any = None,
 ):
     """Inject one encoded video domain and denoise only its central seam."""
 
@@ -268,13 +471,30 @@ def prepare_h3_seam_repair(
         )
     video = encoded_video.to(device=target_video.device, dtype=target_video.dtype).clone()
     audio = target_audio.clone()
-    token_values = seam_video_token_values(plan, feather_frames)
-    video_mask = torch.tensor(
-        token_values, dtype=torch.float32, device=video.device
-    ).view(1, 1, int(video.shape[2]), 1, 1)
-    video_mask = video_mask.expand(
-        int(video.shape[0]), 1, int(video.shape[2]), int(video.shape[3]), int(video.shape[4])
-    ).clone()
+    if generation_strength is None:
+        token_values = seam_video_token_values(plan, feather_frames, curve, projection)
+        video_mask = torch.tensor(
+            token_values, dtype=torch.float32, device=video.device
+        ).view(1, 1, int(video.shape[2]), 1, 1)
+        video_mask = video_mask.expand(
+            int(video.shape[0]),
+            1,
+            int(video.shape[2]),
+            int(video.shape[3]),
+            int(video.shape[4]),
+        ).clone()
+        field_source = "generated_temporal_field"
+    else:
+        projected = _project_visible_strength(generation_strength, plan, video, projection)
+        video_mask = projected.unsqueeze(0).unsqueeze(0).expand(
+            int(video.shape[0]),
+            1,
+            int(video.shape[2]),
+            int(video.shape[3]),
+            int(video.shape[4]),
+        ).clone()
+        token_values = [float(value) for value in projected.mean(dim=(1, 2)).tolist()]
+        field_source = "connected_mask"
     audio_mask = torch.zeros(
         (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[-1])),
         dtype=torch.float32,
@@ -289,10 +509,16 @@ def prepare_h3_seam_repair(
         "working_frames": int(plan["working_frames"]),
         "repair_start_frame": int(plan["repair_start_frame"]),
         "repair_end_frame": int(plan["repair_end_frame"]),
-        "feather_frames": int(feather_frames),
+        "transition_frames": int(feather_frames),
+        "curve": curve,
+        "token_projection": projection,
+        "field_source": field_source,
         "video_generate_tokens": sum(value > 0.0 for value in token_values),
+        "video_full_generate_tokens": sum(value >= 1.0 - 1e-6 for value in token_values),
+        "video_soft_tokens": sum(1e-6 < value < 1.0 - 1e-6 for value in token_values),
         "video_token_values": list(token_values),
-        "audio_mode": "preserve",
+        "audio_mode": "internal-zero-mask-discarded",
+        "acceptance_mode": "hard-decoded-splice",
     }
     return out, report
 
@@ -303,7 +529,9 @@ def splice_seam_patch(
     repaired_working_frames: Any,
     plan: dict[str, Any],
     *,
-    feather_frames: int = 6,
+    feather_frames: int = 8,
+    curve: str = "cosine",
+    blend_strength: Any = None,
 ):
     """Replace only the inner tail/head frames and preserve total duration."""
 
@@ -323,7 +551,20 @@ def splice_seam_patch(
     start, end = ranges["working_patch"]
     patch = repaired_working_frames[start:end]
     original = _concat_image_batches([left_frames[-repair:], right_frames[:repair]])
-    patch = _blend_patch(patch, original, feather_frames)
+    if blend_strength is not None:
+        if int(blend_strength.shape[0]) == int(plan["working_frames"]):
+            blend_strength = blend_strength[start:end]
+        elif int(blend_strength.shape[0]) not in {1, int(patch.shape[0])}:
+            raise ValueError(
+                "blend mask must have one frame, the patch length, or the working length"
+            )
+    patch = _blend_patch(
+        patch,
+        original,
+        feather_frames,
+        curve,
+        blend_strength=blend_strength,
+    )
     left_start, left_end = ranges["left_keep"]
     right_start, right_end = ranges["right_keep"]
     joined = _concat_image_batches(
@@ -340,5 +581,7 @@ def splice_seam_patch(
         "output_frames": int(joined.shape[0]),
         "replacement_frames": int(patch.shape[0]),
         "decoded_feather_frames": int(feather_frames),
+        "blend_curve": curve,
+        "blend_source": "connected_mask" if blend_strength is not None else "temporal_curve",
     }
     return joined, patch, report

@@ -5,10 +5,13 @@ from __future__ import annotations
 import json
 
 from ..cauce.seams import (
+    MASK_CURVES,
+    TOKEN_PROJECTIONS,
     build_seam_window,
     make_seam_window,
     make_seam_plan,
     prepare_h3_seam_repair,
+    seam_visible_fields,
     splice_seam_patch,
 )
 
@@ -82,10 +85,15 @@ class CaucePrepareH3SeamRepair:
                 "target_latent": ("LATENT",),
                 "encoded_video_latent": ("LATENT",),
                 "seam": ("CAUCE_SEAM",),
-                "latent_feather_frames": (
+                "latent_transition_frames": (
                     "INT",
-                    {"default": 6, "min": 0, "max": 48, "step": 1},
+                    {"default": 12, "min": 0, "max": 48, "step": 1},
                 ),
+                "mask_curve": (MASK_CURVES,),
+                "token_projection": (TOKEN_PROJECTIONS,),
+            },
+            "optional": {
+                "generation_strength": ("MASK",),
             }
         }
 
@@ -94,18 +102,85 @@ class CaucePrepareH3SeamRepair:
     FUNCTION = "prepare"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Inject the encoded 5-second video domain into H3 and denoise only the "
-        "central seam. The H3 audio stream stays preserved and silent."
+        "Inject the encoded video domain into H3 and attach a continuous generation "
+        "strength field. A connected MASK may vary arbitrarily over space and time; "
+        "the hard accepted interval still prevents changes outside the repair."
     )
 
-    def prepare(self, target_latent, encoded_video_latent, seam, latent_feather_frames):
+    def prepare(
+        self,
+        target_latent,
+        encoded_video_latent,
+        seam,
+        latent_transition_frames=12,
+        mask_curve="cosine",
+        token_projection="coverage",
+        generation_strength=None,
+    ):
         latent, report = prepare_h3_seam_repair(
             target_latent,
             encoded_video_latent,
             seam,
-            feather_frames=latent_feather_frames,
+            feather_frames=latent_transition_frames,
+            curve=mask_curve,
+            projection=token_projection,
+            generation_strength=generation_strength,
         )
         return latent, json.dumps(report, ensure_ascii=False, indent=2)
+
+
+class CauceConfluenceFields:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "working_images": ("IMAGE",),
+                "seam": ("CAUCE_SEAM",),
+                "latent_transition_frames": (
+                    "INT",
+                    {"default": 12, "min": 0, "max": 48, "step": 1},
+                ),
+                "decoded_blend_frames": (
+                    "INT",
+                    {"default": 8, "min": 0, "max": 48, "step": 1},
+                ),
+                "curve": (MASK_CURVES,),
+            }
+        }
+
+    RETURN_TYPES = ("MASK", "MASK", "MASK", "STRING")
+    RETURN_NAMES = (
+        "generation_strength",
+        "hard_acceptance",
+        "output_opacity",
+        "field_report",
+    )
+    FUNCTION = "build"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Compile three separate temporal fields: soft sampling strength, the hard "
+        "accepted repair interval, and decoded output opacity. The masks remain "
+        "ordinary Comfy MASK data and may be previewed or replaced."
+    )
+
+    def build(
+        self,
+        working_images,
+        seam,
+        latent_transition_frames,
+        decoded_blend_frames,
+        curve,
+    ):
+        generation, acceptance, opacity, report = seam_visible_fields(
+            working_images,
+            seam,
+            latent_transition_frames=latent_transition_frames,
+            decoded_blend_frames=decoded_blend_frames,
+            curve=curve,
+        )
+        return generation, acceptance, opacity, json.dumps(
+            report, ensure_ascii=False, indent=2
+        )
 
 
 class CauceApplySeamPatch:
@@ -119,8 +194,12 @@ class CauceApplySeamPatch:
                 "seam": ("CAUCE_SEAM",),
                 "decoded_feather_frames": (
                     "INT",
-                    {"default": 6, "min": 0, "max": 48, "step": 1},
+                    {"default": 8, "min": 0, "max": 48, "step": 1},
                 ),
+                "blend_curve": (MASK_CURVES,),
+            },
+            "optional": {
+                "blend_strength": ("MASK",),
             }
         }
 
@@ -139,7 +218,9 @@ class CauceApplySeamPatch:
         right_frames,
         repaired_working_images,
         seam,
-        decoded_feather_frames,
+        decoded_feather_frames=8,
+        blend_curve="cosine",
+        blend_strength=None,
     ):
         joined, patch, report = splice_seam_patch(
             left_frames,
@@ -147,18 +228,22 @@ class CauceApplySeamPatch:
             repaired_working_images,
             seam,
             feather_frames=decoded_feather_frames,
+            curve=blend_curve,
+            blend_strength=blend_strength,
         )
         return joined, patch, json.dumps(report, ensure_ascii=False, indent=2)
 
 
 NODE_CLASS_MAPPINGS = {
     "CauceBuildSeamWindow": CauceBuildSeamWindow,
+    "CauceConfluenceFields": CauceConfluenceFields,
     "CaucePrepareH3SeamRepair": CaucePrepareH3SeamRepair,
     "CauceApplySeamPatch": CauceApplySeamPatch,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceBuildSeamWindow": "CAUCE · Build Confluence Window",
+    "CauceConfluenceFields": "CAUCE · Confluence Fields",
     "CaucePrepareH3SeamRepair": "CAUCE · Prepare H3 Seam Repair",
     "CauceApplySeamPatch": "CAUCE · Apply Confluence Patch",
 }

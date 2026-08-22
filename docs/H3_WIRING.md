@@ -26,7 +26,7 @@ The CAUCE node delegates conditioning/latent construction to the official
 ```text
 Load Video frames
     -> CAUCE Add H3 Video Reference
-optional additional image/audio/video reference nodes
+optional additional image/video reference nodes
     -> CAUCE H3 Ref2VA
 ```
 
@@ -39,7 +39,7 @@ official ordering performed by the current native H3 implementation.
 FL2VA or Ref2VA positive + latent
 CAUCE window
 absolute master_seconds
-IMAGE and/or AUDIO
+IMAGE or VIDEO
     -> CAUCE H3 Timed Guide
     -> positive
 ```
@@ -87,15 +87,13 @@ new H3 positive + empty target latent ----------------┐ |
                                       CAUCE Save AV Latent (index 2)
 ```
 
-Use `39` frames as the initial AV context candidate. It is the first boundary
-that is simultaneously valid for H3's causal video run and exact on the 40 Hz
-audio grid. `90`, `141`, and later shared boundaries are available when the
-target has enough room.
+Use `39` frames as the already-tested initial visual context candidate. Every
+H3 visual boundary `5`, `22`, `39`, `56`, ... is valid. The parent video tail is
+copied; the internal audio stream is frozen and discarded.
 
-Decode each resolved parent separately, then route its images/audio through
-`CAUCE · Accept Decoded Window` with the same `CAUCE_WINDOW`. It removes both
-the hidden head and any snapped tail, and cuts audio at the corresponding exact
-sample boundaries.
+Decode each resolved parent separately, then route its images through `CAUCE ·
+Accept Decoded Window` with the same `CAUCE_WINDOW`. It removes both the hidden
+head and any snapped tail. The fixed master audio remains outside H3.
 
 Do not concatenate independent H3 latents before VAE decode. Their causal
 `1,4,4,4,4` temporal phases do not restart safely at a naïve join. Assemble the
@@ -123,14 +121,15 @@ left resolved parent ---------------------------┐
 right resolved parent ------------------------┐|
 new H3 positive + empty target latent -------┐||
                                              vvv
-                               CAUCE Prepare H3 AV Bridge
+                           CAUCE Prepare H3 Visual Bridge
                                              |
                                   positive + masked latent
                                              |
                                           sampler
 ```
 
-The left tail occupies the target head and the right head occupies its tail.
-Both use shared AV context boundaries; the unknown middle alone remains
-generable. `mask_plus_guide` can be tested explicitly, but `mask_only` is the
-production baseline until the laboratory comparison is measured.
+The left visual tail occupies the target head and the right visual head occupies
+its tail. Both use legal visual context boundaries; the unknown middle alone
+remains generable. H3's internal audio rows are frozen. `mask_plus_guide` can be
+tested explicitly, but `mask_only` is the production baseline until the
+laboratory comparison is measured.

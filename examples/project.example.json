@@ -29,7 +29,7 @@
       "seed": 2026082102,
       "parent_latent": "cauce/latents/forest_window_001_00001.safetensors",
       "parents_json": "[\"forest_window_001\"]",
-      "prompt": "Continue the same audiovisual event without a cut. Preserve direction, camera velocity, water flow, atmosphere, and causal motion from the inherited context. Let forest density gradually increase. Audio remains continuous; no music, no speech."
+      "prompt": "Continue the same visual event without a cut. Preserve direction, camera velocity, water flow, atmosphere, and causal motion from the inherited context. Let forest density gradually increase."
     }
   ]
 }

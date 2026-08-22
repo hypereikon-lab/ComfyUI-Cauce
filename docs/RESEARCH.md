@@ -26,8 +26,9 @@ and community experiments used to challenge the architecture.
 ## Decisions produced by the comparison
 
 1. H3 video-valid runs are `17k+5`; visual latent length is `5k+2`.
-2. A copied joint AV context additionally needs an integer 40 Hz audio
-   endpoint. The shared sequence is `39+51m` frames.
+2. The first implementation copied a joint AV context and therefore required
+   `39+51m` frames. Production now copies video only and accepts every legal
+   visual boundary `5+17m`; H3 audio rows remain frozen scaffolding.
 3. A continuation parent retains H3's causal origin. CAUCE crops only its
    post-accept tail; it never drops a phase-shifting latent prefix.
 4. Independent H3 latents are decoded independently. CAUCE does not concatenate
@@ -36,9 +37,47 @@ and community experiments used to challenge the architecture.
    guide conditioning is exposed only as an explicit experiment.
 6. Master audio is placed and delivered on the rational/sample clock and can
    remain authoritative instead of being reconstructed through AudioVAE.
-7. Dense official H3 remains the baseline for the laboratory 5090. Sparse
-   attention, caches, turbo LoRAs, and third-party quantizations are candidates,
-   not hidden dependencies.
+7. Dense official H3 remains the baseline for the laboratory 5090. Acceleration,
+   streaming, LoRA training, and generated audio are outside the production
+   scope rather than hidden dependencies or roadmap items.
+
+## Confluence review — 2026-08-22
+
+The standard masked-denoise Confluence graph passed tensor/runtime validation
+but failed on heterogeneous real gesture material. This rejects the sampler as
+a production method; it does not reject the 124-frame causal domain, exact
+splice geometry, or fixed-duration acceptance contract.
+
+Sources reviewed for the replacement:
+
+- [LanPaint paper](https://arxiv.org/abs/2502.03491): training-free partial
+  conditional sampling through bidirectional guided Langevin dynamics, without
+  backpropagation or model training.
+- [LanPaint ComfyUI implementation](https://github.com/scraed/LanPaint): v2.1.0
+  fixes current H3 support and exposes a custom advanced sampler compatible
+  with H3 nested latents. It is GPL-3.0 and remains separately installed.
+- [Current ComfyUI sampler path](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/sample.py):
+  native `noise_mask` values are passed into the custom sampler rather than
+  being compiled as binary UI state.
+
+The replacement keeps three different mathematical objects:
+
+```text
+sampling strength s(t,x,y) ∈ [0,1]
+hard accepted interval       a(t) ∈ {0,1}
+decoded output opacity       o(t,x,y) ∈ [0,1]
+```
+
+These fields must not be collapsed into one mask. `s` controls the conditional
+sampler, `a` controls what may enter the production result, and `o` composites
+the accepted decoded proposal with the two source clips. The default `s` and
+`o` are raised cosines, while either can be replaced by arbitrary Comfy `MASK`
+data. H3 audio remains a zero-masked structural stream and is discarded; the
+fixed master soundtrack is not encoded or conditioned through this path.
+
+CAUCE does not copy LanPaint code. Workflow 60 depends on its public node
+interface, while CAUCE independently implements the temporal geometry, field
+construction, causal-token projection, acceptance, and splice.
 
 ## Compatibility policy
 

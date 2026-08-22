@@ -12,20 +12,22 @@ de 32 GB y 64 GB de RAM. CAUCE no modificó CUDA, PyTorch, ComfyUI ni modelos.
 | Ref2VA motion, landscape | verificado | 124 f, 576×320, 5,167 s | 72,6 s | `cauce/demos/ref2va_motion_landscape_00001_.mp4` |
 | Continuation `mask_only` | ejecuta; seam rechazado | 85 f aceptados, 640×640 | 93,4 s | `cauce/sequence/forest_window_002_00001_.mp4` |
 | Continuation `mask_plus_guide` | incompatible con core 0.33.1 | — | falla antes de output | error de geometría en sampler |
-| Continuation tail + endpoint | seam visual verificado; escucha pendiente | 85 f aceptados, 640×640, 3,542 s | 104,1 s | `cauce/sequence/forest_window_002_hybrid_00001_.mp4` |
+| Continuation tail + endpoint | seam visual verificado | 85 f aceptados, 640×640, 3,542 s | 104,1 s | `cauce/sequence/forest_window_002_hybrid_00001_.mp4` |
 | Timed Guide | bloqueado por capability | — | — | falta `MiniMaxH3AddGuide` oficial |
 | Bridge | graph validado | — | — | pendiente GPU |
-| Confluence seam repair, sintético | runtime verificado; gesto real pendiente | 124 f working → 120 f join / 48 f patch | 42,8 s a 4 steps | previews temporales, prompt `5ea6dc99-...` |
+| Confluence v1, máscara estándar | runtime sintético verificado; gesto real rechazado | 124 f working → 120 f join / 48 f patch | 42,8 s a 4 steps | previews temporales, prompt `5ea6dc99-...` |
+| Confluence v2, LanPaint + campos continuos | implementación local completa; prueba live pendiente | 124 f working / 48 f aceptación dura | pendiente | workflow 60 actualizado |
 
 ## Lectura de los resultados
 
-El baseline FL2VA produjo video y audio, latent AV persistente y receipt. El
-Ref2VA también completó, pero referencias landscape sobre un output cuadrado
+El baseline FL2VA produjo video, latent estructural y receipt. Su audio generado
+queda fuera del contrato productivo y los workflows actuales no lo decodifican
+ni lo montan. Ref2VA también completó, pero referencias landscape sobre un output cuadrado
 indujeron letterboxing visible. El segundo run `576×320` eliminó ese problema,
 ocupó 72,6 s y produjo un MP4 de 1.361.003 bytes; ese profile queda verificado
 para el envelope demo de 124 frames.
 
-La primera continuación demostró que copiar y preservar 39 frames AV es válido
+La primera continuación demostró que copiar y preservar 39 frames visuales es válido
 en términos de tensores y sampling, pero no basta como condición futura: el
 primer frame aceptado de B cambió fuertemente de paisaje respecto del último de
 A. Ése es un fail de calidad, aunque el job figure `success`.
@@ -40,20 +42,15 @@ La estrategia compatible a validar usa dos señales del mismo parent:
 
 ```text
 parent A
-  ├─ tail AV de 39 frames → target B + máscara preserve
+  ├─ tail visual de 39 frames → target B + máscara preserve
   └─ último frame decodificado → FL2VA first_frame de B
 ```
 
 El segundo camino fortalece el borde perceptual; el primero conserva historia
-AV y fase causal. El run híbrido conservó la composición del río, el árbol
+visual y fase causal. El run híbrido conservó la composición del río, el árbol
 central, la perspectiva y la dirección de avance en el primer frame aceptado de
 B, por lo que pasa este primer seam gate visual. Receipt:
 `5d56dccb564f350687e10a5d8d760c219fe1a4ca30983d93910b0689db6a69e4`.
-
-El borde de audio fue decodificado a 44,1 kHz estéreo. En una ventana de 250 ms,
-el RMS cambió de `0,0119` a `0,0246`, el salto de muestra fue `0,0102` y la
-correlación normalizada fue `-0,0144`. No aparece un impulso extremo, pero esas
-métricas no prueban continuidad perceptual; queda una escucha crítica pendiente.
 
 Confluence se ejecutó además con dos campos de color de 60 frames generados en
 memoria, sin subir assets ni escribir un MP4 permanente. El build produjo el

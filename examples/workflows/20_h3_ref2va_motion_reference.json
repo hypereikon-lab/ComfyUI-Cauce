@@ -1,8 +1,8 @@
 {
   "id": "1f9963fc-adba-5132-831f-20232ba97b14",
   "revision": 0,
-  "last_node_id": 28,
-  "last_link_id": 34,
+  "last_node_id": 27,
+  "last_link_id": 30,
   "nodes": [
     {
       "id": 1,
@@ -506,7 +506,7 @@
           "links": [
             13,
             24,
-            30
+            28
           ]
         },
         {
@@ -981,8 +981,7 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            12,
-            28
+            12
           ]
         }
       ],
@@ -1212,7 +1211,7 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        "Use <Picture 1> and <Picture 2> as the visual and spatial reference field. Use <Video 1> only as the movement and camera reference. Generate a continuous humid forest passage whose geometry remains coherent while path and stream trade perceptual dominance. Preserve the reference motion rhythm without copying literal image content from the motion clip. Audio: running water, soft foliage, distant birds; no speech, no music.",
+        "Use <Picture 1> and <Picture 2> as the visual and spatial reference field. Use <Video 1> only as the movement and camera reference. Generate a continuous humid forest passage whose geometry remains coherent while path and stream trade perceptual dominance. Preserve the reference motion rhythm without copying literal image content from the motion clip.",
         "match"
       ]
     },
@@ -1404,8 +1403,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            25,
-            27
+            25
           ]
         }
       ],
@@ -1448,7 +1446,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            29
+            27
           ]
         }
       ],
@@ -1459,49 +1457,6 @@
     },
     {
       "id": 25,
-      "type": "VAEDecodeAudio",
-      "pos": [
-        3790,
-        100
-      ],
-      "size": [
-        170,
-        46
-      ],
-      "flags": {},
-      "order": 24,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "samples",
-          "name": "samples",
-          "type": "LATENT",
-          "link": 27
-        },
-        {
-          "localized_name": "vae",
-          "name": "vae",
-          "type": "VAE",
-          "link": 28
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "AUDIO",
-          "name": "AUDIO",
-          "type": "AUDIO",
-          "links": [
-            31
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAEDecodeAudio",
-        "cnr_id": "comfy-core"
-      }
-    },
-    {
-      "id": 26,
       "type": "CauceAcceptDecodedWindow",
       "pos": [
         4010,
@@ -1512,26 +1467,26 @@
         66
       ],
       "flags": {},
-      "order": 25,
+      "order": 24,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 29
+          "link": 27
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 30
+          "link": 28
         },
         {
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 31,
+          "link": null,
           "shape": 7
         }
       ],
@@ -1541,16 +1496,14 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            32
+            29
           ]
         },
         {
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "links": [
-            33
-          ]
+          "links": null
         },
         {
           "localized_name": "accepted_frames",
@@ -1565,7 +1518,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 26,
       "type": "CreateVideo",
       "pos": [
         4320,
@@ -1576,20 +1529,20 @@
         102
       ],
       "flags": {},
-      "order": 26,
+      "order": 25,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 32
+          "link": 29
         },
         {
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 33,
+          "link": null,
           "shape": 7
         },
         {
@@ -1617,7 +1570,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            34
+            30
           ]
         }
       ],
@@ -1631,7 +1584,7 @@
       ]
     },
     {
-      "id": 28,
+      "id": 27,
       "type": "SaveVideo",
       "pos": [
         4640,
@@ -1642,14 +1595,14 @@
         106
       ],
       "flags": {},
-      "order": 27,
+      "order": 26,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 34
+          "link": 30
         },
         {
           "localized_name": "filename_prefix",
@@ -1909,23 +1862,23 @@
     ],
     [
       27,
-      23,
+      24,
       0,
       25,
       0,
-      "LATENT"
+      "IMAGE"
     ],
     [
       28,
-      16,
+      9,
       0,
       25,
       1,
-      "VAE"
+      "CAUCE_WINDOW"
     ],
     [
       29,
-      24,
+      25,
       0,
       26,
       0,
@@ -1933,41 +1886,9 @@
     ],
     [
       30,
-      9,
-      0,
-      26,
-      1,
-      "CAUCE_WINDOW"
-    ],
-    [
-      31,
-      25,
-      0,
-      26,
-      2,
-      "AUDIO"
-    ],
-    [
-      32,
       26,
       0,
       27,
-      0,
-      "IMAGE"
-    ],
-    [
-      33,
-      26,
-      1,
-      27,
-      1,
-      "AUDIO"
-    ],
-    [
-      34,
-      27,
-      0,
-      28,
       0,
       "VIDEO"
     ]

@@ -124,7 +124,7 @@ class CauceGenerationWindow:
                     {"default": 5.0, "min": 0.1, "max": 15.0, "step": 0.001},
                 ),
                 "context_frames": (
-                    ["0", "39", "90", "141", "192", "243", "294", "345"],
+                    [str(value) for value in (0, *range(5, 346, 17))],
                     {"default": "0"},
                 ),
                 "duplicate_prefix_frames": (["0", "5"], {"default": "0"}),

@@ -6,7 +6,9 @@ paralela, un editor externo ni una ontología de sujetos o acciones.
 
 CAUCE organiza cuatro hechos: medios opacos, tiempo absoluto, relaciones entre
 ventanas y artifacts versionados. La interpretación sigue ocurriendo en H3 a
-partir de las imágenes, videos, audios y prompts conectados.
+partir de las imágenes, videos y prompts conectados. El soundtrack es un master
+fijo: marca el reloj creativo y se monta al final, pero no se usa como target
+generativo ni se reemplaza con audio sintetizado por H3.
 
 ## Preparación
 
@@ -41,7 +43,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
-| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Reparación local del salto; recorrido sintético verificado, material real pendiente. |
+| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Reparación condicional; v1 rechazado, v2 LanPaint pendiente de prueba live. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
 ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
@@ -76,12 +78,12 @@ reloj ni el resto del workflow.
 first IMAGE + last IMAGE + arbitrary prompt
   → CAUCE generation window
   → official MiniMaxH3ImageToVideo
-  → H3 sigma shifts (video 12 / audio 3)
+  → H3 sigma shifts internos
   → res_multistep + simple / 20 steps
   → resolved phase-safe parent
-  → video/audio decode
+  → video decode; audio H3 descartado
   → accepted temporal range
-  → MP4 + AV latent + receipt
+  → MP4 visual + latent estructural + receipt
 ```
 
 Para iterar normalmente sólo se cambian imágenes, prompt y seed. El profile
@@ -106,7 +108,8 @@ visualizado o material filmado.
 
 El MP4 de demo dura 2,333 s y contiene 56 frames, una longitud válida `17k+5`.
 Para reemplazarlo, el video debe estar a 24 fps y durar entre 2 y 15 s. El total
-temporal de referencias video/audio no puede exceder 15 s.
+temporal de referencias video no puede exceder 15 s en este preset. Los sockets
+de audio existen por compatibilidad upstream, pero no se usan en producción.
 
 El workflow usa `h3-5090-ref2va-576x320`: mantiene un costo cercano al profile
 cuadrado de 448, pero ofrece un canvas landscape más apropiado para referencias
@@ -117,16 +120,16 @@ semántica de las referencias.
 ## 30 · Guide en tiempo absoluto
 
 `CAUCE · H3 Timed Guide` resuelve `master_seconds` contra el inicio real de la
-ventana y llama al `MiniMaxH3AddGuide` oficial. Esto permite que un frame, clip
-o audio esté anclado a la música o a un punto de montaje sin codificar a mano
-un índice local del latent. El runtime `ComfyUI 0.33.1` actualmente instalado en
+ventana y llama al `MiniMaxH3AddGuide` oficial. Esto permite que un frame o clip
+esté anclado a la música o a un punto de montaje sin codificar a mano un índice
+local del latent. El runtime `ComfyUI 0.33.1` actualmente instalado en
 el lab todavía no registra `MiniMaxH3AddGuide`; por eso este workflow carga y se
 puede inspeccionar, pero queda bloqueado con un error explícito hasta que esa
 clase oficial esté disponible. FL2VA y Ref2VA no dependen de ella.
 
 Se pueden encadenar varios guides. Cada uno debe caber completamente en la
-ventana renderizada. Para un clip guía, usar una longitud H3 válida; para un
-audio guide, conectar también el audio VAE.
+ventana renderizada. Para un clip guía, usar una longitud H3 válida. El master
+de audio no se conecta a AddGuide.
 
 ## 40 · Continuación de dos ventanas
 
@@ -135,9 +138,9 @@ La segunda ventana declara `context_frames = 39`. El graph:
 1. genera y resuelve el parent A;
 2. decodifica A y selecciona su último frame aceptado de forma opaca;
 3. usa ese endpoint como `first_frame` oficial de FL2VA para B;
-4. copia exactamente el tail AV de A al head del target B;
+4. copia exactamente el tail visual de A al head del target B;
 5. coloca máscara cero sobre esa región heredada;
-6. genera únicamente lo desconocido;
+6. congela el stream de audio estructural y genera sólo video desconocido;
 7. acepta y guarda A y B por separado.
 
 La ventana B solicita `85` frames nuevos (`3,541666667 s`). Con los `39`
@@ -149,9 +152,9 @@ No se concatenan latents H3 independientes antes del VAE. Cada parent se
 decodifica dentro de su propia fase causal y sólo las regiones aceptadas se
 montan después sobre el reloj maestro.
 
-`39` es el primer boundary compartido entre la fase visual H3 y el grid de
-audio. `90`, `141` y siguientes quedan disponibles para experimentos más
-largos, pero aumentan el costo heredado y reducen el intervalo nuevo.
+`39` permanece como preset ya probado, pero ya no es una obligación AV. Los
+boundaries visuales legales son `5`, `22`, `39`, `56`, etc.; esto permite elegir
+contexto exclusivamente por continuidad visual.
 
 En el runtime 0.33.1, el latent tail por sí solo ejecutó pero produjo un salto
 visual fuerte. La guía de clip latente pertenece a un core H3 posterior y CAUCE
@@ -159,19 +162,20 @@ la bloquea explícitamente cuando no está disponible. El endpoint decodificado
 es la estrategia compatible que ahora debe pasar el gate comparativo; no se
 declara continuidad “resuelta” sólo porque el sampler termine. En la prueba
 del lab, la variante híbrida conservó composición, perspectiva, cauce y árbol
-central a través del join. El audio aún requiere escucha crítica antes de
-promover el recorrido a preset de producción.
+central a través del join. El audio generado no forma parte de ese gate ni se
+acepta en la pieza.
 
 ## 50 · Bridge
 
-Este graph no es “run immediately”. Requiere dos `.safetensors` producidos por
-`CAUCE · Save AV Latent`. Ajustar los dos paths antes de ejecutar.
+Este graph no es “run immediately”. Requiere dos `.safetensors` estructurales
+producidos por `CAUCE · Save AV Latent`. Ajustar los dos paths antes de ejecutar.
 
-El bridge copia 39 frames desde cada extremo y conserva ambos bloques. La
-intersección central permanece generable. Si los contexts se solapan, el nodo
-falla cerrado en vez de inventar un join ambiguo.
+El bridge copia 39 frames visuales desde cada extremo y conserva ambos bloques.
+El stream de audio interno queda congelado y se descarta. La intersección
+central permanece generable. Si los contexts se solapan, el nodo falla cerrado
+en vez de inventar un join ambiguo.
 
-## 60 · Confluence: reparar un corte entre dos gestos
+## 60 · Confluence: reparación condicional entre dos gestos
 
 Este recorrido parte de dos videos ya existentes, no de parents latentes. Los
 normaliza al profile FL2VA 640, toma 2,5 s de contexto a cada lado y entrega el
@@ -191,10 +195,30 @@ región generable: [38, 86) = 48 frames = 2 s
 output: len(A) + len(B), sin cambio de duración
 ```
 
-H3 ve first/last frames del working domain y el prompt arbitrario, pero su
-`noise_mask` abre únicamente la zona central. Después del decode, CAUCE acepta
-sólo ese parche y repone el resto desde los inputs originales; modificar el
-exterior no es una solicitud al modelo, sino una imposibilidad topológica.
+H3 ve first/last frames del working domain y el prompt arbitrario. `CAUCE ·
+Confluence Fields` produce tres `MASK` comunes e inspeccionables:
+
+```text
+generation_strength  → fuerza continua del sampler
+hard_acceptance      → intervalo binario permitido
+output_opacity       → mezcla decodificada del parche
+```
+
+El preset usa una curva cosenoidal, 12 frames de transición latente y ocho de
+blend decodificado. El valor parte exactamente en cero, alcanza uno en el
+interior y vuelve a cero. La proyección a tokens H3 usa cobertura promedio para
+conservar esa información gradual; `peak` queda sólo para comparación.
+
+El sampler estándar anterior ejecutó correctamente, pero falló cualitativamente
+con gestos reales. Este workflow requiere [LanPaint v2.1.0 o
+posterior](https://github.com/scraed/LanPaint) y usa `LanPaint Sampler Custom
+Advanced` con cinco iteraciones internas, lambda 5, step size 0,2 y modo `Image
+First`. LanPaint realiza el muestreo condicional; CAUCE sigue controlando toda
+la geometría temporal, las máscaras, el rango aceptado y el splice final.
+
+Después del decode, CAUCE acepta sólo el parche central y repone el resto desde
+los inputs originales. Modificar el exterior no es una solicitud al modelo,
+sino una imposibilidad topológica.
 
 El JSON contiene `gesture_a.mp4` y `gesture_b.mp4` como placeholders. Cada clip
 debe tener al menos 60 frames y ambos deben ser exactamente 24 fps. La primera
@@ -203,16 +227,28 @@ aceleración en el corte; probar 0,5, 1 y 1,5 s por lado antes de adoptar 1 s co
 preset definitivo. La resolución queda normalizada a 640×640 para el envelope
 verificado de la 5090.
 
-El recorrido completo ya se validó en la instancia del lab con dos batches
-sintéticos de 60 frames: H3 recibió 124 frames, el sampler de prueba terminó,
-el output unido devolvió 120 frames y el parche exactamente 48. Esa prueba
-confirma sockets, shapes, máscaras, decode y splice; no evalúa si un gesto real
-se vuelve perceptualmente continuo.
+El recorrido estándar anterior se validó en la instancia del lab con dos
+batches sintéticos de 60 frames: H3 recibió 124 frames, el sampler terminó, el
+output unido devolvió 120 frames y el parche exactamente 48. Esa prueba confirmó
+sockets, shapes, decode y splice, pero la posterior prueba perceptual fue mala.
+La versión condicional debe volver a superar primero ese mismo par de gestos.
 
-El workflow es intencionalmente video-only. No regenera audio y no debe
-reemplazar la música sincronizada del master; ésta se conserva o se monta con
-los nodos de audio autoritativo. Para una pieza larga se corrigen clips locales,
-no se carga el master completo como un único batch de imágenes.
+El workflow es intencionalmente video-only. El audio master no se conecta, no
+se codifica y no se sustituye. H3 mantiene internamente un stream de audio vacío
+y enmascarado sólo porque su latent es estructuralmente AV; ese resultado se
+descarta. Para una pieza larga se corrigen clips locales y luego se colocan
+sobre el reloj del master fijo.
+
+### Instalar el sampler condicional
+
+En ComfyUI Manager, instalar `LanPaint` o usar su Git URL:
+
+```text
+https://github.com/scraed/LanPaint.git
+```
+
+Reiniciar ComfyUI una vez. CAUCE no copia ni modifica LanPaint y no agrega sus
+dependencias a la instalación propia.
 
 ## Runner: secuencia reiniciable
 

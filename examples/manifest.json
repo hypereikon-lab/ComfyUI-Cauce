@@ -62,9 +62,14 @@
       "id": "h3-confluence-seam-repair",
       "path": "workflows/60_h3_confluence_seam_repair.json",
       "tier": "advanced",
-      "status": "synthetic-runtime-verified-real-gesture-pending",
+      "status": "v1-real-gesture-rejected-v2-conditional-pending",
       "samples": 1,
-      "requires": ["two 24 fps videos >= 2.5 s", "ComfyUI-Cauce", "MiniMax H3 FL2VA"]
+      "requires": [
+        "two 24 fps videos >= 2.5 s",
+        "ComfyUI-Cauce",
+        "MiniMax H3 FL2VA",
+        "LanPaint >= 2.1.0"
+      ]
     }
   ]
 }

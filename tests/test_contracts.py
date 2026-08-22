@@ -61,9 +61,13 @@ class ContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             make_window("w", 0, 5, context_frames=39)
 
-    def test_window_rejects_video_only_context_boundary(self):
+    def test_window_accepts_visual_context_without_audio_alignment(self):
+        window = make_window("w", 10, 5, context_frames=22)
+        self.assertEqual(window["context_frames"], 22)
+
+    def test_window_rejects_context_outside_the_visual_grid(self):
         with self.assertRaises(ValueError):
-            make_window("w", 10, 5, context_frames=22)
+            make_window("w", 10, 5, context_frames=23)
 
     def test_field_and_timeline_are_versioned_data(self):
         field = append_field_span(

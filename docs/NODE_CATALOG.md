@@ -45,16 +45,18 @@ Comfy PNG plus `.prompt.txt` and `.json` sidecars.
 
 Reference nodes construct an ordered runtime set without embedding media
 tensors in JSON. Ref2VA validates per-kind counts, total count, and declared
-temporal durations before invoking the official node.
+temporal durations before invoking the official node. The audio-reference node
+is retained for upstream compatibility but is not used by the current fixed-
+soundtrack production workflows.
 
 ## Masks
 
 - `CAUCE · Time Field Span`
 - `CAUCE · Compile H3 AV Mask`
 
-Fields use explicit polarity: `1 = generate`, `0 = preserve`. Video and audio
-are projected independently onto H3's visual support and 40 Hz grids. Multiple
-masks intersect: preservation wins.
+Fields use explicit polarity: `1 = generate`, `0 = preserve`. Video and H3's
+internal audio rows are projected independently. Production workflows freeze
+the internal audio rows; multiple masks intersect and preservation wins.
 
 ## Audio
 
@@ -85,14 +87,15 @@ For runtimes predating H3 clip guides, a continuation can decode its parent,
 select the final accepted image, and connect it as the next FL2VA `first_frame`.
 The image endpoint and the inherited latent tail are complementary constraints.
 
-The bridge node copies a left parent tail and a right parent head into the
-target, protects both endpoints, and leaves only the middle denoisable. It is
-the native latent path for temporal gap filling between already-generated
-states.
+The bridge node copies a left visual parent tail and a right visual parent head
+into the target, protects both endpoints, freezes H3's internal audio rows, and
+leaves only the visual middle denoisable. It is the native latent path for
+temporal gap filling between already-generated states.
 
 ## Seams
 
 - `CAUCE · Build Confluence Window`
+- `CAUCE · Confluence Fields`
 - `CAUCE · Prepare H3 Seam Repair`
 - `CAUCE · Apply Confluence Patch`
 
@@ -102,12 +105,19 @@ the batch is an exact H3 run, and returns both the seam plan and its matching
 `CAUCE_WINDOW`. At the default 24 fps settings this is
 `2 guards + 60 A + 60 B + 2 guards = 124` frames.
 
-The prepare node VAE-encodes that one composite domain and sets H3's video
-noise mask to generate only the central interval. The audio stream is fully
-preserved/silent; production audio remains authoritative outside this workflow.
-The apply node accepts only the repaired inner patch, blends its decoded edges,
-and returns `A + B` with exactly the original combined frame count. Frames
-outside the replacement interval are copied without interpretation or change.
+`Confluence Fields` emits three ordinary Comfy `MASK` tensors: continuous
+generation strength, binary hard acceptance, and continuous output opacity.
+The default curve is raised cosine, but any arbitrary spatial/temporal `MASK`
+can be connected to the prepare and apply nodes. The prepare node projects the
+visible field onto the actual causal-token supports and attaches it to the H3
+latent. The apply node accepts only the repaired inner patch, blends it through
+the independent output-opacity field, and returns `A + B` with exactly the
+original combined frame count. Frames outside the replacement interval are
+copied without interpretation or change.
+
+Workflow 60 uses the separately installed LanPaint conditional sampler. H3's
+internal audio latent is zero-masked and discarded; the fixed production audio
+never enters these nodes.
 
 ## Artifacts
 

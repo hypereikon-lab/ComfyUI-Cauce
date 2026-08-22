@@ -1,8 +1,8 @@
 {
   "id": "1c660586-e589-5702-8ed2-4c599f25b26d",
   "revision": 0,
-  "last_node_id": 25,
-  "last_link_id": 33,
+  "last_node_id": 23,
+  "last_link_id": 29,
   "nodes": [
     {
       "id": 1,
@@ -288,7 +288,7 @@
       "widgets_values": [
         "guided_forest_001",
         0.0,
-        "One continuous forest shot. Begin at the first frame, pass through the guide composition at the specified master time, and arrive at the final frame. Motion remains slow, causal, and spatially coherent. Audio: continuous water and humid forest ambience, no cuts, no speech, no music."
+        "One continuous forest shot. Begin at the first frame, pass through the guide composition at the specified master time, and arrive at the final frame. Motion remains slow, causal, and spatially coherent."
       ]
     },
     {
@@ -388,7 +388,7 @@
             5,
             12,
             23,
-            29
+            27
           ]
         },
         {
@@ -775,49 +775,6 @@
     },
     {
       "id": 12,
-      "type": "VAELoader",
-      "pos": [
-        1190,
-        420
-      ],
-      "size": [
-        270,
-        58
-      ],
-      "flags": {},
-      "order": 11,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "vae_name",
-          "name": "vae_name",
-          "type": "COMBO",
-          "link": null,
-          "widget": {
-            "name": "vae_name"
-          }
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "VAE",
-          "name": "VAE",
-          "type": "VAE",
-          "links": [
-            27
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAELoader",
-        "cnr_id": "comfy-core"
-      },
-      "widgets_values": [
-        "minimax_h3_audio_vae_fp32.safetensors"
-      ]
-    },
-    {
-      "id": 13,
       "type": "KSamplerSelect",
       "pos": [
         1840,
@@ -828,7 +785,7 @@
         58
       ],
       "flags": {},
-      "order": 12,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
@@ -860,7 +817,7 @@
       ]
     },
     {
-      "id": 14,
+      "id": 13,
       "type": "BasicScheduler",
       "pos": [
         1840,
@@ -871,7 +828,7 @@
         106
       ],
       "flags": {},
-      "order": 13,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
@@ -929,7 +886,7 @@
       ]
     },
     {
-      "id": 15,
+      "id": 14,
       "type": "CauceH3FL2VA",
       "pos": [
         2190,
@@ -940,7 +897,7 @@
         238
       ],
       "flags": {},
-      "order": 14,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
@@ -1025,7 +982,7 @@
       ]
     },
     {
-      "id": 16,
+      "id": 15,
       "type": "CauceH3TimedGuide",
       "pos": [
         2660,
@@ -1036,7 +993,7 @@
         182
       ],
       "flags": {},
-      "order": 15,
+      "order": 14,
       "mode": 0,
       "inputs": [
         {
@@ -1126,7 +1083,7 @@
       ]
     },
     {
-      "id": 17,
+      "id": 16,
       "type": "RandomNoise",
       "pos": [
         3070,
@@ -1137,7 +1094,7 @@
         82
       ],
       "flags": {},
-      "order": 16,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
@@ -1170,7 +1127,7 @@
       ]
     },
     {
-      "id": 18,
+      "id": 17,
       "type": "BasicGuider",
       "pos": [
         3070,
@@ -1181,7 +1138,7 @@
         46
       ],
       "flags": {},
-      "order": 17,
+      "order": 16,
       "mode": 0,
       "inputs": [
         {
@@ -1213,7 +1170,7 @@
       }
     },
     {
-      "id": 19,
+      "id": 18,
       "type": "SamplerCustomAdvanced",
       "pos": [
         3390,
@@ -1224,7 +1181,7 @@
         126
       ],
       "flags": {},
-      "order": 18,
+      "order": 17,
       "mode": 0,
       "inputs": [
         {
@@ -1280,7 +1237,7 @@
       }
     },
     {
-      "id": 20,
+      "id": 19,
       "type": "CauceResolveParentLatent",
       "pos": [
         3680,
@@ -1291,7 +1248,7 @@
         46
       ],
       "flags": {},
-      "order": 19,
+      "order": 18,
       "mode": 0,
       "inputs": [
         {
@@ -1313,8 +1270,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            24,
-            26
+            24
           ]
         }
       ],
@@ -1324,7 +1280,7 @@
       }
     },
     {
-      "id": 21,
+      "id": 20,
       "type": "VAEDecode",
       "pos": [
         3970,
@@ -1335,7 +1291,7 @@
         46
       ],
       "flags": {},
-      "order": 20,
+      "order": 19,
       "mode": 0,
       "inputs": [
         {
@@ -1357,7 +1313,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            28
+            26
           ]
         }
       ],
@@ -1367,50 +1323,7 @@
       }
     },
     {
-      "id": 22,
-      "type": "VAEDecodeAudio",
-      "pos": [
-        3970,
-        100
-      ],
-      "size": [
-        170,
-        46
-      ],
-      "flags": {},
-      "order": 21,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "samples",
-          "name": "samples",
-          "type": "LATENT",
-          "link": 26
-        },
-        {
-          "localized_name": "vae",
-          "name": "vae",
-          "type": "VAE",
-          "link": 27
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "AUDIO",
-          "name": "AUDIO",
-          "type": "AUDIO",
-          "links": [
-            30
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAEDecodeAudio",
-        "cnr_id": "comfy-core"
-      }
-    },
-    {
-      "id": 23,
+      "id": 21,
       "type": "CauceAcceptDecodedWindow",
       "pos": [
         4190,
@@ -1421,26 +1334,26 @@
         66
       ],
       "flags": {},
-      "order": 22,
+      "order": 20,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 28
+          "link": 26
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 29
+          "link": 27
         },
         {
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 30,
+          "link": null,
           "shape": 7
         }
       ],
@@ -1450,16 +1363,14 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            31
+            28
           ]
         },
         {
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "links": [
-            32
-          ]
+          "links": null
         },
         {
           "localized_name": "accepted_frames",
@@ -1474,7 +1385,7 @@
       }
     },
     {
-      "id": 24,
+      "id": 22,
       "type": "CreateVideo",
       "pos": [
         4500,
@@ -1485,20 +1396,20 @@
         102
       ],
       "flags": {},
-      "order": 23,
+      "order": 21,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 31
+          "link": 28
         },
         {
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 32,
+          "link": null,
           "shape": 7
         },
         {
@@ -1526,7 +1437,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            33
+            29
           ]
         }
       ],
@@ -1540,7 +1451,7 @@
       ]
     },
     {
-      "id": 25,
+      "id": 23,
       "type": "SaveVideo",
       "pos": [
         4820,
@@ -1551,14 +1462,14 @@
         106
       ],
       "flags": {},
-      "order": 24,
+      "order": 22,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 33
+          "link": 29
         },
         {
           "localized_name": "filename_prefix",
@@ -1620,7 +1531,7 @@
       2,
       9,
       0,
-      14,
+      13,
       0,
       "MODEL"
     ],
@@ -1628,7 +1539,7 @@
       3,
       10,
       0,
-      15,
+      14,
       0,
       "CLIP"
     ],
@@ -1636,7 +1547,7 @@
       4,
       11,
       0,
-      15,
+      14,
       1,
       "VAE"
     ],
@@ -1644,7 +1555,7 @@
       5,
       6,
       0,
-      15,
+      14,
       2,
       "CAUCE_WINDOW"
     ],
@@ -1652,7 +1563,7 @@
       6,
       7,
       0,
-      15,
+      14,
       3,
       "CAUCE_PROFILE"
     ],
@@ -1660,7 +1571,7 @@
       7,
       2,
       0,
-      15,
+      14,
       4,
       "IMAGE"
     ],
@@ -1668,7 +1579,7 @@
       8,
       3,
       0,
-      15,
+      14,
       5,
       "IMAGE"
     ],
@@ -1676,23 +1587,23 @@
       9,
       5,
       2,
-      15,
+      14,
       6,
       "STRING"
     ],
     [
       10,
-      15,
+      14,
       0,
-      16,
+      15,
       0,
       "CONDITIONING"
     ],
     [
       11,
-      15,
+      14,
       1,
-      16,
+      15,
       1,
       "LATENT"
     ],
@@ -1700,7 +1611,7 @@
       12,
       6,
       0,
-      16,
+      15,
       2,
       "CAUCE_WINDOW"
     ],
@@ -1708,7 +1619,7 @@
       13,
       11,
       0,
-      16,
+      15,
       3,
       "VAE"
     ],
@@ -1716,7 +1627,7 @@
       14,
       4,
       0,
-      16,
+      15,
       5,
       "IMAGE"
     ],
@@ -1724,63 +1635,63 @@
       15,
       9,
       0,
-      18,
+      17,
       0,
       "MODEL"
     ],
     [
       16,
-      16,
+      15,
       0,
-      18,
+      17,
       1,
       "CONDITIONING"
     ],
     [
       17,
-      17,
+      16,
       0,
-      19,
+      18,
       0,
       "NOISE"
     ],
     [
       18,
-      18,
+      17,
       0,
-      19,
+      18,
       1,
       "GUIDER"
     ],
     [
       19,
-      13,
+      12,
       0,
-      19,
+      18,
       2,
       "SAMPLER"
     ],
     [
       20,
-      14,
+      13,
       0,
-      19,
+      18,
       3,
       "SIGMAS"
     ],
     [
       21,
-      15,
+      14,
       1,
-      19,
+      18,
       4,
       "LATENT"
     ],
     [
       22,
-      19,
+      18,
       0,
-      20,
+      19,
       0,
       "LATENT"
     ],
@@ -1788,15 +1699,15 @@
       23,
       6,
       0,
-      20,
+      19,
       1,
       "CAUCE_WINDOW"
     ],
     [
       24,
-      20,
+      19,
       0,
-      21,
+      20,
       0,
       "LATENT"
     ],
@@ -1804,7 +1715,7 @@
       25,
       11,
       0,
-      21,
+      20,
       1,
       "VAE"
     ],
@@ -1812,63 +1723,31 @@
       26,
       20,
       0,
-      22,
+      21,
       0,
-      "LATENT"
+      "IMAGE"
     ],
     [
       27,
-      12,
+      6,
       0,
-      22,
+      21,
       1,
-      "VAE"
+      "CAUCE_WINDOW"
     ],
     [
       28,
       21,
       0,
-      23,
+      22,
       0,
       "IMAGE"
     ],
     [
       29,
-      6,
-      0,
-      23,
-      1,
-      "CAUCE_WINDOW"
-    ],
-    [
-      30,
       22,
       0,
       23,
-      2,
-      "AUDIO"
-    ],
-    [
-      31,
-      23,
-      0,
-      24,
-      0,
-      "IMAGE"
-    ],
-    [
-      32,
-      23,
-      1,
-      24,
-      1,
-      "AUDIO"
-    ],
-    [
-      33,
-      24,
-      0,
-      25,
       0,
       "VIDEO"
     ]

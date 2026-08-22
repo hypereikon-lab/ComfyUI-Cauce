@@ -5,6 +5,7 @@ from cauce.seams import (
     make_seam_window,
     seam_splice_ranges,
     seam_video_token_values,
+    seam_visible_frame_values,
 )
 
 
@@ -21,12 +22,40 @@ class SeamTests(unittest.TestCase):
 
     def test_seam_mask_preserves_outer_tokens_and_generates_the_middle(self):
         plan = make_seam_plan(200, 180)
-        values = seam_video_token_values(plan, feather_frames=6)
+        values = seam_video_token_values(plan, feather_frames=12)
         self.assertEqual(len(values), 37)
         self.assertEqual(values[0], 0.0)
         self.assertEqual(values[-1], 0.0)
         self.assertIn(1.0, values)
         self.assertTrue(any(0.0 < value < 1.0 for value in values))
+
+    def test_coverage_projection_keeps_more_gradient_information_than_peak(self):
+        plan = make_seam_plan(200, 180)
+        coverage = seam_video_token_values(
+            plan, feather_frames=12, curve="cosine", projection="coverage"
+        )
+        peak = seam_video_token_values(
+            plan, feather_frames=12, curve="cosine", projection="peak"
+        )
+        self.assertTrue(all(left <= right for left, right in zip(coverage, peak)))
+        self.assertTrue(any(left < right for left, right in zip(coverage, peak)))
+
+    def test_visible_fields_separate_sampling_acceptance_and_output_opacity(self):
+        plan = make_seam_plan(200, 180)
+        sampling, acceptance, opacity = seam_visible_frame_values(
+            plan,
+            latent_transition_frames=12,
+            decoded_blend_frames=8,
+            curve="cosine",
+        )
+        start, end = plan["repair_start_frame"], plan["repair_end_frame"]
+        self.assertEqual(len(sampling), 124)
+        self.assertEqual(sampling[start], 0.0)
+        self.assertEqual(sampling[start + 12], 1.0)
+        self.assertEqual(acceptance[start], 1.0)
+        self.assertEqual(acceptance[start - 1], 0.0)
+        self.assertEqual(opacity[start], 0.0)
+        self.assertEqual(opacity[end - 1], 0.0)
 
     def test_seam_window_matches_the_plan_exactly(self):
         plan = make_seam_plan(200, 180)

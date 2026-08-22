@@ -18,7 +18,6 @@ from .timebase import (
     fraction_from_payload,
     fraction_payload,
     frames_to_seconds,
-    is_h3_av_boundary,
     is_h3_frame_count,
     round_fraction,
     snap_h3_frame_count,
@@ -208,9 +207,9 @@ def make_window(
     duplicate_prefix_frames = int(duplicate_prefix_frames)
     if context_frames < 0 or duplicate_prefix_frames < 0:
         raise ValueError("context and duplicate-prefix frames cannot be negative")
-    if context_frames and not is_h3_av_boundary(context_frames):
+    if context_frames and not is_h3_frame_count(context_frames):
         raise ValueError(
-            "AV continuation context must use a shared H3 boundary: 39, 90, 141, 192, ... frames"
+            "visual continuation context must use the H3 grid: 5, 22, 39, 56, ... frames"
         )
     if duplicate_prefix_frames:
         visual_token_count_for_span(duplicate_prefix_frames)

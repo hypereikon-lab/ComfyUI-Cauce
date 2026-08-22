@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-cauce"
 version = "0.1.0"
-description = "Media, time, and continuity for audiovisual generation in ComfyUI"
+description = "Media, exact time, and visual continuity against a fixed master clock"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

@@ -183,6 +183,14 @@ SPECS = {
         ],
         [("output", "LATENT"), ("denoised_output", "LATENT")], [230, 126],
     ),
+    "LanPaint_SamplerCustomAdvanced": (
+        [
+            L("noise", "NOISE"), L("guider", "GUIDER"), L("sampler", "SAMPLER"),
+            L("sigmas", "SIGMAS"), L("latent_image", "LATENT"),
+            W("LanPaint_NumSteps", "INT"),
+        ],
+        [("output", "LATENT"), ("denoised_output", "LATENT")], [350, 260],
+    ),
     "CauceResolveParentLatent": (
         [L("latent", "LATENT"), L("window", "CAUCE_WINDOW")],
         [("LATENT", "LATENT")], [244, 46],
@@ -191,20 +199,19 @@ SPECS = {
         [
             L("positive", "CONDITIONING"), L("target_latent", "LATENT"),
             L("previous_latent", "LATENT"), W("context_frames", "COMBO"),
-            W("audio_feather_ticks", "INT"), W("conditioning_mode", "COMBO"),
+            W("conditioning_mode", "COMBO"),
         ],
         [("positive", "CONDITIONING"), ("latent", "LATENT"), ("trim_frames", "INT")],
-        [330, 166],
+        [330, 142],
     ),
     "CaucePrepareBridge": (
         [
             L("positive", "CONDITIONING"), L("target_latent", "LATENT"),
             L("left_parent", "LATENT"), L("right_parent", "LATENT"),
-            W("context_frames", "COMBO"), W("audio_feather_ticks", "INT"),
-            W("conditioning_mode", "COMBO"),
+            W("context_frames", "COMBO"), W("conditioning_mode", "COMBO"),
         ],
         [("positive", "CONDITIONING"), ("latent", "LATENT"), ("middle_frames", "INT")],
-        [330, 186],
+        [330, 162],
     ),
     "VAEDecode": ([L("samples", "LATENT"), L("vae", "VAE")], [("IMAGE", "IMAGE")], [160, 46]),
     "VAEDecodeAudio": ([L("samples", "LATENT"), L("vae", "VAE")], [("AUDIO", "AUDIO")], [170, 46]),
@@ -236,15 +243,30 @@ SPECS = {
     "CaucePrepareH3SeamRepair": (
         [
             L("target_latent", "LATENT"), L("encoded_video_latent", "LATENT"),
-            L("seam", "CAUCE_SEAM"), W("latent_feather_frames", "INT"),
+            L("seam", "CAUCE_SEAM"), W("latent_transition_frames", "INT"),
+            W("mask_curve", "COMBO"), W("token_projection", "COMBO"),
+            L("generation_strength", "MASK", True),
         ],
-        [("masked_latent", "LATENT"), ("mask_report", "STRING")], [350, 118],
+        [("masked_latent", "LATENT"), ("mask_report", "STRING")], [350, 190],
+    ),
+    "CauceConfluenceFields": (
+        [
+            L("working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
+            W("latent_transition_frames", "INT"), W("decoded_blend_frames", "INT"),
+            W("curve", "COMBO"),
+        ],
+        [
+            ("generation_strength", "MASK"), ("hard_acceptance", "MASK"),
+            ("output_opacity", "MASK"), ("field_report", "STRING"),
+        ],
+        [350, 170],
     ),
     "CauceApplySeamPatch": (
         [
             L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
             L("repaired_working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
-            W("decoded_feather_frames", "INT"),
+            W("decoded_feather_frames", "INT"), W("blend_curve", "COMBO"),
+            L("blend_strength", "MASK", True),
         ],
         [("joined_images", "IMAGE"), ("repair_patch", "IMAGE"), ("splice_report", "STRING")],
         [360, 138],
@@ -301,6 +323,8 @@ class Workflow:
             properties["Node name for S&R"] = node_type
             if node_type.startswith("Cauce"):
                 properties["aux_id"] = "hypereikon-lab/ComfyUI-Cauce"
+            elif node_type.startswith("LanPaint"):
+                pass
             else:
                 properties["cnr_id"] = "comfy-core"
         node = {
@@ -397,7 +421,11 @@ def add_model_stack(wf, x, y, family):
         ["qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors", "minimax", "default"],
     )
     video_vae = wf.add("VAELoader", (x, y + 320), ["minimax_h3_video_vae_fp16.safetensors"])
-    audio_vae = wf.add("VAELoader", (x, y + 420), ["minimax_h3_audio_vae_fp32.safetensors"])
+    audio_vae = None
+    if family == "Ref2VA":
+        audio_vae = wf.add(
+            "VAELoader", (x, y + 420), ["minimax_h3_audio_vae_fp32.safetensors"]
+        )
     sampler = wf.add("KSamplerSelect", (x + 650, y), ["res_multistep"])
     scheduler = wf.add("BasicScheduler", (x + 650, y + 100), ["simple", 20, 1.0])
     wf.connect(unet, "MODEL", shifted, "model")
@@ -414,7 +442,6 @@ def add_sample_decode(wf, x, y, stack, conditioning, latent, window, *, seed, pr
     sample = wf.add("SamplerCustomAdvanced", (x + 320, y + 60))
     parent = wf.add("CauceResolveParentLatent", (x + 610, y + 60))
     decode_v = wf.add("VAEDecode", (x + 900, y))
-    decode_a = wf.add("VAEDecodeAudio", (x + 900, y + 100))
     accept = wf.add("CauceAcceptDecodedWindow", (x + 1120, y + 40))
     video = wf.add("CreateVideo", (x + 1430, y + 40), [24.0, 8])
     save = wf.add("SaveVideo", (x + 1750, y + 40), [prefix, "mp4", "auto"])
@@ -429,13 +456,9 @@ def add_sample_decode(wf, x, y, stack, conditioning, latent, window, *, seed, pr
     wf.connect(window[0], window[1], parent, "window")
     wf.connect(parent, "LATENT", decode_v, "samples")
     wf.connect(stack["video_vae"], "VAE", decode_v, "vae")
-    wf.connect(parent, "LATENT", decode_a, "samples")
-    wf.connect(stack["audio_vae"], "VAE", decode_a, "vae")
     wf.connect(decode_v, "IMAGE", accept, "images")
     wf.connect(window[0], window[1], accept, "window")
-    wf.connect(decode_a, "AUDIO", accept, "audio")
     wf.connect(accept, "images", video, "images")
-    wf.connect(accept, "audio", video, "audio")
     wf.connect(video, "VIDEO", save, "video")
     return {
         "noise": noise,
@@ -493,13 +516,14 @@ def build_fl2va():
     note(wf, (-50, -450), """# CAUCE 10 · H3 FL2VA first → last
 
 Workflow de producción mínimo: dos imágenes opacas en puntos absolutos, una
-ventana exacta H3, profile 5090, sampling AV, aceptación temporal, MP4, latent y
-receipt. Cambia imágenes, prompt y seed; la topología permanece igual.""", size=(720, 250))
+ventana exacta H3, profile 5090, sampling visual, aceptación temporal, MP4,
+latent y receipt. El audio generado por H3 se descarta; cambia imágenes, prompt
+y seed sin cambiar la topología.""", size=(720, 250))
     first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"], title="First frame")
     last = wf.add("LoadImage", (0, 310), ["cauce_forest_b.jpg", "image"], title="Last frame")
     p0 = wf.add("CauceTimelinePoint", (330, 0), [
         "forest_motion_001_a", 0.0,
-        "A single continuous shot through humid Valdivian temperate rainforest. Begin exactly from the first frame and arrive exactly at the last frame. The camera glides slowly forward while the two spatial directions—path and watercourse—exchange visual weight. Ferns move subtly in moist air; water keeps a coherent downstream flow. Natural diffuse light, no cuts. Audio: close running water, soft leaf movement, distant birds, no music, no speech.",
+        "A single continuous shot through humid Valdivian temperate rainforest. Begin exactly from the first frame and arrive exactly at the last frame. The camera glides slowly forward while the two spatial directions—path and watercourse—exchange visual weight. Ferns move subtly in moist air; water keeps a coherent downstream flow. Natural diffuse light, no cuts.",
     ])
     p1 = wf.add("CauceTimelinePoint", (330, 310), ["forest_motion_001_b", 5.166666667, ""])
     a0 = wf.add("CauceAttachPointImage", (760, 0), ["frame_a_v001", "cauce_demo_assets"])
@@ -559,7 +583,7 @@ Los tags compilados son `<Picture 1>`, `<Picture 2>`, `<Video 1>`.""", size=(720
     preflight = wf.add("CaucePreflight", (980, 720), [35.0])
     stack = add_model_stack(wf, 1390, 0, "Ref2VA")
     h3 = wf.add("CauceH3Ref2VA", (2390, 0), [
-        "Use <Picture 1> and <Picture 2> as the visual and spatial reference field. Use <Video 1> only as the movement and camera reference. Generate a continuous humid forest passage whose geometry remains coherent while path and stream trade perceptual dominance. Preserve the reference motion rhythm without copying literal image content from the motion clip. Audio: running water, soft foliage, distant birds; no speech, no music.",
+        "Use <Picture 1> and <Picture 2> as the visual and spatial reference field. Use <Video 1> only as the movement and camera reference. Generate a continuous humid forest passage whose geometry remains coherent while path and stream trade perceptual dominance. Preserve the reference motion rhythm without copying literal image content from the motion clip.",
         "match",
     ])
     wf.connect(motion, "VIDEO", components, "video")
@@ -595,7 +619,7 @@ latent: CAUCE lo resuelve dentro de la ventana exacta.""", size=(720, 240))
     guide_image = wf.add("LoadImage", (0, 560), ["cauce_forest_c.jpg", "image"])
     point = wf.add("CauceTimelinePoint", (340, 0), [
         "guided_forest_001", 0.0,
-        "One continuous forest shot. Begin at the first frame, pass through the guide composition at the specified master time, and arrive at the final frame. Motion remains slow, causal, and spatially coherent. Audio: continuous water and humid forest ambience, no cuts, no speech, no music.",
+        "One continuous forest shot. Begin at the first frame, pass through the guide composition at the specified master time, and arrive at the final frame. Motion remains slow, causal, and spatially coherent.",
     ])
     window = wf.add("CauceGenerationWindow", (780, 0), ["guided_window_001", 0.0, 5.0, "0", "0", "ceil", "nearest_run", 362])
     profile = wf.add("CauceExecutionProfile", (780, 430), ["h3-5090-fl2va-640"])
@@ -622,16 +646,17 @@ latent: CAUCE lo resuelve dentro de la ventana exacta.""", size=(720, 240))
 
 def build_continuation():
     wf = Workflow("40_h3_two_window_continuation", scale=0.22, offset=(100, 180))
-    note(wf, (-50, -500), """# CAUCE 40 · Two-window AV continuation
+    note(wf, (-50, -500), """# CAUCE 40 · Two-window visual continuation
 
-La ventana B hereda 39 frames AV phase-aligned del parent A y usa además el
+La ventana B hereda 39 frames latentes del parent A y usa además el
 último frame decodificado de A como first-frame guide oficial. El latent asegura
 contexto causal; la imagen refuerza la continuidad perceptual en runtimes H3 que
-aún no incluyen clip guides. Ejecuta dos samples: valida primero CAUCE 10.""", size=(790, 280))
+aún no incluyen clip guides. El audio interno se descarta. Ejecuta dos samples:
+valida primero CAUCE 10.""", size=(790, 280))
     first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
     prompt_a = wf.add("CauceTimelinePoint", (320, 0), [
         "continuation_a", 0.0,
-        "A single slow passage through humid Valdivian forest, beginning exactly from the image. Forward motion remains calm and coherent. Audio: running water and distant forest ambience, no music, no speech.",
+        "A single slow passage through humid Valdivian forest, beginning exactly from the image. Forward motion remains calm and coherent.",
     ])
     window_a = wf.add("CauceGenerationWindow", (760, 0), ["continuation_window_a", 0.0, 5.0, "0", "0", "ceil", "nearest_run", 362])
     window_b = wf.add("CauceGenerationWindow", (760, 440), ["continuation_window_b", 5.166666667, 3.541666667, "39", "0", "ceil", "nearest_run", 362])
@@ -639,7 +664,7 @@ aún no incluyen clip guides. Ejecuta dos samples: valida primero CAUCE 10.""", 
     stack = add_model_stack(wf, 1480, 0, "FL2VA")
     cond_a = wf.add("CauceH3FL2VA", (2480, 0), [""])
     cond_b = wf.add("CauceH3FL2VA", (2480, 440), [
-        "Continue the same audiovisual event without a cut. Preserve direction, camera velocity, water flow, atmosphere, and causal motion from the inherited context. Let the forest density gradually increase. Audio remains continuous running water and forest ambience; no music, no speech.",
+        "Continue the same visual event without a cut. Preserve direction, camera velocity, water flow, atmosphere, and causal motion from the inherited context. Let the forest density gradually increase.",
     ])
     wf.connect(stack["clip"], "CLIP", cond_a, "clip"); wf.connect(stack["video_vae"], "VAE", cond_a, "vae")
     wf.connect(window_a, "window", cond_a, "window"); wf.connect(profile, "profile", cond_a, "profile")
@@ -653,7 +678,7 @@ aún no incluyen clip guides. Ejecuta dos samples: valida primero CAUCE 10.""", 
     endpoint = wf.add("CauceSelectImageFrame", (2480, 840), [-1])
     wf.connect(result_a["accept"], "images", endpoint, "images")
     wf.connect(endpoint, "image", cond_b, "first_frame")
-    prepare_b = wf.add("CaucePrepareContinuation", (3000, 840), ["39", 8, "mask_only"])
+    prepare_b = wf.add("CaucePrepareContinuation", (3000, 840), ["39", "mask_only"])
     wf.connect(cond_b, "positive", prepare_b, "positive")
     wf.connect(cond_b, "latent", prepare_b, "target_latent")
     wf.connect(result_a["parent"], "LATENT", prepare_b, "previous_latent")
@@ -685,9 +710,9 @@ ejecutar, ajusta ambos paths/índices a artifacts existentes.""", size=(700, 240
     profile = wf.add("CauceExecutionProfile", (360, 430), ["h3-5090-fl2va-640"])
     stack = add_model_stack(wf, 760, 0, "FL2VA")
     h3 = wf.add("CauceH3FL2VA", (1760, 0), [
-        "Generate only the missing middle between the two inherited audiovisual boundaries. Maintain causal camera motion, spatial direction, water flow, atmosphere, and continuous sound across both joins. No cut, no reset, no music, no speech.",
+        "Generate only the missing middle between the two inherited visual boundaries. Maintain causal camera motion, spatial direction, water flow, and atmosphere across both joins. No cut or camera reset.",
     ])
-    bridge = wf.add("CaucePrepareBridge", (2220, 0), ["39", 8, "mask_only"])
+    bridge = wf.add("CaucePrepareBridge", (2220, 0), ["39", "mask_only"])
     wf.connect(stack["clip"], "CLIP", h3, "clip"); wf.connect(stack["video_vae"], "VAE", h3, "vae")
     wf.connect(window, "window", h3, "window"); wf.connect(profile, "profile", h3, "profile")
     wf.connect(h3, "positive", bridge, "positive"); wf.connect(h3, "latent", bridge, "target_latent")
@@ -707,15 +732,17 @@ ejecutar, ajusta ambos paths/índices a artifacts existentes.""", size=(700, 240
 
 def build_confluence():
     wf = Workflow("60_h3_confluence_seam_repair", scale=0.22, offset=(90, 170))
-    note(wf, (-50, -520), """# CAUCE 60 · Confluence seam repair
+    note(wf, (-50, -520), """# CAUCE 60 · Confluence conditional repair
 
 Template para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade
-guards simétricos para formar 124 frames H3 y regenera sólo el último segundo de
-A + el primer segundo de B. El output reemplaza exactamente esos 48 frames:
-duración y frames exteriores permanecen intactos.
+guards simétricos para formar 124 frames H3 y repara el último segundo de A +
+el primer segundo de B con LanPaint. Un campo cosenoidal continuo controla la
+fuerza de generación; otro controla la opacidad final. El intervalo aceptado
+sigue siendo duro: duración y frames exteriores permanecen intactos.
 
-Antes de ejecutar, sube `gesture_a.mp4` y `gesture_b.mp4` o selecciónalos en los
-dos Load Video. Ambos necesitan al menos 60 frames a 24 fps.""", size=(820, 310))
+Requiere CAUCE y LanPaint v2.1.0 o posterior. Sube `gesture_a.mp4` y
+`gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps. El audio master
+no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(820, 310))
     left_video = wf.add("LoadVideo", (0, 0), ["gesture_a.mp4", "image"], title="Gesture A")
     right_video = wf.add("LoadVideo", (0, 340), ["gesture_b.mp4", "image"], title="Gesture B")
     left_parts = wf.add("GetVideoComponents", (330, 0))
@@ -731,12 +758,19 @@ dos Load Video. Ambos necesitan al menos 60 frames a 24 fps.""", size=(820, 310)
         "Repair only the masked temporal join. Preserve framing, visual content, and motion outside it. Generate one continuous gesture whose position, velocity, and acceleration connect the left state to the right state without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Audio is not part of this repair."
     ])
     encode = wf.add("VAEEncode", (2730, 390))
-    prepare = wf.add("CaucePrepareH3SeamRepair", (3100, 230), [6])
+    fields = wf.add("CauceConfluenceFields", (3100, 520), [12, 8, "cosine"])
+    prepare = wf.add(
+        "CaucePrepareH3SeamRepair", (3100, 230), [12, "cosine", "coverage"]
+    )
     noise = wf.add("RandomNoise", (3490, 0), [2026082201, "fixed"])
     guider = wf.add("BasicGuider", (3490, 150))
-    sample = wf.add("SamplerCustomAdvanced", (3810, 100))
-    decode = wf.add("VAEDecode", (4100, 100))
-    apply = wf.add("CauceApplySeamPatch", (4370, 100), [6])
+    sample = wf.add(
+        "LanPaint_SamplerCustomAdvanced",
+        (3810, 100),
+        [5, 5.0, 0.2, "Image First", "LanPaint Custom Sampler Adv.", "lanpaint_star_button"],
+    )
+    decode = wf.add("VAEDecode", (4210, 100))
+    apply = wf.add("CauceApplySeamPatch", (4470, 100), [8, "cosine"])
     joined_video = wf.add("CreateVideo", (4780, 0), [24.0, 8])
     joined_save = wf.add("SaveVideo", (5110, 0), [
         "cauce/demos/confluence_repaired_join", "mp4", "auto",
@@ -767,6 +801,9 @@ dos Load Video. Ambos necesitan al menos 60 frames a 24 fps.""", size=(820, 310)
     wf.connect(condition, "latent", prepare, "target_latent")
     wf.connect(encode, "LATENT", prepare, "encoded_video_latent")
     wf.connect(seam, "seam", prepare, "seam")
+    wf.connect(seam, "working_images", fields, "working_images")
+    wf.connect(seam, "seam", fields, "seam")
+    wf.connect(fields, "generation_strength", prepare, "generation_strength")
     wf.connect(stack["model"], "MODEL", guider, "model")
     wf.connect(condition, "positive", guider, "conditioning")
     wf.connect(noise, "NOISE", sample, "noise")
@@ -780,6 +817,7 @@ dos Load Video. Ambos necesitan al menos 60 frames a 24 fps.""", size=(820, 310)
     wf.connect(right_scale, "IMAGE", apply, "right_frames")
     wf.connect(decode, "IMAGE", apply, "repaired_working_images")
     wf.connect(seam, "seam", apply, "seam")
+    wf.connect(fields, "output_opacity", apply, "blend_strength")
     wf.connect(apply, "joined_images", joined_video, "images")
     wf.connect(joined_video, "VIDEO", joined_save, "video")
     wf.connect(apply, "repair_patch", patch_video, "images")
@@ -788,7 +826,7 @@ dos Load Video. Ambos necesitan al menos 60 frames a 24 fps.""", size=(820, 310)
     wf.group("SOURCES · NORMALIZE", (-40, -40, 890, 760))
     wf.group("CONFLUENCE WINDOW", (880, -40, 760, 600))
     wf.group("H3 MODEL + WORKING DOMAIN", (1640, -40, 1420, 960))
-    wf.group("MASKED SEAM REPAIR", (3060, -40, 1280, 620))
+    wf.group("CONDITIONAL SEAM REPAIR", (3060, -40, 1380, 800))
     wf.group("DURATION-PRESERVING SPLICE", (4330, -40, 1110, 620))
     return wf.data()
 
@@ -806,7 +844,6 @@ def api_fl2va():
         "4": {"class_type": "MiniMaxH3SigmaShift", "inputs": {"model": ["3", 0], "shift_video": 12.0, "shift_audio": 3.0}},
         "5": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors", "type": "minimax", "device": "default"}},
         "6": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_video_vae_fp16.safetensors"}},
-        "7": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_audio_vae_fp32.safetensors"}},
         "8": {"class_type": "LoadImage", "inputs": {"image": "{{window.first_frame}}"}},
         "9": {"class_type": "LoadImage", "inputs": {"image": "{{window.last_frame}}"}},
         "10": {"class_type": "CauceH3FL2VA", "inputs": {
@@ -820,9 +857,8 @@ def api_fl2va():
         "15": {"class_type": "SamplerCustomAdvanced", "inputs": {"noise": ["14", 0], "guider": ["11", 0], "sampler": ["12", 0], "sigmas": ["13", 0], "latent_image": ["10", 1]}},
         "16": {"class_type": "CauceResolveParentLatent", "inputs": {"latent": ["15", 0], "window": ["1", 0]}},
         "17": {"class_type": "VAEDecode", "inputs": {"samples": ["16", 0], "vae": ["6", 0]}},
-        "18": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["16", 0], "vae": ["7", 0]}},
-        "19": {"class_type": "CauceAcceptDecodedWindow", "inputs": {"images": ["17", 0], "window": ["1", 0], "audio": ["18", 0]}},
-        "20": {"class_type": "CreateVideo", "inputs": {"images": ["19", 0], "audio": ["19", 1], "fps": 24.0, "bit_depth": 8}},
+        "19": {"class_type": "CauceAcceptDecodedWindow", "inputs": {"images": ["17", 0], "window": ["1", 0]}},
+        "20": {"class_type": "CreateVideo", "inputs": {"images": ["19", 0], "fps": 24.0, "bit_depth": 8}},
         "21": {"class_type": "SaveVideo", "inputs": {"video": ["20", 0], "filename_prefix": "cauce/sequence/{{window.id}}", "format": "mp4", "codec": "auto"}},
         "22": {"class_type": "CauceRunReceipt", "inputs": {
             "artifact_id": "{{window.id}}", "window": ["1", 0], "profile": ["2", 0], "seed": "{{window.seed}}",
@@ -846,7 +882,6 @@ def api_continuation():
         "4": {"class_type": "MiniMaxH3SigmaShift", "inputs": {"model": ["3", 0], "shift_video": 12.0, "shift_audio": 3.0}},
         "5": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors", "type": "minimax", "device": "default"}},
         "6": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_video_vae_fp16.safetensors"}},
-        "7": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_audio_vae_fp32.safetensors"}},
         "8": {"class_type": "CauceH3FL2VA", "inputs": {
             "clip": ["5", 0], "vae": ["6", 0], "prompt": "{{window.prompt}}",
             "window": ["1", 0], "profile": ["2", 0], "first_frame": ["26", 0]
@@ -854,8 +889,7 @@ def api_continuation():
         "9": {"class_type": "CauceLoadAVLatent", "inputs": {"path_or_folder": "{{window.parent_latent}}", "artifact_index": 0}},
         "10": {"class_type": "CaucePrepareContinuation", "inputs": {
             "positive": ["8", 0], "target_latent": ["8", 1], "previous_latent": ["9", 0],
-            "context_frames": "{{window.context_frames}}", "audio_feather_ticks": 8,
-            "conditioning_mode": "mask_only"
+            "context_frames": "{{window.context_frames}}", "conditioning_mode": "mask_only"
         }},
         "11": {"class_type": "BasicGuider", "inputs": {"model": ["4", 0], "conditioning": ["10", 0]}},
         "12": {"class_type": "KSamplerSelect", "inputs": {"sampler_name": "res_multistep"}},
@@ -864,9 +898,8 @@ def api_continuation():
         "15": {"class_type": "SamplerCustomAdvanced", "inputs": {"noise": ["14", 0], "guider": ["11", 0], "sampler": ["12", 0], "sigmas": ["13", 0], "latent_image": ["10", 1]}},
         "16": {"class_type": "CauceResolveParentLatent", "inputs": {"latent": ["15", 0], "window": ["1", 0]}},
         "17": {"class_type": "VAEDecode", "inputs": {"samples": ["16", 0], "vae": ["6", 0]}},
-        "18": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["16", 0], "vae": ["7", 0]}},
-        "19": {"class_type": "CauceAcceptDecodedWindow", "inputs": {"images": ["17", 0], "window": ["1", 0], "audio": ["18", 0]}},
-        "20": {"class_type": "CreateVideo", "inputs": {"images": ["19", 0], "audio": ["19", 1], "fps": 24.0, "bit_depth": 8}},
+        "19": {"class_type": "CauceAcceptDecodedWindow", "inputs": {"images": ["17", 0], "window": ["1", 0]}},
+        "20": {"class_type": "CreateVideo", "inputs": {"images": ["19", 0], "fps": 24.0, "bit_depth": 8}},
         "21": {"class_type": "SaveVideo", "inputs": {"video": ["20", 0], "filename_prefix": "cauce/sequence/{{window.id}}", "format": "mp4", "codec": "auto"}},
         "22": {"class_type": "CauceRunReceipt", "inputs": {
             "artifact_id": "{{window.id}}", "window": ["1", 0], "profile": ["2", 0],

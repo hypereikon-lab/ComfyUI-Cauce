@@ -19,12 +19,8 @@ class CaucePrepareContinuation:
                 "target_latent": ("LATENT",),
                 "previous_latent": ("LATENT",),
                 "context_frames": (
-                    ["39", "90", "141", "192", "243", "294", "345"],
+                    [str(value) for value in range(5, 346, 17)],
                     {"default": "39"},
-                ),
-                "audio_feather_ticks": (
-                    "INT",
-                    {"default": 8, "min": 0, "max": 256, "step": 1},
                 ),
                 "conditioning_mode": (
                     ["mask_only", "mask_plus_guide"],
@@ -38,8 +34,8 @@ class CaucePrepareContinuation:
     FUNCTION = "prepare"
     CATEGORY = "CAUCE/Continuity"
     DESCRIPTION = (
-        "Copy and preserve a phase-aligned AV parent tail at the target head. "
-        "Native guide conditioning is available as an explicit experimental mode."
+        "Copy and preserve a phase-aligned visual parent tail at the target head. "
+        "H3's internal audio stream stays frozen and is not a production output."
     )
 
     def prepare(
@@ -48,7 +44,6 @@ class CaucePrepareContinuation:
         target_latent,
         previous_latent,
         context_frames,
-        audio_feather_ticks,
         conditioning_mode,
     ):
         return prepare_continuation(
@@ -56,7 +51,6 @@ class CaucePrepareContinuation:
             target_latent,
             previous_latent,
             context_frames=int(context_frames),
-            audio_feather_ticks=int(audio_feather_ticks),
             conditioning_mode=conditioning_mode,
         )
 
@@ -88,12 +82,8 @@ class CaucePrepareBridge:
                 "left_parent": ("LATENT",),
                 "right_parent": ("LATENT",),
                 "context_frames": (
-                    ["39", "90", "141", "192", "243", "294", "345"],
+                    [str(value) for value in range(5, 346, 17)],
                     {"default": "39"},
-                ),
-                "audio_feather_ticks": (
-                    "INT",
-                    {"default": 8, "min": 0, "max": 256, "step": 1},
                 ),
                 "conditioning_mode": (
                     ["mask_only", "mask_plus_guide"],
@@ -107,8 +97,8 @@ class CaucePrepareBridge:
     FUNCTION = "prepare"
     CATEGORY = "CAUCE/Continuity"
     DESCRIPTION = (
-        "Protect phase-aligned AV content at both ends of a target and generate "
-        "only the missing middle."
+        "Protect phase-aligned visual content at both ends of a target and generate "
+        "only the missing middle. H3's internal audio stream stays frozen."
     )
 
     def prepare(
@@ -118,7 +108,6 @@ class CaucePrepareBridge:
         left_parent,
         right_parent,
         context_frames,
-        audio_feather_ticks,
         conditioning_mode,
     ):
         return prepare_bridge(
@@ -127,7 +116,6 @@ class CaucePrepareBridge:
             left_parent,
             right_parent,
             context_frames=int(context_frames),
-            audio_feather_ticks=int(audio_feather_ticks),
             conditioning_mode=conditioning_mode,
         )
 
@@ -165,6 +153,6 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CaucePrepareContinuation": "CAUCE · Prepare H3 Continuation",
     "CauceResolveParentLatent": "CAUCE · Resolve Parent Latent",
-    "CaucePrepareBridge": "CAUCE · Prepare H3 AV Bridge",
+    "CaucePrepareBridge": "CAUCE · Prepare H3 Visual Bridge",
     "CauceAcceptDecodedWindow": "CAUCE · Accept Decoded Window",
 }

@@ -111,23 +111,24 @@ are committed as receipts and documented measurements.
 
 - Reject either input unless its reported frame rate is exactly 24 fps.
 - Reject either input when it is shorter than the requested context.
-- Confirm the default plan is 124 working frames, cut 62, repair `[38,86)`.
+- Confirm the default plan is 124 working frames, cut 62, sampling `[26,98)`,
+  and accepted repair `[38,86)`.
 - Confirm the VAE-encoded composite and FL2VA target have identical shapes.
-- Confirm `generation_strength` has exact zero endpoints, a full-strength core,
-  and no nonzero values outside `[repair_start,repair_end)`.
+- Confirm `sampling_support` is binary and has no nonzero values outside
+  `[sampling_start,sampling_end)`.
 - Confirm `hard_acceptance` is binary and exactly matches the replacement range.
 - Confirm `output_opacity` is independent from generation strength and also has
   exact zero endpoints.
-- Confirm coverage projection preserves multiple soft latent tokens; compare
-  against `peak` only as a diagnostic.
+- Confirm `cover` and `majority` projections both remain binary after causal
+  token projection.
 - Confirm the H3 internal audio mask is all zero, the master audio is never
   encoded, and no generated audio is accepted.
 - Confirm the splice replaces 48 frames and returns exactly `len(A) + len(B)`.
 - Checksum every frame outside the replacement range.
 - Compare position, velocity, acceleration, optical flow, and perceptual seam
   energy over five frames on both patch edges and around the original cut.
-- Compare transition widths of 6, 12 and 18 frames while keeping the accepted
-  one-second-per-side repair range fixed.
+- Compare decoded blend widths of 4, 8 and 12 frames while keeping the accepted
+  one-second-per-side repair range and 12-frame sampling overscan fixed.
 - Compare standard masked sampling against LanPaint conditional sampling with
   identical source, prompt, seed, profile, outer steps and repair fields.
 - Verify graph execution synthetically, then promote only after the exact real

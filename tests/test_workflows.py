@@ -93,7 +93,7 @@ class VisualWorkflowTests(unittest.TestCase):
         build = next(
             node for node in workflow["nodes"] if node["type"] == "CauceBuildSeamWindow"
         )
-        self.assertEqual(build["widgets_values"], [2.5, 1.0, 362])
+        self.assertEqual(build["widgets_values"], [2.5, 1.0, 0.5, 362])
         scales = [node for node in workflow["nodes"] if node["type"] == "ImageScale"]
         self.assertEqual(len(scales), 2)
         self.assertTrue(
@@ -102,13 +102,13 @@ class VisualWorkflowTests(unittest.TestCase):
         fields = next(
             node for node in workflow["nodes"] if node["type"] == "CauceConfluenceFields"
         )
-        self.assertEqual(fields["widgets_values"], [12, 8, "cosine"])
+        self.assertEqual(fields["widgets_values"], [8, "cosine"])
         prepare = next(
             node
             for node in workflow["nodes"]
             if node["type"] == "CaucePrepareH3SeamRepair"
         )
-        self.assertEqual(prepare["widgets_values"], [12, "cosine", "coverage"])
+        self.assertEqual(prepare["widgets_values"], ["cover", 0.5])
 
     def test_demo_assets_exist_and_are_bounded(self):
         assets = ROOT / "examples" / "assets"

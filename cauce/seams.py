@@ -36,7 +36,7 @@ def _concat_image_batches(parts: list[Any]):
 
 
 MASK_CURVES = ("cosine", "smoothstep", "linear")
-TOKEN_PROJECTIONS = ("coverage", "peak")
+TOKEN_PROJECTIONS = ("cover", "majority")
 
 
 def _curve_value(value: float, curve: str) -> float:
@@ -137,18 +137,34 @@ def make_seam_plan(
     *,
     context_seconds_per_side: float = 2.5,
     repair_seconds_per_side: float = 1.0,
+    sampling_overscan_seconds_per_side: float = 0.5,
     maximum_frames: int = 362,
 ) -> dict[str, Any]:
-    """Resolve a symmetric decoded seam window onto an exact H3 frame run."""
+    """Resolve one seam into separate sampling and accepted-output regions.
+
+    ``repair`` is the patch that may enter the production result. ``overscan``
+    opens a wider binary LanPaint region around it, so the accepted patch does
+    not touch the conditional sampler's hard boundary.
+    """
 
     left_count = int(left_frame_count)
     right_count = int(right_frame_count)
     context = seconds_to_frames(context_seconds_per_side, H3_FPS, "nearest")
     repair = seconds_to_frames(repair_seconds_per_side, H3_FPS, "nearest")
+    overscan = seconds_to_frames(
+        sampling_overscan_seconds_per_side, H3_FPS, "nearest"
+    )
+    sampling = repair + overscan
     if context < 1 or repair < 1:
         raise ValueError("context and repair durations must resolve to at least one frame")
+    if overscan < 0:
+        raise ValueError("sampling overscan cannot be negative")
     if repair >= context:
         raise ValueError("repair duration per side must be shorter than context per side")
+    if sampling >= context:
+        raise ValueError(
+            "repair plus sampling overscan must be shorter than context per side"
+        )
     if left_count < context or right_count < context:
         raise ValueError(
             "each source needs at least "
@@ -171,6 +187,8 @@ def make_seam_plan(
     cut = guard + context
     repair_start = cut - repair
     repair_end = cut + repair
+    sampling_start = cut - sampling
+    sampling_end = cut + sampling
     accepted_start = guard
     accepted_end = guard + real_frames
     plan = {
@@ -180,18 +198,24 @@ def make_seam_plan(
         "right_total_frames": right_count,
         "context_frames_per_side": context,
         "repair_frames_per_side": repair,
+        "sampling_overscan_frames_per_side": overscan,
+        "sampling_frames_per_side": sampling,
         "working_frames": working_frames,
         "guard_frames_per_side": guard,
         "cut_frame": cut,
         "repair_start_frame": repair_start,
         "repair_end_frame": repair_end,
         "repair_total_frames": repair * 2,
+        "sampling_start_frame": sampling_start,
+        "sampling_end_frame": sampling_end,
+        "sampling_total_frames": sampling * 2,
         "accepted_start_frame": accepted_start,
         "accepted_end_frame": accepted_end,
         "accepted_frames": real_frames,
         "working_duration_seconds": float(frames_to_seconds(working_frames)),
         "accepted_duration_seconds": float(frames_to_seconds(real_frames)),
         "repair_duration_seconds": float(frames_to_seconds(repair * 2)),
+        "sampling_duration_seconds": float(frames_to_seconds(sampling * 2)),
         "left_source_start_frame": left_count - context,
         "right_source_end_frame": context,
     }
@@ -254,28 +278,42 @@ def build_seam_window(left_frames: Any, right_frames: Any, plan: dict[str, Any])
 
 def seam_video_token_values(
     plan: dict[str, Any],
-    feather_frames: int = 12,
-    curve: str = "cosine",
-    projection: str = "coverage",
+    projection: str = "cover",
+    generation_support: Any = None,
+    threshold: float = 0.5,
 ) -> tuple[float, ...]:
-    """Project a continuous temporal generation field onto H3 visual tokens."""
+    """Project a visible field to the binary support required by LanPaint.
+
+    LanPaint thresholds its denoise mask internally. CAUCE therefore performs
+    that decision explicitly and reports it instead of pretending that a soft
+    sampling opacity survives into the conditional sampler.
+    """
 
     _validate_seam(plan)
     if projection not in TOKEN_PROJECTIONS:
         raise ValueError(f"token projection must be one of {', '.join(TOKEN_PROJECTIONS)}")
-    start = int(plan["repair_start_frame"])
-    end = int(plan["repair_end_frame"])
-    strengths = [0.0] * int(plan["working_frames"])
-    strengths[start:end] = _symmetric_weights(end - start, feather_frames, curve)
+    if not 0.0 <= float(threshold) <= 1.0:
+        raise ValueError("sampling threshold must lie in [0, 1]")
+    frames = int(plan["working_frames"])
+    if generation_support is None:
+        strengths = [0.0] * frames
+        start = int(plan["sampling_start_frame"])
+        end = int(plan["sampling_end_frame"])
+        strengths[start:end] = [1.0] * (end - start)
+    else:
+        if len(generation_support) != frames:
+            raise ValueError("generation support must match the working frame count")
+        strengths = [min(1.0, max(0.0, float(value))) for value in generation_support]
     values = []
     for token_start, token_end in visual_token_spans(
         h3_visual_latent_frames(int(plan["working_frames"]))
     ):
         support = strengths[token_start:token_end]
-        if projection == "peak":
-            values.append(max(support, default=0.0))
+        coverage = sum(value >= float(threshold) for value in support)
+        if projection == "cover":
+            values.append(1.0 if coverage > 0 else 0.0)
         else:
-            values.append(sum(support) / len(support) if support else 0.0)
+            values.append(1.0 if support and coverage * 2 >= len(support) else 0.0)
     if visual_token_spans(len(values))[-1][1] != int(plan["working_frames"]):
         raise RuntimeError("seam mask and H3 token geometry disagree")
     return tuple(values)
@@ -284,20 +322,21 @@ def seam_video_token_values(
 def seam_visible_frame_values(
     plan: dict[str, Any],
     *,
-    latent_transition_frames: int = 12,
     decoded_blend_frames: int = 8,
     curve: str = "cosine",
 ) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
-    """Return the three one-dimensional Confluence fields without tensors."""
+    """Return binary sampling/acceptance and soft decoded opacity fields."""
 
     _validate_seam(plan)
     frames = int(plan["working_frames"])
     start = int(plan["repair_start_frame"])
     end = int(plan["repair_end_frame"])
+    sampling_start = int(plan["sampling_start_frame"])
+    sampling_end = int(plan["sampling_end_frame"])
 
     sampling_values = [0.0] * frames
-    sampling_values[start:end] = _symmetric_weights(
-        end - start, latent_transition_frames, curve
+    sampling_values[sampling_start:sampling_end] = [1.0] * (
+        sampling_end - sampling_start
     )
     acceptance_values = [0.0] * frames
     acceptance_values[start:end] = [1.0] * (end - start)
@@ -310,7 +349,6 @@ def seam_visible_fields(
     working_images: Any,
     plan: dict[str, Any],
     *,
-    latent_transition_frames: int = 12,
     decoded_blend_frames: int = 8,
     curve: str = "cosine",
 ):
@@ -325,7 +363,6 @@ def seam_visible_fields(
     end = int(plan["repair_end_frame"])
     sampling_values, acceptance_values, blend_values = seam_visible_frame_values(
         plan,
-        latent_transition_frames=latent_transition_frames,
         decoded_blend_frames=decoded_blend_frames,
         curve=curve,
     )
@@ -367,9 +404,13 @@ def seam_visible_fields(
         "schema": "cauce.confluence-fields/1",
         "seam_hash": plan["hash"],
         "curve": curve,
-        "latent_transition_frames": int(latent_transition_frames),
         "decoded_blend_frames": int(decoded_blend_frames),
         "sampling_mean": sampling_mean,
+        "sampling_mode": "binary_lanpaint_support",
+        "sampling_range": [
+            int(plan["sampling_start_frame"]),
+            int(plan["sampling_end_frame"]),
+        ],
         "acceptance_frames": end - start,
         "hard_acceptance_range": [start, end],
     }
@@ -381,8 +422,9 @@ def _project_visible_strength(
     plan: dict[str, Any],
     video: Any,
     projection: str,
+    threshold: float,
 ):
-    """Project an arbitrary visible MASK while keeping the repair interval closed."""
+    """Project an arbitrary visible MASK to explicit binary H3 support."""
 
     import torch
 
@@ -396,16 +438,15 @@ def _project_visible_strength(
         int(video.shape[4]),
     ).to(device=video.device, dtype=torch.float32)
     hard = torch.zeros((frames, 1, 1), dtype=torch.float32, device=video.device)
-    hard[
-        int(plan["repair_start_frame"]) : int(plan["repair_end_frame"])
-    ] = 1.0
-    mask = mask * hard
+    hard[int(plan["sampling_start_frame"]) : int(plan["sampling_end_frame"])] = 1.0
+    mask = (mask * hard >= float(threshold)).to(dtype=torch.float32)
     reduced = []
     for token_start, token_end in visual_token_spans(int(video.shape[2])):
         support = mask[token_start:token_end]
-        reduced.append(
-            support.amax(dim=0) if projection == "peak" else support.mean(dim=0)
-        )
+        if projection == "cover":
+            reduced.append(support.amax(dim=0))
+        else:
+            reduced.append((support.mean(dim=0) >= 0.5).to(dtype=torch.float32))
     return torch.stack(reduced, dim=0)
 
 
@@ -445,10 +486,9 @@ def prepare_h3_seam_repair(
     encoded_video_latent: dict[str, Any],
     plan: dict[str, Any],
     *,
-    feather_frames: int = 12,
-    curve: str = "cosine",
-    projection: str = "coverage",
-    generation_strength: Any = None,
+    projection: str = "cover",
+    sampling_threshold: float = 0.5,
+    generation_support: Any = None,
 ):
     """Inject one encoded video domain and denoise only its central seam."""
 
@@ -471,8 +511,10 @@ def prepare_h3_seam_repair(
         )
     video = encoded_video.to(device=target_video.device, dtype=target_video.dtype).clone()
     audio = target_audio.clone()
-    if generation_strength is None:
-        token_values = seam_video_token_values(plan, feather_frames, curve, projection)
+    if generation_support is None:
+        token_values = seam_video_token_values(
+            plan, projection=projection, threshold=sampling_threshold
+        )
         video_mask = torch.tensor(
             token_values, dtype=torch.float32, device=video.device
         ).view(1, 1, int(video.shape[2]), 1, 1)
@@ -483,9 +525,11 @@ def prepare_h3_seam_repair(
             int(video.shape[3]),
             int(video.shape[4]),
         ).clone()
-        field_source = "generated_temporal_field"
+        field_source = "plan_binary_overscan"
     else:
-        projected = _project_visible_strength(generation_strength, plan, video, projection)
+        projected = _project_visible_strength(
+            generation_support, plan, video, projection, sampling_threshold
+        )
         video_mask = projected.unsqueeze(0).unsqueeze(0).expand(
             int(video.shape[0]),
             1,
@@ -509,13 +553,15 @@ def prepare_h3_seam_repair(
         "working_frames": int(plan["working_frames"]),
         "repair_start_frame": int(plan["repair_start_frame"]),
         "repair_end_frame": int(plan["repair_end_frame"]),
-        "transition_frames": int(feather_frames),
-        "curve": curve,
+        "sampling_start_frame": int(plan["sampling_start_frame"]),
+        "sampling_end_frame": int(plan["sampling_end_frame"]),
         "token_projection": projection,
+        "sampling_threshold": float(sampling_threshold),
+        "sampling_mask_mode": "binary_required_by_lanpaint",
         "field_source": field_source,
         "video_generate_tokens": sum(value > 0.0 for value in token_values),
         "video_full_generate_tokens": sum(value >= 1.0 - 1e-6 for value in token_values),
-        "video_soft_tokens": sum(1e-6 < value < 1.0 - 1e-6 for value in token_values),
+        "video_soft_tokens": 0,
         "video_token_values": list(token_values),
         "audio_mode": "internal-zero-mask-discarded",
         "acceptance_mode": "hard-decoded-splice",

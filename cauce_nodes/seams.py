@@ -36,6 +36,10 @@ class CauceBuildSeamWindow:
                     "FLOAT",
                     {"default": 1.0, "min": 1 / 24, "max": 5.0, "step": 1 / 24},
                 ),
+                "sampling_overscan_seconds_per_side": (
+                    "FLOAT",
+                    {"default": 0.5, "min": 0.0, "max": 2.0, "step": 1 / 24},
+                ),
                 "maximum_frames": (
                     "INT",
                     {"default": 362, "min": 124, "max": 362, "step": 17},
@@ -61,6 +65,7 @@ class CauceBuildSeamWindow:
         right_fps,
         context_seconds_per_side,
         repair_seconds_per_side,
+        sampling_overscan_seconds_per_side,
         maximum_frames,
     ):
         if abs(float(left_fps) - 24.0) > 1e-3 or abs(float(right_fps) - 24.0) > 1e-3:
@@ -70,6 +75,7 @@ class CauceBuildSeamWindow:
             int(right_frames.shape[0]),
             context_seconds_per_side=context_seconds_per_side,
             repair_seconds_per_side=repair_seconds_per_side,
+            sampling_overscan_seconds_per_side=sampling_overscan_seconds_per_side,
             maximum_frames=maximum_frames,
         )
         working = build_seam_window(left_frames, right_frames, plan)
@@ -85,15 +91,14 @@ class CaucePrepareH3SeamRepair:
                 "target_latent": ("LATENT",),
                 "encoded_video_latent": ("LATENT",),
                 "seam": ("CAUCE_SEAM",),
-                "latent_transition_frames": (
-                    "INT",
-                    {"default": 12, "min": 0, "max": 48, "step": 1},
-                ),
-                "mask_curve": (MASK_CURVES,),
                 "token_projection": (TOKEN_PROJECTIONS,),
+                "sampling_threshold": (
+                    "FLOAT",
+                    {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
             },
             "optional": {
-                "generation_strength": ("MASK",),
+                "generation_support": ("MASK",),
             }
         }
 
@@ -102,9 +107,9 @@ class CaucePrepareH3SeamRepair:
     FUNCTION = "prepare"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Inject the encoded video domain into H3 and attach a continuous generation "
-        "strength field. A connected MASK may vary arbitrarily over space and time; "
-        "the hard accepted interval still prevents changes outside the repair."
+        "Inject the encoded video domain into H3 and attach explicit binary LanPaint "
+        "support. Sampling overscan surrounds the smaller accepted repair so sampler "
+        "boundary artifacts cannot enter the final splice."
     )
 
     def prepare(
@@ -112,19 +117,17 @@ class CaucePrepareH3SeamRepair:
         target_latent,
         encoded_video_latent,
         seam,
-        latent_transition_frames=12,
-        mask_curve="cosine",
-        token_projection="coverage",
-        generation_strength=None,
+        token_projection="cover",
+        sampling_threshold=0.5,
+        generation_support=None,
     ):
         latent, report = prepare_h3_seam_repair(
             target_latent,
             encoded_video_latent,
             seam,
-            feather_frames=latent_transition_frames,
-            curve=mask_curve,
             projection=token_projection,
-            generation_strength=generation_strength,
+            sampling_threshold=sampling_threshold,
+            generation_support=generation_support,
         )
         return latent, json.dumps(report, ensure_ascii=False, indent=2)
 
@@ -136,10 +139,6 @@ class CauceConfluenceFields:
             "required": {
                 "working_images": ("IMAGE",),
                 "seam": ("CAUCE_SEAM",),
-                "latent_transition_frames": (
-                    "INT",
-                    {"default": 12, "min": 0, "max": 48, "step": 1},
-                ),
                 "decoded_blend_frames": (
                     "INT",
                     {"default": 8, "min": 0, "max": 48, "step": 1},
@@ -150,7 +149,7 @@ class CauceConfluenceFields:
 
     RETURN_TYPES = ("MASK", "MASK", "MASK", "STRING")
     RETURN_NAMES = (
-        "generation_strength",
+        "sampling_support",
         "hard_acceptance",
         "output_opacity",
         "field_report",
@@ -158,23 +157,21 @@ class CauceConfluenceFields:
     FUNCTION = "build"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Compile three separate temporal fields: soft sampling strength, the hard "
-        "accepted repair interval, and decoded output opacity. The masks remain "
-        "ordinary Comfy MASK data and may be previewed or replaced."
+        "Compile binary LanPaint sampling support, the smaller hard accepted interval, "
+        "and a soft decoded output opacity. Only output opacity is continuous because "
+        "LanPaint thresholds its denoise mask internally."
     )
 
     def build(
         self,
         working_images,
         seam,
-        latent_transition_frames,
         decoded_blend_frames,
         curve,
     ):
         generation, acceptance, opacity, report = seam_visible_fields(
             working_images,
             seam,
-            latent_transition_frames=latent_transition_frames,
             decoded_blend_frames=decoded_blend_frames,
             curve=curve,
         )

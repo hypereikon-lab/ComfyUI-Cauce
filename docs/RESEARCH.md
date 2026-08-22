@@ -63,16 +63,18 @@ Sources reviewed for the replacement:
 The replacement keeps three different mathematical objects:
 
 ```text
-sampling strength s(t,x,y) ∈ [0,1]
+sampling support  s(t,x,y) ∈ {0,1}
 hard accepted interval       a(t) ∈ {0,1}
 decoded output opacity       o(t,x,y) ∈ [0,1]
 ```
 
 These fields must not be collapsed into one mask. `s` controls the conditional
 sampler, `a` controls what may enter the production result, and `o` composites
-the accepted decoded proposal with the two source clips. The default `s` and
-`o` are raised cosines, while either can be replaced by arbitrary Comfy `MASK`
-data. H3 audio remains a zero-masked structural stream and is discarded; the
+the accepted decoded proposal with the two source clips. LanPaint thresholds
+its denoise mask internally, so CAUCE represents `s` honestly as binary support
+with temporal overscan around `a`; only `o` is a raised cosine. Either support
+or opacity may still be replaced by ordinary Comfy `MASK` data at its relevant
+stage. H3 audio remains a zero-masked structural stream and is discarded; the
 fixed master soundtrack is not encoded or conditioned through this path.
 
 CAUCE does not copy LanPaint code. Workflow 60 depends on its public node

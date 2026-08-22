@@ -152,7 +152,7 @@ one causal VAE domain:
 ```text
 duplicate guard + tail(A) + head(B) + duplicate guard
   → one H3 video latent
-  → continuous generation-strength field
+  → binary LanPaint sampling support with overscan
   → training-free conditional sampler
   → decode one repaired working domain
   → accept only the central patch
@@ -167,8 +167,9 @@ cut is frame 62 of that working domain and the repair spans `[38,86)`: the last
 
 Confluence deliberately separates three fields:
 
-1. `generation_strength` is continuous in `[0,1]` and controls conditional
-   sampling. Its default is a raised cosine with 12-frame transitions.
+1. `sampling_support` is binary and controls conditional sampling. It extends
+   12 decoded frames beyond each accepted edge by default, keeping LanPaint's
+   hard mask boundary outside the patch that can enter production.
 2. `hard_acceptance` is binary and defines the only decoded interval that can
    enter the result. It is not passed as an opacity heuristic.
 3. `output_opacity` is a second continuous field used after decode to merge the
@@ -185,12 +186,13 @@ where `d` is distance from the nearest repair boundary. The first and last
 accepted frames therefore have opacity zero, the interior reaches one, and the
 derivative vanishes at both ends.
 
-Visible strengths are projected onto each causal visual-token support using
-mean coverage rather than `amax`. `amax` remains an explicit `peak` diagnostic
-mode, but it expands a small visible value across an entire four-frame token
-and destroys much of the intended gradient. An arbitrary connected Comfy
-`MASK` may replace the default field; it is still multiplied by the binary
-repair interval before latent projection.
+LanPaint converts its denoise mask to `(mask > 0.5)` inside the sampler. A soft
+sampling mask therefore does not survive that boundary. CAUCE makes this
+constraint explicit: `cover` opens a causal visual token when any selected
+visible frame overlaps it; `majority` requires half its support. An arbitrary
+connected Comfy `MASK` may replace the default support, but it is thresholded
+and clipped to the overscan range before latent projection. The continuous
+gradient belongs to decoded compositing, where it is mathematically preserved.
 
 The old standard masked sampler proved only that the graph could execute and
 failed the first heterogeneous real-gesture test. Workflow 60 now delegates

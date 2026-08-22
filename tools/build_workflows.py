@@ -232,7 +232,9 @@ SPECS = {
             L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
             L("left_fps", "FLOAT"), L("right_fps", "FLOAT"),
             W("context_seconds_per_side", "FLOAT"),
-            W("repair_seconds_per_side", "FLOAT"), W("maximum_frames", "INT"),
+            W("repair_seconds_per_side", "FLOAT"),
+            W("sampling_overscan_seconds_per_side", "FLOAT"),
+            W("maximum_frames", "INT"),
         ],
         [
             ("working_images", "IMAGE"), ("seam", "CAUCE_SEAM"),
@@ -243,20 +245,19 @@ SPECS = {
     "CaucePrepareH3SeamRepair": (
         [
             L("target_latent", "LATENT"), L("encoded_video_latent", "LATENT"),
-            L("seam", "CAUCE_SEAM"), W("latent_transition_frames", "INT"),
-            W("mask_curve", "COMBO"), W("token_projection", "COMBO"),
-            L("generation_strength", "MASK", True),
+            L("seam", "CAUCE_SEAM"), W("token_projection", "COMBO"),
+            W("sampling_threshold", "FLOAT"),
+            L("generation_support", "MASK", True),
         ],
         [("masked_latent", "LATENT"), ("mask_report", "STRING")], [350, 190],
     ),
     "CauceConfluenceFields": (
         [
             L("working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
-            W("latent_transition_frames", "INT"), W("decoded_blend_frames", "INT"),
-            W("curve", "COMBO"),
+            W("decoded_blend_frames", "INT"), W("curve", "COMBO"),
         ],
         [
-            ("generation_strength", "MASK"), ("hard_acceptance", "MASK"),
+            ("sampling_support", "MASK"), ("hard_acceptance", "MASK"),
             ("output_opacity", "MASK"), ("field_report", "STRING"),
         ],
         [350, 170],
@@ -735,10 +736,11 @@ def build_confluence():
     note(wf, (-50, -520), """# CAUCE 60 · Confluence conditional repair
 
 Template para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade
-guards simétricos para formar 124 frames H3 y repara el último segundo de A +
-el primer segundo de B con LanPaint. Un campo cosenoidal continuo controla la
-fuerza de generación; otro controla la opacidad final. El intervalo aceptado
-sigue siendo duro: duración y frames exteriores permanecen intactos.
+guards simétricos para formar 124 frames H3. LanPaint muestrea una región binaria
+de 1,5 s por lado, pero CAUCE acepta sólo el último segundo de A + el primero de
+B. Ese overscan mantiene el borde duro del sampler fuera del parche aceptado;
+una opacidad cosenoidal suaviza el splice final. Duración y frames exteriores
+permanecen intactos.
 
 Requiere CAUCE y LanPaint v2.1.0 o posterior. Sube `gesture_a.mp4` y
 `gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps. El audio master
@@ -749,7 +751,7 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
     right_parts = wf.add("GetVideoComponents", (330, 340))
     left_scale = wf.add("ImageScale", (590, 0), ["lanczos", 640, 640, "center"])
     right_scale = wf.add("ImageScale", (590, 340), ["lanczos", 640, 640, "center"])
-    seam = wf.add("CauceBuildSeamWindow", (930, 150), [2.5, 1.0, 362])
+    seam = wf.add("CauceBuildSeamWindow", (930, 150), [2.5, 1.0, 0.5, 362])
     first = wf.add("CauceSelectImageFrame", (1320, 0), [0], title="Working first frame")
     last = wf.add("CauceSelectImageFrame", (1320, 340), [-1], title="Working last frame")
     profile = wf.add("CauceExecutionProfile", (1680, 650), ["h3-5090-fl2va-640"])
@@ -758,9 +760,9 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
         "Repair only the masked temporal join. Preserve framing, visual content, and motion outside it. Generate one continuous gesture whose position, velocity, and acceleration connect the left state to the right state without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Audio is not part of this repair."
     ])
     encode = wf.add("VAEEncode", (2730, 390))
-    fields = wf.add("CauceConfluenceFields", (3100, 520), [12, 8, "cosine"])
+    fields = wf.add("CauceConfluenceFields", (3100, 520), [8, "cosine"])
     prepare = wf.add(
-        "CaucePrepareH3SeamRepair", (3100, 230), [12, "cosine", "coverage"]
+        "CaucePrepareH3SeamRepair", (3100, 230), ["cover", 0.5]
     )
     noise = wf.add("RandomNoise", (3490, 0), [2026082201, "fixed"])
     guider = wf.add("BasicGuider", (3490, 150))
@@ -803,7 +805,7 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
     wf.connect(seam, "seam", prepare, "seam")
     wf.connect(seam, "working_images", fields, "working_images")
     wf.connect(seam, "seam", fields, "seam")
-    wf.connect(fields, "generation_strength", prepare, "generation_strength")
+    wf.connect(fields, "sampling_support", prepare, "generation_support")
     wf.connect(stack["model"], "MODEL", guider, "model")
     wf.connect(condition, "positive", guider, "conditioning")
     wf.connect(noise, "NOISE", sample, "noise")

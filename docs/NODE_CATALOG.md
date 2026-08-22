@@ -105,13 +105,12 @@ the batch is an exact H3 run, and returns both the seam plan and its matching
 `CAUCE_WINDOW`. At the default 24 fps settings this is
 `2 guards + 60 A + 60 B + 2 guards = 124` frames.
 
-`Confluence Fields` emits three ordinary Comfy `MASK` tensors: continuous
-generation strength, binary hard acceptance, and continuous output opacity.
-The default curve is raised cosine, but any arbitrary spatial/temporal `MASK`
-can be connected to the prepare and apply nodes. The prepare node projects the
-visible field onto the actual causal-token supports and attaches it to the H3
-latent. The apply node accepts only the repaired inner patch, blends it through
-the independent output-opacity field, and returns `A + B` with exactly the
+`Confluence Fields` emits three ordinary Comfy `MASK` tensors: binary sampling
+support, binary hard acceptance, and continuous output opacity. Sampling uses a
+configurable overscan outside the accepted patch because LanPaint thresholds
+its mask internally. The prepare node projects that support onto actual causal
+visual tokens; the apply node accepts only the repaired inner patch, blends it
+through the raised-cosine output opacity, and returns `A + B` with exactly the
 original combined frame count. Frames outside the replacement interval are
 copied without interpretation or change.
 

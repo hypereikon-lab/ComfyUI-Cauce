@@ -31,9 +31,9 @@ continuation have executed successfully on the live lab RTX 5090. Mask-only
 continuation also executes, but its first visual seam failed the quality gate;
 the shipped hybrid workflow passed that visual comparison. The original
 standard-masked Confluence completed end-to-end synthetically but failed on
-real gesture pairs. Confluence now uses separate continuous sampling/output
-fields and the training-free LanPaint conditional sampler; live promotion is
-pending on the same gesture pairs.
+real gesture pairs. Confluence now uses binary LanPaint sampling overscan around
+a smaller accepted patch plus a continuous decoded-output opacity; live
+promotion is pending on the same gesture pairs.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.
@@ -95,8 +95,8 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
   never a source of generative audio.
 - **CAUCE / Continuity** — phase-safe visual parents, masked continuation, and
   exact decoded acceptance; H3 audio rows stay frozen.
-- **CAUCE / Seams** — decoded-domain confluence windows, continuous confidence
-  fields, conditional H3 video inpainting, and duration-preserving replacement.
+- **CAUCE / Seams** — decoded-domain confluence windows, explicit sampling and
+  acceptance regions, soft output opacity, and duration-preserving replacement.
 - **CAUCE / Artifacts** — receipts and atomic nested AV latent save/load.
 - **CAUCE / Runtime** — bounded 5090 profiles and read-only preflight.
 

@@ -22,7 +22,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "# CAUCE 60 · Confluence conditional repair\n\nTemplate para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade\nguards simétricos para formar 124 frames H3 y repara el último segundo de A +\nel primer segundo de B con LanPaint. Un campo cosenoidal continuo controla la\nfuerza de generación; otro controla la opacidad final. El intervalo aceptado\nsigue siendo duro: duración y frames exteriores permanecen intactos.\n\nRequiere CAUCE y LanPaint v2.1.0 o posterior. Sube `gesture_a.mp4` y\n`gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps. El audio master\nno entra a este workflow ni se reemplaza con audio generado por H3."
+        "# CAUCE 60 · Confluence conditional repair\n\nTemplate para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade\nguards simétricos para formar 124 frames H3. LanPaint muestrea una región binaria\nde 1,5 s por lado, pero CAUCE acepta sólo el último segundo de A + el primero de\nB. Ese overscan mantiene el borde duro del sampler fuera del parche aceptado;\nuna opacidad cosenoidal suaviza el splice final. Duración y frames exteriores\npermanecen intactos.\n\nRequiere CAUCE y LanPaint v2.1.0 o posterior. Sube `gesture_a.mp4` y\n`gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps. El audio master\nno entra a este workflow ni se reemplaza con audio generado por H3."
       ],
       "color": "#24382a",
       "bgcolor": "#132019"
@@ -467,6 +467,15 @@
           }
         },
         {
+          "localized_name": "sampling_overscan_seconds_per_side",
+          "name": "sampling_overscan_seconds_per_side",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "sampling_overscan_seconds_per_side"
+          }
+        },
+        {
           "localized_name": "maximum_frames",
           "name": "maximum_frames",
           "type": "INT",
@@ -520,6 +529,7 @@
       "widgets_values": [
         2.5,
         1.0,
+        0.5,
         362
       ]
     },
@@ -1231,15 +1241,6 @@
           "link": 25
         },
         {
-          "localized_name": "latent_transition_frames",
-          "name": "latent_transition_frames",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "latent_transition_frames"
-          }
-        },
-        {
           "localized_name": "decoded_blend_frames",
           "name": "decoded_blend_frames",
           "type": "INT",
@@ -1260,8 +1261,8 @@
       ],
       "outputs": [
         {
-          "localized_name": "generation_strength",
-          "name": "generation_strength",
+          "localized_name": "sampling_support",
+          "name": "sampling_support",
           "type": "MASK",
           "links": [
             26
@@ -1293,7 +1294,6 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        12,
         8,
         "cosine"
       ]
@@ -1332,24 +1332,6 @@
           "link": 23
         },
         {
-          "localized_name": "latent_transition_frames",
-          "name": "latent_transition_frames",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "latent_transition_frames"
-          }
-        },
-        {
-          "localized_name": "mask_curve",
-          "name": "mask_curve",
-          "type": "COMBO",
-          "link": null,
-          "widget": {
-            "name": "mask_curve"
-          }
-        },
-        {
           "localized_name": "token_projection",
           "name": "token_projection",
           "type": "COMBO",
@@ -1359,8 +1341,17 @@
           }
         },
         {
-          "localized_name": "generation_strength",
-          "name": "generation_strength",
+          "localized_name": "sampling_threshold",
+          "name": "sampling_threshold",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "sampling_threshold"
+          }
+        },
+        {
+          "localized_name": "generation_support",
+          "name": "generation_support",
           "type": "MASK",
           "link": 26,
           "shape": 7
@@ -1387,9 +1378,8 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        12,
-        "cosine",
-        "coverage"
+        "cover",
+        0.5
       ]
     },
     {
@@ -2176,7 +2166,7 @@
       20,
       0,
       21,
-      6,
+      5,
       "MASK"
     ],
     [

@@ -191,7 +191,8 @@ A: últimos 60 frames ┐
 B: primeros 60 frames┘
 
 corte working: frame 62
-región generable: [38, 86) = 48 frames = 2 s
+sampling LanPaint: [26, 98) = 72 frames = 3 s
+parche aceptado: [38, 86) = 48 frames = 2 s
 output: len(A) + len(B), sin cambio de duración
 ```
 
@@ -199,15 +200,18 @@ H3 ve first/last frames del working domain y el prompt arbitrario. `CAUCE ·
 Confluence Fields` produce tres `MASK` comunes e inspeccionables:
 
 ```text
-generation_strength  → fuerza continua del sampler
+sampling_support     → soporte binario del sampler, con overscan
 hard_acceptance      → intervalo binario permitido
 output_opacity       → mezcla decodificada del parche
 ```
 
-El preset usa una curva cosenoidal, 12 frames de transición latente y ocho de
-blend decodificado. El valor parte exactamente en cero, alcanza uno en el
-interior y vuelve a cero. La proyección a tokens H3 usa cobertura promedio para
-conservar esa información gradual; `peak` queda sólo para comparación.
+LanPaint binariza internamente el denoise mask con un umbral de 0,5; por eso una
+curva suave de sampling no llegaría intacta al sampler. El preset lo representa
+sin ambigüedad: abre una región binaria 12 frames más ancha por cada lado que el
+parche aceptado y la proyecta a tokens H3 con modo `cover`. Esos bordes de
+sampling nunca entran al resultado. Después del decode, `output_opacity` sí usa
+una curva cosenoidal continua de ocho frames: parte exactamente en cero, llega
+a uno en el interior y vuelve a cero.
 
 El sampler estándar anterior ejecutó correctamente, pero falló cualitativamente
 con gestos reales. Este workflow requiere [LanPaint v2.1.0 o
@@ -223,9 +227,10 @@ sino una imposibilidad topológica.
 El JSON contiene `gesture_a.mp4` y `gesture_b.mp4` como placeholders. Cada clip
 debe tener al menos 60 frames y ambos deben ser exactamente 24 fps. La primera
 validación cualitativa deberá cubrir gestos con distinta posición, velocidad y
-aceleración en el corte; probar 0,5, 1 y 1,5 s por lado antes de adoptar 1 s como
-preset definitivo. La resolución queda normalizada a 640×640 para el envelope
-verificado de la 5090.
+aceleración en el corte. Mantener inicialmente el parche aceptado en 1 s por
+lado y comparar overscan de 0,25, 0,5 y 0,75 s; así cambia una sola variable.
+La resolución queda normalizada a 640×640 para el envelope verificado de la
+5090.
 
 El recorrido estándar anterior se validó en la instancia del lab con dos
 batches sintéticos de 60 frames: H3 recibió 124 frames, el sampler terminó, el
@@ -313,8 +318,8 @@ sin perder qué parent produjo la rama anterior.
 - **Bridge sin archivo:** usar el path exacto entregado por `Save AV Latent`.
 - **Confluence rechaza el input:** ambos videos deben ser 24 fps, tener al menos
   el contexto solicitado y normalizarse al mismo profile antes del VAE.
-- **Confluence carga pero no corrige el gesto:** ampliar gradualmente la región
-  reparada o cambiar el prompt/seed; no ampliar contexto, reparación y
-  resolución simultáneamente.
+- **Confluence carga pero no corrige el gesto:** variar primero seed/prompt;
+  luego comparar overscan de sampling sin cambiar a la vez contexto, parche
+  aceptado y resolución.
 - **El túnel cae:** el proceso de Comfy puede continuar en la torre; consultar
   history al reconectar antes de volver a encolar.

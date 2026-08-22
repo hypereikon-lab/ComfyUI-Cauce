@@ -13,8 +13,8 @@ Estado real: `00`, `10` y `20` están verificados; `30` requiere un AddGuide
 oficial más nuevo; `40` pasó el primer gate visual de continuidad híbrida y
 descarta el audio H3; `50` sigue experimental. La versión estándar de `60`
 completó una ejecución sintética pero falló con gestos reales. El workflow
-actual usa campos continuos + LanPaint y está pendiente de validación live con
-los mismos pares rechazados.
+actual usa sampling binario con overscan, opacidad final continua y LanPaint;
+está pendiente de validación live con los mismos pares rechazados.
 Consultar [`docs/LAB_RESULTS.md`](../docs/LAB_RESULTS.md) antes de ejecutar jobs
 costosos.
 

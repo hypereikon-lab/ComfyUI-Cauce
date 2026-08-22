@@ -7,7 +7,12 @@ import math
 from typing import Any
 
 from .contracts import SEAM_SCHEMA, content_hash, make_window
-from .h3 import get_av_streams, pixel_frames_from_video_latent
+from .h3 import (
+    execute_add_guide,
+    get_av_streams,
+    pixel_frames_from_video_latent,
+    require_h3_temporal_edit_runtime,
+)
 from .timebase import (
     H3_FPS,
     H3_TRAINED_MIN_FRAMES,
@@ -136,35 +141,27 @@ def make_seam_plan(
     right_frame_count: int,
     *,
     context_seconds_per_side: float = 2.5,
-    repair_seconds_per_side: float = 1.0,
-    sampling_overscan_seconds_per_side: float = 0.5,
+    repair_seconds_total: float = 1.0,
+    guide_frames: int = 22,
     maximum_frames: int = 362,
 ) -> dict[str, Any]:
-    """Resolve one seam into separate sampling and accepted-output regions.
+    """Resolve one cut into a small, token-aligned bidirectional bridge.
 
-    ``repair`` is the patch that may enter the production result. ``overscan``
-    opens a wider binary LanPaint region around it, so the accepted patch does
-    not touch the conditional sampler's hard boundary.
+    The requested repair duration is the *entire* interval across the cut, not
+    a duration per side.  The interval is snapped to symmetric H3 token
+    boundaries and surrounded by valid multi-frame guide clips.  This keeps
+    the unknown middle small while exposing incoming and outgoing motion.
     """
 
     left_count = int(left_frame_count)
     right_count = int(right_frame_count)
     context = seconds_to_frames(context_seconds_per_side, H3_FPS, "nearest")
-    repair = seconds_to_frames(repair_seconds_per_side, H3_FPS, "nearest")
-    overscan = seconds_to_frames(
-        sampling_overscan_seconds_per_side, H3_FPS, "nearest"
-    )
-    sampling = repair + overscan
-    if context < 1 or repair < 1:
+    requested_repair = seconds_to_frames(repair_seconds_total, H3_FPS, "nearest")
+    guide_frames = int(guide_frames)
+    if context < 1 or requested_repair < 1:
         raise ValueError("context and repair durations must resolve to at least one frame")
-    if overscan < 0:
-        raise ValueError("sampling overscan cannot be negative")
-    if repair >= context:
-        raise ValueError("repair duration per side must be shorter than context per side")
-    if sampling >= context:
-        raise ValueError(
-            "repair plus sampling overscan must be shorter than context per side"
-        )
+    if not is_h3_frame_count(guide_frames):
+        raise ValueError("guide_frames must use the H3 clip grid: 5, 22, 39, 56, ...")
     if left_count < context or right_count < context:
         raise ValueError(
             "each source needs at least "
@@ -185,10 +182,39 @@ def make_seam_plan(
         )
     guard = (working_frames - real_frames) // 2
     cut = guard + context
-    repair_start = cut - repair
-    repair_end = cut + repair
-    sampling_start = cut - sampling
-    sampling_end = cut + sampling
+    boundaries = {0}
+    boundaries.update(
+        end
+        for _, end in visual_token_spans(h3_visual_latent_frames(working_frames))
+    )
+    candidates = []
+    for start in boundaries:
+        end = 2 * cut - start
+        if (
+            start < cut < end
+            and end in boundaries
+            and start - guide_frames >= 0
+            and end + guide_frames <= working_frames
+        ):
+            length = end - start
+            candidates.append((start, end, length))
+    if not candidates:
+        raise ValueError(
+            "context is too short for symmetric H3 repair plus bidirectional guides"
+        )
+    repair_start, repair_end, repair_total = min(
+        candidates,
+        key=lambda item: (
+            abs(item[2] - requested_repair),
+            item[2] > requested_repair,
+            item[2],
+        ),
+    )
+    repair_per_side = repair_total // 2
+    left_guide_start = repair_start - guide_frames
+    left_guide_end = repair_start
+    right_guide_start = repair_end
+    right_guide_end = repair_end + guide_frames
     accepted_start = guard
     accepted_end = guard + real_frames
     plan = {
@@ -197,25 +223,32 @@ def make_seam_plan(
         "left_total_frames": left_count,
         "right_total_frames": right_count,
         "context_frames_per_side": context,
-        "repair_frames_per_side": repair,
-        "sampling_overscan_frames_per_side": overscan,
-        "sampling_frames_per_side": sampling,
+        "repair_requested_frames_total": requested_repair,
+        "repair_frames_per_side": repair_per_side,
+        "repair_total_frames": repair_total,
+        "guide_frames": guide_frames,
+        "left_guide_start_frame": left_guide_start,
+        "left_guide_end_frame": left_guide_end,
+        "right_guide_start_frame": right_guide_start,
+        "right_guide_end_frame": right_guide_end,
         "working_frames": working_frames,
         "guard_frames_per_side": guard,
         "cut_frame": cut,
         "repair_start_frame": repair_start,
         "repair_end_frame": repair_end,
-        "repair_total_frames": repair * 2,
-        "sampling_start_frame": sampling_start,
-        "sampling_end_frame": sampling_end,
-        "sampling_total_frames": sampling * 2,
+        "sampling_start_frame": repair_start,
+        "sampling_end_frame": repair_end,
+        "sampling_total_frames": repair_total,
         "accepted_start_frame": accepted_start,
         "accepted_end_frame": accepted_end,
         "accepted_frames": real_frames,
         "working_duration_seconds": float(frames_to_seconds(working_frames)),
         "accepted_duration_seconds": float(frames_to_seconds(real_frames)),
-        "repair_duration_seconds": float(frames_to_seconds(repair * 2)),
-        "sampling_duration_seconds": float(frames_to_seconds(sampling * 2)),
+        "repair_requested_duration_seconds": float(
+            frames_to_seconds(requested_repair)
+        ),
+        "repair_duration_seconds": float(frames_to_seconds(repair_total)),
+        "sampling_duration_seconds": float(frames_to_seconds(repair_total)),
         "left_source_start_frame": left_count - context,
         "right_source_end_frame": context,
     }
@@ -282,12 +315,7 @@ def seam_video_token_values(
     generation_support: Any = None,
     threshold: float = 0.5,
 ) -> tuple[float, ...]:
-    """Project a visible field to the binary support required by LanPaint.
-
-    LanPaint thresholds its denoise mask internally. CAUCE therefore performs
-    that decision explicitly and reports it instead of pretending that a soft
-    sampling opacity survives into the conditional sampler.
-    """
+    """Project visible repair support onto exact H3 temporal tokens."""
 
     _validate_seam(plan)
     if projection not in TOKEN_PROJECTIONS:
@@ -401,12 +429,12 @@ def seam_visible_fields(
         ).copy()
         sampling_mean = float(sampling.mean())
     report = {
-        "schema": "cauce.confluence-fields/1",
+        "schema": "cauce.confluence-fields/2",
         "seam_hash": plan["hash"],
         "curve": curve,
         "decoded_blend_frames": int(decoded_blend_frames),
         "sampling_mean": sampling_mean,
-        "sampling_mode": "binary_lanpaint_support",
+        "sampling_mode": "h3_per_token_temporal_mask",
         "sampling_range": [
             int(plan["sampling_start_frame"]),
             int(plan["sampling_end_frame"]),
@@ -490,7 +518,7 @@ def prepare_h3_seam_repair(
     sampling_threshold: float = 0.5,
     generation_support: Any = None,
 ):
-    """Inject one encoded video domain and denoise only its central seam."""
+    """Inject the source video domain and denoise only its central seam."""
 
     import torch
 
@@ -500,6 +528,7 @@ def prepare_h3_seam_repair(
         raise RuntimeError("H3 seam repair can only be prepared inside ComfyUI") from exc
 
     _validate_seam(plan)
+    capabilities = require_h3_temporal_edit_runtime()
     target_video, target_audio = get_av_streams(target_latent)
     encoded_video = _video_samples(encoded_video_latent)
     if pixel_frames_from_video_latent(target_video) != int(plan["working_frames"]):
@@ -525,7 +554,7 @@ def prepare_h3_seam_repair(
             int(video.shape[3]),
             int(video.shape[4]),
         ).clone()
-        field_source = "plan_binary_overscan"
+        field_source = "plan_token_aligned_repair"
     else:
         projected = _project_visible_strength(
             generation_support, plan, video, projection, sampling_threshold
@@ -548,7 +577,7 @@ def prepare_h3_seam_repair(
     out["samples"] = comfy.nested_tensor.NestedTensor((video, audio))
     out["noise_mask"] = comfy.nested_tensor.NestedTensor((video_mask, audio_mask))
     report = {
-        "schema": "cauce.seam-mask-report/1",
+        "schema": "cauce.seam-mask-report/2",
         "seam_hash": plan["hash"],
         "working_frames": int(plan["working_frames"]),
         "repair_start_frame": int(plan["repair_start_frame"]),
@@ -557,7 +586,7 @@ def prepare_h3_seam_repair(
         "sampling_end_frame": int(plan["sampling_end_frame"]),
         "token_projection": projection,
         "sampling_threshold": float(sampling_threshold),
-        "sampling_mask_mode": "binary_required_by_lanpaint",
+        "sampling_mask_mode": "official_h3_per_token_denoise_mask",
         "field_source": field_source,
         "video_generate_tokens": sum(value > 0.0 for value in token_values),
         "video_full_generate_tokens": sum(value >= 1.0 - 1e-6 for value in token_values),
@@ -565,8 +594,62 @@ def prepare_h3_seam_repair(
         "video_token_values": list(token_values),
         "audio_mode": "internal-zero-mask-discarded",
         "acceptance_mode": "hard-decoded-splice",
+        "runtime_capabilities": capabilities,
     }
     return out, report
+
+
+def add_h3_seam_guides(
+    positive: Any,
+    target_latent: dict[str, Any],
+    working_images: Any,
+    plan: dict[str, Any],
+    vae: Any,
+):
+    """Anchor preserved motion clips immediately before and after the gap."""
+
+    _validate_seam(plan)
+    capabilities = require_h3_temporal_edit_runtime()
+    if int(working_images.shape[0]) != int(plan["working_frames"]):
+        raise ValueError("working image batch does not match the seam plan")
+    left_start = int(plan["left_guide_start_frame"])
+    left_end = int(plan["left_guide_end_frame"])
+    right_start = int(plan["right_guide_start_frame"])
+    right_end = int(plan["right_guide_end_frame"])
+    left_clip = working_images[left_start:left_end]
+    right_clip = working_images[right_start:right_end]
+    if int(left_clip.shape[0]) != int(plan["guide_frames"]) or int(
+        right_clip.shape[0]
+    ) != int(plan["guide_frames"]):
+        raise RuntimeError("confluence guide extraction produced an invalid H3 clip")
+    conditioned = execute_add_guide(
+        positive=positive,
+        latent=target_latent,
+        frame_idx=left_start,
+        vae=vae,
+        image=left_clip,
+    )
+    conditioned = execute_add_guide(
+        positive=conditioned,
+        latent=target_latent,
+        frame_idx=right_start,
+        vae=vae,
+        image=right_clip,
+    )
+    report = {
+        "schema": "cauce.confluence-guides/1",
+        "seam_hash": plan["hash"],
+        "guide_frames": int(plan["guide_frames"]),
+        "left_range": [left_start, left_end],
+        "right_range": [right_start, right_end],
+        "generated_range": [
+            int(plan["repair_start_frame"]),
+            int(plan["repair_end_frame"]),
+        ],
+        "audio_mode": "no-guide-audio",
+        "runtime_capabilities": capabilities,
+    }
+    return conditioned, report
 
 
 def splice_seam_patch(

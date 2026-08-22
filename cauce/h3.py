@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import importlib
+import inspect
 from typing import Any
 
 from .contracts import WINDOW_SCHEMA, range_fraction
@@ -161,6 +162,108 @@ def official_h3_nodes():
             f"MiniMaxH3ReferenceToVideo nodes ({type(exc).__name__}: {exc})"
         ) from exc
     return image_to_video, reference_to_video, add_guide
+
+
+def h3_temporal_edit_capabilities() -> dict[str, Any]:
+    """Inspect the official H3 runtime without mutating it.
+
+    MiniMax H3 temporal editing needs two separate upstream capabilities:
+    arbitrary clip guides and model-aware per-token denoise masks.  Older
+    ComfyUI builds can accept a nested ``noise_mask`` while silently treating
+    the preserved rows at the generation timestep, which produces a valid run
+    but not a valid temporal edit.  CAUCE therefore detects the implementation
+    hooks rather than trusting a version string.
+    """
+
+    problems: list[str] = []
+    try:
+        _, _, add_guide = official_h3_nodes()
+    except RuntimeError as exc:
+        add_guide = None
+        problems.append(str(exc))
+
+    try:
+        model_base = importlib.import_module("comfy.model_base")
+        minimax_h3 = getattr(model_base, "MiniMaxH3")
+    except (ImportError, AttributeError) as exc:  # pragma: no cover - inside ComfyUI
+        minimax_h3 = None
+        problems.append(f"MiniMaxH3 model runtime unavailable ({type(exc).__name__}: {exc})")
+
+    required_mask_hooks = (
+        "_token_grid_masks",
+        "_denoise_mask_conds",
+        "scale_latent_inpaint",
+    )
+    missing_mask_hooks = [
+        name
+        for name in required_mask_hooks
+        if minimax_h3 is None or name not in minimax_h3.__dict__
+    ]
+    if missing_mask_hooks:
+        problems.append(
+            "official H3 per-token denoise-mask support is missing: "
+            + ", ".join(missing_mask_hooks)
+        )
+
+    try:
+        h3_model = importlib.import_module("comfy.ldm.minimax.model")
+        forward = getattr(getattr(h3_model, "MiniMaxH3Model", None), "forward", None)
+        inner = getattr(getattr(h3_model, "MiniMaxH3Model", None), "_forward", None)
+        engine_checks = {
+            "mask_row_values": callable(getattr(h3_model, "mask_row_values", None)),
+            "mod_row": callable(getattr(h3_model, "_mod_row", None)),
+            "forward_masks": callable(forward)
+            and {"denoise_mask", "audio_denoise_mask"}.issubset(
+                inspect.signature(forward).parameters
+            ),
+            "inner_masks": callable(inner)
+            and {"denoise_mask", "audio_denoise_mask"}.issubset(
+                inspect.signature(inner).parameters
+            ),
+        }
+    except (ImportError, AttributeError, TypeError, ValueError) as exc:
+        engine_checks = {
+            "mask_row_values": False,
+            "mod_row": False,
+            "forward_masks": False,
+            "inner_masks": False,
+        }
+        problems.append(
+            f"MiniMaxH3 per-row mask engine unavailable ({type(exc).__name__}: {exc})"
+        )
+    missing_engine_hooks = [name for name, ready in engine_checks.items() if not ready]
+    if missing_engine_hooks:
+        problems.append(
+            "official H3 per-row mask engine is incomplete: "
+            + ", ".join(missing_engine_hooks)
+        )
+    if add_guide is None:
+        problems.append("official MiniMaxH3AddGuide is missing")
+
+    return {
+        "schema": "cauce.h3-temporal-edit-capabilities/1",
+        "ready": not problems,
+        "add_guide": add_guide is not None,
+        "per_token_denoise_mask": not missing_mask_hooks and not missing_engine_hooks,
+        "missing_mask_hooks": missing_mask_hooks,
+        "mask_engine": engine_checks,
+        "missing_engine_hooks": missing_engine_hooks,
+        "problems": problems,
+    }
+
+
+def require_h3_temporal_edit_runtime() -> dict[str, Any]:
+    """Fail closed when the official runtime cannot perform a real edit."""
+
+    capabilities = h3_temporal_edit_capabilities()
+    if not capabilities["ready"]:
+        detail = "; ".join(capabilities["problems"])
+        raise RuntimeError(
+            "CAUCE Confluence needs a newer official ComfyUI H3 runtime with "
+            "MiniMaxH3AddGuide and per-token denoise masks (upstream PRs #15439 "
+            f"and #15375). Current runtime is unsafe for temporal editing: {detail}"
+        )
+    return capabilities
 
 
 def unwrap_node_output(value: Any) -> tuple[Any, ...]:

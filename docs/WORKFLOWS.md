@@ -43,7 +43,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
-| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Reparación condicional; v1 rechazado, v2 LanPaint pendiente de prueba live. |
+| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Puente bidireccional v4; requiere core H3 oficial actualizado y validación live. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
 ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
@@ -180,8 +180,7 @@ en vez de inventar un join ambiguo.
 Este recorrido parte de dos videos ya existentes, no de parents latentes. Los
 normaliza al profile FL2VA 640, toma 2,5 s de contexto a cada lado y entrega el
 tail de A y el head de B al VAE como un único dominio causal. El nodo de build
-produce también la ventana H3 exacta, de modo que no existe un segundo widget
-de duración que pueda quedar desincronizado.
+produce también la ventana H3 exacta.
 
 Con los defaults:
 
@@ -191,34 +190,50 @@ A: últimos 60 frames ┐
 B: primeros 60 frames┘
 
 corte working: frame 62
-sampling LanPaint: [26, 98) = 72 frames = 3 s
-parche aceptado: [38, 86) = 48 frames = 2 s
+clip guía izquierdo:  [29, 51) = 22 frames preservados
+centro generable:      [51, 73) = 22 frames = 0,917 s
+clip guía derecho:     [73, 95) = 22 frames preservados
 output: len(A) + len(B), sin cambio de duración
 ```
 
-H3 ve first/last frames del working domain y el prompt arbitrario. `CAUCE ·
-Confluence Fields` produce tres `MASK` comunes e inspeccionables:
+El segundo interior pedido no se duplica por lado: son 24 frames solicitados en
+total. CAUCE elige los límites temporales H3 simétricos más cercanos, 22 frames,
+para que ningún token quede parcialmente generado. `CAUCE · H3 Confluence
+Guides` agrega los dos clips preservados al conditioning oficial; el modelo ve
+el movimiento de entrada y de salida, además de first/last y el prompt
+arbitrario.
+
+`CAUCE · Confluence Fields` produce tres `MASK` inspeccionables:
 
 ```text
-sampling_support     → soporte binario del sampler, con overscan
+sampling_support     → soporte binario exacto por token H3
 hard_acceptance      → intervalo binario permitido
 output_opacity       → mezcla decodificada del parche
 ```
 
-LanPaint binariza internamente el denoise mask con un umbral de 0,5; por eso una
-curva suave de sampling no llegaría intacta al sampler. El preset lo representa
-sin ambigüedad: abre una región binaria 12 frames más ancha por cada lado que el
-parche aceptado y la proyecta a tokens H3 con modo `cover`. Esos bordes de
-sampling nunca entran al resultado. Después del decode, `output_opacity` sí usa
-una curva cosenoidal continua de ocho frames: parte exactamente en cero, llega
-a uno en el interior y vuelve a cero.
+Después del decode, `output_opacity` usa una curva cosenoidal continua de cuatro
+frames. Ésta suaviza el splice visible; no representa una fuerza de denoise
+fraccional.
 
-El sampler estándar anterior ejecutó correctamente, pero falló cualitativamente
-con gestos reales. Este workflow requiere [LanPaint v2.1.0 o
-posterior](https://github.com/scraed/LanPaint) y usa `LanPaint Sampler Custom
-Advanced` con cinco iteraciones internas, lambda 5, step size 0,2 y modo `Image
-First`. LanPaint realiza el muestreo condicional; CAUCE sigue controlando toda
-la geometría temporal, las máscaras, el rango aceptado y el splice final.
+La auditoría de v1–v3 encontró dos causas estructurales. Primero, el gráfico
+interpretaba 1 s como 1 s por lado y añadía 0,5 s de overscan por lado: H3
+inventaba 72 frames/3 s. Segundo, ComfyUI v0.33.1 es anterior a la
+implementación oficial que entrega la máscara por token al modelo, etiqueta
+cada fila con su timestep correcto e inyecta el latent preservado a fuerza de
+conditioning. El sampler podía completar sin que el edit fuese válido.
+
+La v4 usa `SamplerCustomAdvanced` oficial y comprueba en runtime:
+
+```text
+MiniMaxH3AddGuide
+MiniMaxH3._token_grid_masks
+MiniMaxH3._denoise_mask_conds
+MiniMaxH3.scale_latent_inpaint
+```
+
+Si falta cualquiera, falla antes del sample y solicita actualizar el core
+oficial. La actualización requerida no implica cambiar CUDA, PyTorch ni los
+modelos.
 
 Después del decode, CAUCE acepta sólo el parche central y repone el resto desde
 los inputs originales. Modificar el exterior no es una solicitud al modelo,
@@ -226,34 +241,20 @@ sino una imposibilidad topológica.
 
 El JSON contiene `gesture_a.mp4` y `gesture_b.mp4` como placeholders. Cada clip
 debe tener al menos 60 frames y ambos deben ser exactamente 24 fps. La primera
-validación cualitativa deberá cubrir gestos con distinta posición, velocidad y
-aceleración en el corte. Mantener inicialmente el parche aceptado en 1 s por
-lado y comparar overscan de 0,25, 0,5 y 0,75 s; así cambia una sola variable.
-La resolución queda normalizada a 640×640 para el envelope verificado de la
-5090.
+validación debe reutilizar los mismos gestos rechazados y comparar join duro,
+v3 y v4 con seed fijo. Variar después una sola variable: seed, prompt o clips
+guía de 22/39 frames, manteniendo el centro de 22 frames. La resolución queda
+normalizada a 640×640 para el envelope verificado de la 5090.
 
-El recorrido estándar anterior se validó en la instancia del lab con dos
-batches sintéticos de 60 frames: H3 recibió 124 frames, el sampler terminó, el
-output unido devolvió 120 frames y el parche exactamente 48. Esa prueba confirmó
-sockets, shapes, decode y splice, pero la posterior prueba perceptual fue mala.
-La versión condicional debe volver a superar primero ese mismo par de gestos.
+Las versiones anteriores confirmaron sockets, shapes, decode y splice, pero la
+prueba perceptual fue mala. La v4 debe superar primero ese mismo par de gestos;
+un job exitoso ya no basta para promoverla.
 
 El workflow es intencionalmente video-only. El audio master no se conecta, no
 se codifica y no se sustituye. H3 mantiene internamente un stream de audio vacío
 y enmascarado sólo porque su latent es estructuralmente AV; ese resultado se
 descarta. Para una pieza larga se corrigen clips locales y luego se colocan
 sobre el reloj del master fijo.
-
-### Instalar el sampler condicional
-
-En ComfyUI Manager, instalar `LanPaint` o usar su Git URL:
-
-```text
-https://github.com/scraed/LanPaint.git
-```
-
-Reiniciar ComfyUI una vez. CAUCE no copia ni modifica LanPaint y no agrega sus
-dependencias a la instalación propia.
 
 ## Runner: secuencia reiniciable
 
@@ -319,7 +320,8 @@ sin perder qué parent produjo la rama anterior.
 - **Confluence rechaza el input:** ambos videos deben ser 24 fps, tener al menos
   el contexto solicitado y normalizarse al mismo profile antes del VAE.
 - **Confluence carga pero no corrige el gesto:** variar primero seed/prompt;
-  luego comparar overscan de sampling sin cambiar a la vez contexto, parche
-  aceptado y resolución.
+  si el nodo reporta runtime incompleto, actualizar primero el core oficial;
+  luego comparar clips guía de 22/39 frames sin cambiar a la vez centro,
+  resolución y seed.
 - **El túnel cae:** el proceso de Comfy puede continuar en la torre; consultar
   history al reconectar antes de volver a encolar.

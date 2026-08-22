@@ -96,6 +96,7 @@ temporal gap filling between already-generated states.
 
 - `CAUCE · Build Confluence Window`
 - `CAUCE · Confluence Fields`
+- `CAUCE · H3 Confluence Guides`
 - `CAUCE · Prepare H3 Seam Repair`
 - `CAUCE · Apply Confluence Patch`
 
@@ -105,18 +106,16 @@ the batch is an exact H3 run, and returns both the seam plan and its matching
 `CAUCE_WINDOW`. At the default 24 fps settings this is
 `2 guards + 60 A + 60 B + 2 guards = 124` frames.
 
-`Confluence Fields` emits three ordinary Comfy `MASK` tensors: binary sampling
-support, binary hard acceptance, and continuous output opacity. Sampling uses a
-configurable overscan outside the accepted patch because LanPaint thresholds
-its mask internally. The prepare node projects that support onto actual causal
-visual tokens; the apply node accepts only the repaired inner patch, blends it
-through the raised-cosine output opacity, and returns `A + B` with exactly the
-original combined frame count. Frames outside the replacement interval are
-copied without interpretation or change.
+The default one-second request snaps to the nearest symmetric H3 token interval:
+`[51,73)`, 22 frames. `H3 Confluence Guides` anchors the preserved 22 frames
+immediately before and after that interval. `Confluence Fields` emits exact
+sampling/acceptance masks and a continuous decoded opacity. The prepare node
+injects the source latent, verifies official per-token mask support, and fails
+closed on older ComfyUI cores. The apply node returns `A + B` with exactly the
+original combined frame count; exterior frames are copied without change.
 
-Workflow 60 uses the separately installed LanPaint conditional sampler. H3's
-internal audio latent is zero-masked and discarded; the fixed production audio
-never enters these nodes.
+Workflow 60 uses the official standard sampler. H3's internal audio latent is
+zero-masked and discarded; the fixed production audio never enters these nodes.
 
 ## Artifacts
 

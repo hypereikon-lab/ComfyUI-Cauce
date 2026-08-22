@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-cauce"
-version = "0.2.0"
+version = "0.3.0"
 description = "Media, exact time, and visual continuity against a fixed master clock"
 readme = "README.md"
 requires-python = ">=3.10"

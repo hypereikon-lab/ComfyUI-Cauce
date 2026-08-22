@@ -17,7 +17,8 @@ de 32 GB y 64 GB de RAM. CAUCE no modificó CUDA, PyTorch, ComfyUI ni modelos.
 | Bridge | graph validado | — | — | pendiente GPU |
 | Confluence v1, máscara estándar | runtime sintético verificado; gesto real rechazado | 124 f working → 120 f join / 48 f patch | 42,8 s a 4 steps | previews temporales, prompt `5ea6dc99-...` |
 | Confluence v2, LanPaint + campos continuos | rechazado por revisión de implementación | — | — | LanPaint umbraliza el denoise mask; la supuesta fuerza continua no llega al sampler |
-| Confluence v3, overscan binario + blend continuo | runtime real verificado; revisión artística por par | 124 f working / 72 f sampling / 48 f aceptación → 248 f join | 487,85 s | `cauce/demos/confluence_repaired_join_00002_.mp4` |
+| Confluence v3, overscan binario + blend continuo | runtime real; gesto rechazado | 124 f working / 72 f sampling / 48 f aceptación → 248 f join | 487,85 s | `cauce/demos/confluence_repaired_join_00002_.mp4` |
+| Confluence v4, máscara H3 nativa + guías bidireccionales | implementación/tests listos; bloqueado por core 0.33.1 | 124 f working / 22 f sampling y aceptación / guías 22+22 | — | pendiente update oficial y prueba live |
 
 ## Lectura de los resultados
 
@@ -77,8 +78,15 @@ En una medición luminancia-a-luminancia, el corte duro del par de prueba era un
 pico aislado de 26,38; el frame equivalente del repair midió 20,68 dentro de un
 tramo de movimiento sostenido, por lo que el salto dejó de ser una singularidad.
 El bridge generado introduce un zoom rápido por helechos entre ambos parents:
-el contrato temporal y el splice pasan, pero su pertinencia visual sigue siendo
-un gate artístico por par, no una garantía global.
+el contrato temporal y el splice pasan, pero la continuidad pedida falla. Ese
+artifact queda rechazado y no se usa como evidencia de calidad.
+
+La auditoría v4 identificó que el problema no era sólo el sampler. El core
+0.33.1 precede las máscaras H3 por token y `MiniMaxH3AddGuide`; además v3 había
+interpretado el segundo central como dos segundos y luego había abierto tres
+segundos de sampling. La corrección local ahora genera sólo `[51,73)` y agrega
+clips guía `[29,51)` y `[73,95)`. El nodo falla cerrado en el core actual; aún
+no existe resultado live v4.
 
 Durante la carga del ejemplo live se detectó además que Comfy serializa los
 widgets ocultos `left_fps` y `right_fps` aunque estén conectados. El template

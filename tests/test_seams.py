@@ -16,19 +16,22 @@ from cauce.seams import (
 
 
 class SeamTests(unittest.TestCase):
-    def test_default_plan_resolves_120_real_frames_inside_124_h3_frames(self):
+    def test_default_plan_resolves_one_second_request_to_exact_h3_bridge(self):
         plan = make_seam_plan(200, 180)
         self.assertEqual(plan["context_frames_per_side"], 60)
-        self.assertEqual(plan["repair_frames_per_side"], 24)
         self.assertEqual(plan["working_frames"], 124)
         self.assertEqual(plan["guard_frames_per_side"], 2)
         self.assertEqual(plan["cut_frame"], 62)
-        self.assertEqual((plan["repair_start_frame"], plan["repair_end_frame"]), (38, 86))
-        self.assertEqual((plan["sampling_start_frame"], plan["sampling_end_frame"]), (26, 98))
-        self.assertEqual(plan["sampling_overscan_frames_per_side"], 12)
+        self.assertEqual(plan["repair_requested_frames_total"], 24)
+        self.assertEqual(plan["repair_total_frames"], 22)
+        self.assertEqual(plan["repair_frames_per_side"], 11)
+        self.assertEqual((plan["repair_start_frame"], plan["repair_end_frame"]), (51, 73))
+        self.assertEqual((plan["sampling_start_frame"], plan["sampling_end_frame"]), (51, 73))
+        self.assertEqual((plan["left_guide_start_frame"], plan["left_guide_end_frame"]), (29, 51))
+        self.assertEqual((plan["right_guide_start_frame"], plan["right_guide_end_frame"]), (73, 95))
         self.assertEqual((plan["accepted_start_frame"], plan["accepted_end_frame"]), (2, 122))
 
-    def test_seam_mask_is_binary_and_covers_the_sampling_overscan(self):
+    def test_seam_mask_is_binary_and_exactly_covers_the_token_aligned_gap(self):
         plan = make_seam_plan(200, 180)
         values = seam_video_token_values(plan)
         self.assertEqual(len(values), 37)
@@ -36,6 +39,7 @@ class SeamTests(unittest.TestCase):
         self.assertEqual(values[-1], 0.0)
         self.assertIn(1.0, values)
         self.assertEqual(set(values), {0.0, 1.0})
+        self.assertEqual([index for index, value in enumerate(values) if value], list(range(15, 22)))
 
     def test_cover_projection_is_a_superset_of_majority(self):
         plan = make_seam_plan(200, 180)
@@ -61,9 +65,9 @@ class SeamTests(unittest.TestCase):
         self.assertEqual(opacity[start], 0.0)
         self.assertEqual(opacity[end - 1], 0.0)
 
-    def test_overscan_must_fit_inside_context(self):
-        with self.assertRaisesRegex(ValueError, "overscan"):
-            make_seam_plan(200, 180, sampling_overscan_seconds_per_side=1.5)
+    def test_guides_must_use_a_native_h3_clip_length(self):
+        with self.assertRaisesRegex(ValueError, "guide_frames"):
+            make_seam_plan(200, 180, guide_frames=24)
 
     def test_seam_window_matches_the_plan_exactly(self):
         plan = make_seam_plan(200, 180)
@@ -72,17 +76,17 @@ class SeamTests(unittest.TestCase):
         self.assertEqual(window["accepted_frames"], plan["working_frames"])
         self.assertEqual(window["accept_mode"], "full_render")
 
-    def test_splice_ranges_replace_only_the_inner_second_of_each_source(self):
+    def test_splice_ranges_replace_only_the_token_aligned_inner_second(self):
         plan = make_seam_plan(200, 180)
         self.assertEqual(
             seam_splice_ranges(plan),
             {
-                "left_keep": (0, 176),
-                "working_patch": (38, 86),
-                "right_keep": (24, 180),
+                "left_keep": (0, 189),
+                "working_patch": (51, 73),
+                "right_keep": (11, 180),
             },
         )
-        output_frames = 176 + (86 - 38) + (180 - 24)
+        output_frames = 189 + (73 - 51) + (180 - 11)
         self.assertEqual(output_frames, 380)
 
     @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
@@ -95,11 +99,11 @@ class SeamTests(unittest.TestCase):
             left, right, proposal, plan, feather_frames=8, curve="cosine"
         )
         self.assertEqual(joined.shape[0], 380)
-        numpy.testing.assert_array_equal(joined[:176], left[:176])
-        numpy.testing.assert_array_equal(joined[224:], right[24:])
-        self.assertEqual(float(patch[0, 0, 0, 0]), float(left[-24, 0, 0, 0]))
-        self.assertEqual(float(patch[-1, 0, 0, 0]), float(right[23, 0, 0, 0]))
-        self.assertEqual(float(patch[12, 0, 0, 0]), 5000.0)
+        numpy.testing.assert_array_equal(joined[:189], left[:189])
+        numpy.testing.assert_array_equal(joined[211:], right[11:])
+        self.assertEqual(float(patch[0, 0, 0, 0]), float(left[-11, 0, 0, 0]))
+        self.assertEqual(float(patch[-1, 0, 0, 0]), float(right[10, 0, 0, 0]))
+        self.assertEqual(float(patch[10, 0, 0, 0]), 5000.0)
 
     def test_plan_rejects_sources_shorter_than_the_context(self):
         with self.assertRaisesRegex(ValueError, "each source needs at least 60 frames"):

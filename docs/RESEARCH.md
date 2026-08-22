@@ -43,43 +43,60 @@ and community experiments used to challenge the architecture.
 
 ## Confluence review — 2026-08-22
 
-The standard masked-denoise Confluence graph passed tensor/runtime validation
-but failed on heterogeneous real gesture material. This rejects the sampler as
-a production method; it does not reject the 124-frame causal domain, exact
-splice geometry, or fixed-duration acceptance contract.
+The v1–v3 graph passed tensor/runtime validation but failed on heterogeneous
+real gestures. The audit found that the failure preceded sampler choice:
 
-Sources reviewed for the replacement:
+1. The requested one-second center had been interpreted as one second per side.
+2. LanPaint overscan enlarged the actual unknown interval to 72 frames/3 s.
+3. The laboratory core, ComfyUI v0.33.1 (`72865f4`), predates the official H3
+   per-token mask path merged in PR #15375 and `MiniMaxH3AddGuide` from PR
+   #15439. A nested mask reached the sampler, but preserved H3 rows did not yet
+   receive their own conditioning timestep and latent injection.
 
-- [LanPaint paper](https://arxiv.org/abs/2502.03491): training-free partial
-  conditional sampling through bidirectional guided Langevin dynamics, without
-  backpropagation or model training.
-- [LanPaint ComfyUI implementation](https://github.com/scraed/LanPaint): v2.1.0
-  fixes current H3 support and exposes a custom advanced sampler compatible
-  with H3 nested latents. It is GPL-3.0 and remains separately installed.
-- [Current ComfyUI sampler path](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/sample.py):
-  native `noise_mask` values are passed into the custom sampler rather than
-  being compiled as binary UI state.
+Current official ComfyUI provides the missing semantics:
 
-The replacement keeps three different mathematical objects:
+- [`MiniMaxH3AddGuide`](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_minimax_h3.py)
+  anchors an image or a valid `17k+5` clip at an arbitrary frame index.
+- [`MiniMaxH3._denoise_mask_conds` and `scale_latent_inpaint`](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/model_base.py)
+  preserve source latents and expose video/audio masks to the model.
+- [MiniMax H3 model rows](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/minimax/model.py)
+  use `t_row = clamp(1 - m·sigma, max=t_pin)`, so generated and preserved rows
+  are labeled at different noise levels.
+
+The older ecosystems support the same architectural conclusion without being
+copied into CAUCE:
+
+- [VACE](https://github.com/ali-vilab/VACE/blob/main/vace/models/wan/wan_vace.py)
+  does not treat a mask as sufficient by itself. It concatenates encoded source
+  video and mask into a dedicated control latent; preserved visual evidence is
+  an explicit model input.
+- [AnimateDiff](https://github.com/guoyww/AnimateDiff/blob/main/animatediff/models/motion_module.py)
+  applies attention along the frame axis with temporal positions. Its evolved
+  context schedulers overlap windows and weight their centers more strongly,
+  motivating local context adjacent to a seam rather than distant endpoints.
+- [ProPainter](https://github.com/sczhou/ProPainter/blob/main/inference_propainter.py)
+  propagates information bidirectionally with completed optical flow, then
+  combines local neighboring frames and global references. CAUCE does not add
+  those dependencies, but mirrors the information topology with left and right
+  guide clips.
+- [LanPaint](https://github.com/scraed/LanPaint) remains a useful training-free
+  inpainting sampler, but it cannot supply H3 model semantics missing from an
+  older core. It is no longer a workflow-60 dependency.
+
+Confluence v4 keeps three mathematical objects separate:
 
 ```text
-sampling support  s(t,x,y) ∈ {0,1}
-hard accepted interval       a(t) ∈ {0,1}
-decoded output opacity       o(t,x,y) ∈ [0,1]
+model generation support  s(t,x,y) ∈ {0,1}
+accepted decoded interval          a(t) ∈ {0,1}
+decoded splice opacity             o(t,x,y) ∈ [0,1]
 ```
 
-These fields must not be collapsed into one mask. `s` controls the conditional
-sampler, `a` controls what may enter the production result, and `o` composites
-the accepted decoded proposal with the two source clips. LanPaint thresholds
-its denoise mask internally, so CAUCE represents `s` honestly as binary support
-with temporal overscan around `a`; only `o` is a raised cosine. Either support
-or opacity may still be replaced by ordinary Comfy `MASK` data at its relevant
-stage. H3 audio remains a zero-masked structural stream and is discarded; the
-fixed master soundtrack is not encoded or conditioned through this path.
-
-CAUCE does not copy LanPaint code. Workflow 60 depends on its public node
-interface, while CAUCE independently implements the temporal geometry, field
-construction, causal-token projection, acceptance, and splice.
+For the default 124-frame domain with cut `c=62`, CAUCE chooses token
+boundaries `l=51`, `r=73` minimizing `|(r-l)-24|` under `c-l=r-c`. The unknown
+middle is therefore 22 frames. Valid guide clips are
+`G_L=[29,51)` and `G_R=[73,95)`. The standard H3 sampler operates only on
+`[51,73)`; a four-frame raised cosine is used only after decode. H3 audio
+remains zero-masked structural scaffolding and is discarded.
 
 ## Compatibility policy
 

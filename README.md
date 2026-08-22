@@ -24,16 +24,18 @@ media
 
 ## Current status
 
-The greenfield core and 40 ComfyUI nodes are implemented. Seven visual workflows,
+The greenfield core and 41 ComfyUI nodes are implemented. Seven visual workflows,
 two API templates, bounded demo assets, and a restartable two-window project are
 included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
 continuation have executed successfully on the live lab RTX 5090. Mask-only
 continuation also executes, but its first visual seam failed the quality gate;
 the shipped hybrid workflow passed that visual comparison. The original
-standard-masked Confluence completed end-to-end synthetically but failed on
-real gesture pairs. Confluence now uses binary LanPaint sampling overscan around
-a smaller accepted patch plus a continuous decoded-output opacity; live
-promotion is pending on the same gesture pairs.
+standard-masked Confluence completed end-to-end but failed on real gesture
+pairs. The audit found that the laboratory's ComfyUI v0.33.1 predates official
+H3 per-token denoise masks and arbitrary clip guides. Confluence v4 now fails
+closed on that runtime, generates only a token-aligned 22-frame center, and
+anchors preserved 22-frame motion clips on both sides. Live visual promotion is
+pending after the official ComfyUI core is updated.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.
@@ -57,10 +59,8 @@ layer is included.
 - A current ComfyUI build containing:
   - `MiniMaxH3ImageToVideo`
   - `MiniMaxH3ReferenceToVideo`
-- Optional for `CAUCE · H3 Timed Guide`:
   - `MiniMaxH3AddGuide`
-- Required only for workflow 60 / Confluence:
-  - [LanPaint v2.1.0 or later](https://github.com/scraed/LanPaint)
+  - official MiniMax H3 per-token denoise-mask support (upstream PR #15375)
 - The official H3 video/audio VAEs, text encoder, and selected diffusion model.
 - The packages already shipped with a current ComfyUI portable runtime:
   PyTorch, Pillow, NumPy, torchaudio, and safetensors.
@@ -133,6 +133,5 @@ not read or reused.
 ## License
 
 CAUCE code is MIT licensed. Model weights retain their own licenses. GPL
-research packs are not copied into this repository. LanPaint remains a
-separately installed optional dependency used through its public ComfyUI node
-interface; CAUCE itself remains MIT licensed.
+research packs inspected during development are not copied into this
+repository.

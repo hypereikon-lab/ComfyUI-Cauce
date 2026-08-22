@@ -9,12 +9,74 @@ from cauce.h3 import (
     empty_reference_set,
     execute_add_guide,
     frame_index_in_window,
+    h3_temporal_edit_capabilities,
     official_h3_nodes,
+    require_h3_temporal_edit_runtime,
 )
 from cauce.masks import compile_audio_field, compile_video_field
 
 
 class H3AndMaskTests(unittest.TestCase):
+    def test_temporal_edit_runtime_requires_native_guides_and_mask_hooks(self):
+        class OldMiniMaxH3:
+            pass
+
+        with patch(
+            "cauce.h3.official_h3_nodes", return_value=(object(), object(), None)
+        ), patch(
+            "cauce.h3.importlib.import_module",
+            return_value=SimpleNamespace(MiniMaxH3=OldMiniMaxH3),
+        ):
+            capabilities = h3_temporal_edit_capabilities()
+            self.assertFalse(capabilities["ready"])
+            self.assertFalse(capabilities["add_guide"])
+            self.assertFalse(capabilities["per_token_denoise_mask"])
+            with self.assertRaisesRegex(RuntimeError, "unsafe for temporal editing"):
+                require_h3_temporal_edit_runtime()
+
+    def test_temporal_edit_runtime_accepts_feature_complete_official_core(self):
+        class CurrentMiniMaxH3:
+            def _token_grid_masks(self):
+                pass
+
+            def _denoise_mask_conds(self):
+                pass
+
+            def scale_latent_inpaint(self):
+                pass
+
+        class CurrentMiniMaxH3Model:
+            def forward(self, denoise_mask=None, audio_denoise_mask=None):
+                pass
+
+            def _forward(self, denoise_mask=None, audio_denoise_mask=None):
+                pass
+
+        current_engine = SimpleNamespace(
+            MiniMaxH3Model=CurrentMiniMaxH3Model,
+            mask_row_values=lambda: None,
+            _mod_row=lambda: None,
+        )
+
+        def import_current(name):
+            if name == "comfy.model_base":
+                return SimpleNamespace(MiniMaxH3=CurrentMiniMaxH3)
+            if name == "comfy.ldm.minimax.model":
+                return current_engine
+            raise ImportError(name)
+
+        with patch(
+            "cauce.h3.official_h3_nodes",
+            return_value=(object(), object(), object()),
+        ), patch(
+            "cauce.h3.importlib.import_module",
+            side_effect=import_current,
+        ):
+            capabilities = require_h3_temporal_edit_runtime()
+        self.assertTrue(capabilities["ready"])
+        self.assertTrue(capabilities["add_guide"])
+        self.assertTrue(capabilities["per_token_denoise_mask"])
+
     def test_official_fl2va_and_ref2va_do_not_require_add_guide(self):
         module = SimpleNamespace(
             MiniMaxH3ImageToVideo=object(),

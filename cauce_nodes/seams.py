@@ -7,6 +7,7 @@ import json
 from ..cauce.seams import (
     MASK_CURVES,
     TOKEN_PROJECTIONS,
+    add_h3_seam_guides,
     build_seam_window,
     make_seam_window,
     make_seam_plan,
@@ -32,13 +33,13 @@ class CauceBuildSeamWindow:
                     "FLOAT",
                     {"default": 2.5, "min": 0.25, "max": 7.5, "step": 1 / 24},
                 ),
-                "repair_seconds_per_side": (
+                "repair_seconds_total": (
                     "FLOAT",
                     {"default": 1.0, "min": 1 / 24, "max": 5.0, "step": 1 / 24},
                 ),
-                "sampling_overscan_seconds_per_side": (
-                    "FLOAT",
-                    {"default": 0.5, "min": 0.0, "max": 2.0, "step": 1 / 24},
+                "guide_frames": (
+                    "INT",
+                    {"default": 22, "min": 5, "max": 90, "step": 17},
                 ),
                 "maximum_frames": (
                     "INT",
@@ -64,8 +65,8 @@ class CauceBuildSeamWindow:
         left_fps,
         right_fps,
         context_seconds_per_side,
-        repair_seconds_per_side,
-        sampling_overscan_seconds_per_side,
+        repair_seconds_total,
+        guide_frames,
         maximum_frames,
     ):
         if abs(float(left_fps) - 24.0) > 1e-3 or abs(float(right_fps) - 24.0) > 1e-3:
@@ -74,8 +75,8 @@ class CauceBuildSeamWindow:
             int(left_frames.shape[0]),
             int(right_frames.shape[0]),
             context_seconds_per_side=context_seconds_per_side,
-            repair_seconds_per_side=repair_seconds_per_side,
-            sampling_overscan_seconds_per_side=sampling_overscan_seconds_per_side,
+            repair_seconds_total=repair_seconds_total,
+            guide_frames=guide_frames,
             maximum_frames=maximum_frames,
         )
         working = build_seam_window(left_frames, right_frames, plan)
@@ -107,9 +108,8 @@ class CaucePrepareH3SeamRepair:
     FUNCTION = "prepare"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Inject the encoded video domain into H3 and attach explicit binary LanPaint "
-        "support. Sampling overscan surrounds the smaller accepted repair so sampler "
-        "boundary artifacts cannot enter the final splice."
+        "Inject the encoded source video into H3 and attach the official per-token "
+        "temporal denoise mask. Refuses runtimes that cannot preserve masked rows."
     )
 
     def prepare(
@@ -157,9 +157,8 @@ class CauceConfluenceFields:
     FUNCTION = "build"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Compile binary LanPaint sampling support, the smaller hard accepted interval, "
-        "and a soft decoded output opacity. Only output opacity is continuous because "
-        "LanPaint thresholds its denoise mask internally."
+        "Compile exact H3 token sampling support, the accepted interval, and a soft "
+        "decoded output opacity used only for the final duration-preserving splice."
     )
 
     def build(
@@ -178,6 +177,35 @@ class CauceConfluenceFields:
         return generation, acceptance, opacity, json.dumps(
             report, ensure_ascii=False, indent=2
         )
+
+
+class CauceH3ConfluenceGuides:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "positive": ("CONDITIONING",),
+                "target_latent": ("LATENT",),
+                "working_images": ("IMAGE",),
+                "seam": ("CAUCE_SEAM",),
+                "vae": ("VAE",),
+            }
+        }
+
+    RETURN_TYPES = ("CONDITIONING", "STRING")
+    RETURN_NAMES = ("positive", "guide_report")
+    FUNCTION = "apply"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Attach two H3 guide clips immediately outside the generated interval so the "
+        "model sees incoming and outgoing motion, not only distant endpoint images."
+    )
+
+    def apply(self, positive, target_latent, working_images, seam, vae):
+        conditioned, report = add_h3_seam_guides(
+            positive, target_latent, working_images, seam, vae
+        )
+        return conditioned, json.dumps(report, ensure_ascii=False, indent=2)
 
 
 class CauceApplySeamPatch:
@@ -234,6 +262,7 @@ class CauceApplySeamPatch:
 NODE_CLASS_MAPPINGS = {
     "CauceBuildSeamWindow": CauceBuildSeamWindow,
     "CauceConfluenceFields": CauceConfluenceFields,
+    "CauceH3ConfluenceGuides": CauceH3ConfluenceGuides,
     "CaucePrepareH3SeamRepair": CaucePrepareH3SeamRepair,
     "CauceApplySeamPatch": CauceApplySeamPatch,
 }
@@ -241,6 +270,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceBuildSeamWindow": "CAUCE · Build Confluence Window",
     "CauceConfluenceFields": "CAUCE · Confluence Fields",
+    "CauceH3ConfluenceGuides": "CAUCE · H3 Confluence Guides",
     "CaucePrepareH3SeamRepair": "CAUCE · Prepare H3 Seam Repair",
     "CauceApplySeamPatch": "CAUCE · Apply Confluence Patch",
 }

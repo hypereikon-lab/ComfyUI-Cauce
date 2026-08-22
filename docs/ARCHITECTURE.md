@@ -152,8 +152,9 @@ one causal VAE domain:
 ```text
 duplicate guard + tail(A) + head(B) + duplicate guard
   → one H3 video latent
-  → binary LanPaint sampling support with overscan
-  → training-free conditional sampler
+  → left/right 22-frame H3 guide clips
+  → official H3 per-token mask over a 22-frame center
+  → standard H3 sampler
   → decode one repaired working domain
   → accept only the central patch
   → unchanged A prefix + patch + unchanged B suffix
@@ -161,20 +162,20 @@ duplicate guard + tail(A) + head(B) + duplicate guard
 
 At the default 24 fps geometry, 2.5 seconds from each side gives 120 real
 frames. Two duplicate guards at each edge make a legal 124-frame H3 run. The
-cut is frame 62 of that working domain and the repair spans `[38,86)`: the last
-24 frames of A plus the first 24 of B. The final frame count is always
-`len(A) + len(B)`.
+cut is frame 62 of that working domain. A one-second request is snapped to the
+nearest symmetric token boundaries, `[51,73)`: 11 frames from each source, 22
+frames total. Preserved guide clips occupy `[29,51)` and `[73,95)`. The final
+frame count is always `len(A) + len(B)`.
 
 Confluence deliberately separates three fields:
 
-1. `sampling_support` is binary and controls conditional sampling. It extends
-   12 decoded frames beyond each accepted edge by default, keeping LanPaint's
-   hard mask boundary outside the patch that can enter production.
+1. `sampling_support` is binary and controls the official H3 per-token denoise
+   mask. Its boundaries are exact visual-token boundaries.
 2. `hard_acceptance` is binary and defines the only decoded interval that can
    enter the result. It is not passed as an opacity heuristic.
 3. `output_opacity` is a second continuous field used after decode to merge the
    accepted patch against the two original clips. Its default transition is
-   eight frames.
+   four frames by default.
 
 For a transition of `r` frames, the default field is
 
@@ -186,20 +187,16 @@ where `d` is distance from the nearest repair boundary. The first and last
 accepted frames therefore have opacity zero, the interior reaches one, and the
 derivative vanishes at both ends.
 
-LanPaint converts its denoise mask to `(mask > 0.5)` inside the sampler. A soft
-sampling mask therefore does not survive that boundary. CAUCE makes this
-constraint explicit: `cover` opens a causal visual token when any selected
-visible frame overlaps it; `majority` requires half its support. An arbitrary
-connected Comfy `MASK` may replace the default support, but it is thresholded
-and clipped to the overscan range before latent projection. The continuous
-gradient belongs to decoded compositing, where it is mathematically preserved.
+The continuous gradient belongs only to decoded compositing. H3 preservation
+is governed by a token mask and by the model's own timestep labels. ComfyUI
+v0.33.1 accepted the nested mask at the sampler boundary but did not yet pass
+per-row mask timesteps into MiniMax H3; it therefore regenerated rows that the
+graph appeared to preserve. CAUCE now inspects the native mask hooks and
+`MiniMaxH3AddGuide` before sampling, and rejects an incomplete runtime.
 
-The old standard masked sampler proved only that the graph could execute and
-failed the first heterogeneous real-gesture test. Workflow 60 now delegates
-conditional sampling to the separately installed LanPaint node. CAUCE owns the
-time geometry, fields, latent assembly, accepted interval, and splice; LanPaint
-owns the training-free Langevin sampler. No GPL implementation code is copied
-into CAUCE.
+The two guide clips are causal context, not replacement media. The left clip
+shows incoming position and velocity; the right clip shows the outgoing state.
+Together they make the central bridge bidirectional while leaving media opaque.
 
 This is video-only by design. H3's structurally required nested audio stream is
 zero-masked and its output is discarded. The fixed soundtrack remains on

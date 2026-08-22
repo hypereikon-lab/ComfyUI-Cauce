@@ -183,14 +183,6 @@ SPECS = {
         ],
         [("output", "LATENT"), ("denoised_output", "LATENT")], [230, 126],
     ),
-    "LanPaint_SamplerCustomAdvanced": (
-        [
-            L("noise", "NOISE"), L("guider", "GUIDER"), L("sampler", "SAMPLER"),
-            L("sigmas", "SIGMAS"), L("latent_image", "LATENT"),
-            W("LanPaint_NumSteps", "INT"),
-        ],
-        [("output", "LATENT"), ("denoised_output", "LATENT")], [350, 260],
-    ),
     "CauceResolveParentLatent": (
         [L("latent", "LATENT"), L("window", "CAUCE_WINDOW")],
         [("LATENT", "LATENT")], [244, 46],
@@ -232,8 +224,8 @@ SPECS = {
             L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
             L("left_fps", "FLOAT"), L("right_fps", "FLOAT"),
             W("context_seconds_per_side", "FLOAT"),
-            W("repair_seconds_per_side", "FLOAT"),
-            W("sampling_overscan_seconds_per_side", "FLOAT"),
+            W("repair_seconds_total", "FLOAT"),
+            W("guide_frames", "INT"),
             W("maximum_frames", "INT"),
         ],
         [
@@ -261,6 +253,15 @@ SPECS = {
             ("output_opacity", "MASK"), ("field_report", "STRING"),
         ],
         [350, 170],
+    ),
+    "CauceH3ConfluenceGuides": (
+        [
+            L("positive", "CONDITIONING"), L("target_latent", "LATENT"),
+            L("working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
+            L("vae", "VAE"),
+        ],
+        [("positive", "CONDITIONING"), ("guide_report", "STRING")],
+        [360, 190],
     ),
     "CauceApplySeamPatch": (
         [
@@ -324,8 +325,6 @@ class Workflow:
             properties["Node name for S&R"] = node_type
             if node_type.startswith("Cauce"):
                 properties["aux_id"] = "hypereikon-lab/ComfyUI-Cauce"
-            elif node_type.startswith("LanPaint"):
-                pass
             else:
                 properties["cnr_id"] = "comfy-core"
         node = {
@@ -733,18 +732,18 @@ ejecutar, ajusta ambos paths/índices a artifacts existentes.""", size=(700, 240
 
 def build_confluence():
     wf = Workflow("60_h3_confluence_seam_repair", scale=0.22, offset=(90, 170))
-    note(wf, (-50, -520), """# CAUCE 60 · Confluence conditional repair
+    note(wf, (-50, -520), """# CAUCE 60 · Confluence bidireccional
 
 Template para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade
-guards simétricos para formar 124 frames H3. LanPaint muestrea una región binaria
-de 1,5 s por lado, pero CAUCE acepta sólo el último segundo de A + el primero de
-B. Ese overscan mantiene el borde duro del sampler fuera del parche aceptado;
-una opacidad cosenoidal suaviza el splice final. Duración y frames exteriores
-permanecen intactos.
+guards simétricos para formar 124 frames H3. El segundo interior solicitado se
+ajusta a 22 frames exactos de la grilla temporal H3. Dos clips guía de 22 frames,
+pegados a ambos bordes, entregan el movimiento entrante y saliente. Sólo ese
+centro se genera; el exterior queda preservado por la máscara oficial de H3.
 
-Requiere CAUCE y LanPaint v2.1.0 o posterior. Sube `gesture_a.mp4` y
-`gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps. El audio master
-no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(820, 310))
+Requiere un ComfyUI oficial reciente con MiniMaxH3AddGuide y máscara temporal
+por token. CAUCE se niega a ejecutar en runtimes anteriores. Sube
+`gesture_a.mp4` y `gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps.
+El audio master no entra ni se reemplaza con audio generado.""", size=(820, 310))
     left_video = wf.add("LoadVideo", (0, 0), ["gesture_a.mp4", "image"], title="Gesture A")
     right_video = wf.add("LoadVideo", (0, 340), ["gesture_b.mp4", "image"], title="Gesture B")
     left_parts = wf.add("GetVideoComponents", (330, 0))
@@ -757,7 +756,7 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
     seam = wf.add(
         "CauceBuildSeamWindow",
         (930, 150),
-        [24.0, 24.0, 2.5, 1.0, 0.5, 362],
+        [24.0, 24.0, 2.5, 1.0, 22, 362],
     )
     first = wf.add("CauceSelectImageFrame", (1320, 0), [0], title="Working first frame")
     last = wf.add("CauceSelectImageFrame", (1320, 340), [-1], title="Working last frame")
@@ -767,19 +766,16 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
         "Repair only the masked temporal join. Preserve framing, visual content, and motion outside it. Generate one continuous gesture whose position, velocity, and acceleration connect the left state to the right state without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Audio is not part of this repair."
     ])
     encode = wf.add("VAEEncode", (2730, 390))
-    fields = wf.add("CauceConfluenceFields", (3100, 520), [8, "cosine"])
+    fields = wf.add("CauceConfluenceFields", (3100, 520), [4, "cosine"])
     prepare = wf.add(
         "CaucePrepareH3SeamRepair", (3100, 230), ["cover", 0.5]
     )
     noise = wf.add("RandomNoise", (3490, 0), [2026082201, "fixed"])
+    guides = wf.add("CauceH3ConfluenceGuides", (3300, -170))
     guider = wf.add("BasicGuider", (3490, 150))
-    sample = wf.add(
-        "LanPaint_SamplerCustomAdvanced",
-        (3810, 100),
-        [5, 5.0, 0.2, "Image First", "LanPaint Custom Sampler Adv.", "lanpaint_star_button"],
-    )
+    sample = wf.add("SamplerCustomAdvanced", (3810, 100))
     decode = wf.add("VAEDecode", (4210, 100))
-    apply = wf.add("CauceApplySeamPatch", (4470, 100), [8, "cosine"])
+    apply = wf.add("CauceApplySeamPatch", (4470, 100), [4, "cosine"])
     joined_video = wf.add("CreateVideo", (4780, 0), [24.0, 8])
     joined_save = wf.add("SaveVideo", (5110, 0), [
         "cauce/demos/confluence_repaired_join", "mp4", "auto",
@@ -813,8 +809,13 @@ no entra a este workflow ni se reemplaza con audio generado por H3.""", size=(82
     wf.connect(seam, "working_images", fields, "working_images")
     wf.connect(seam, "seam", fields, "seam")
     wf.connect(fields, "sampling_support", prepare, "generation_support")
+    wf.connect(condition, "positive", guides, "positive")
+    wf.connect(condition, "latent", guides, "target_latent")
+    wf.connect(seam, "working_images", guides, "working_images")
+    wf.connect(seam, "seam", guides, "seam")
+    wf.connect(stack["video_vae"], "VAE", guides, "vae")
     wf.connect(stack["model"], "MODEL", guider, "model")
-    wf.connect(condition, "positive", guider, "conditioning")
+    wf.connect(guides, "positive", guider, "conditioning")
     wf.connect(noise, "NOISE", sample, "noise")
     wf.connect(guider, "GUIDER", sample, "guider")
     wf.connect(stack["sampler"], "SAMPLER", sample, "sampler")

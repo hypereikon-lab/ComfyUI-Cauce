@@ -1,8 +1,8 @@
 {
   "id": "af6f91da-624a-5bfd-895d-58bd4584f328",
   "revision": 0,
-  "last_node_id": 30,
-  "last_link_id": 44,
+  "last_node_id": 31,
+  "last_link_id": 49,
   "nodes": [
     {
       "id": 1,
@@ -22,7 +22,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "# CAUCE 60 · Confluence conditional repair\n\nTemplate para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade\nguards simétricos para formar 124 frames H3. LanPaint muestrea una región binaria\nde 1,5 s por lado, pero CAUCE acepta sólo el último segundo de A + el primero de\nB. Ese overscan mantiene el borde duro del sampler fuera del parche aceptado;\nuna opacidad cosenoidal suaviza el splice final. Duración y frames exteriores\npermanecen intactos.\n\nRequiere CAUCE y LanPaint v2.1.0 o posterior. Sube `gesture_a.mp4` y\n`gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps. El audio master\nno entra a este workflow ni se reemplaza con audio generado por H3."
+        "# CAUCE 60 · Confluence bidireccional\n\nTemplate para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade\nguards simétricos para formar 124 frames H3. El segundo interior solicitado se\najusta a 22 frames exactos de la grilla temporal H3. Dos clips guía de 22 frames,\npegados a ambos bordes, entregan el movimiento entrante y saliente. Sólo ese\ncentro se genera; el exterior queda preservado por la máscara oficial de H3.\n\nRequiere un ComfyUI oficial reciente con MiniMaxH3AddGuide y máscara temporal\npor token. CAUCE se niega a ejecutar en runtimes anteriores. Sube\n`gesture_a.mp4` y `gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps.\nEl audio master no entra ni se reemplaza con audio generado."
       ],
       "color": "#24382a",
       "bgcolor": "#132019"
@@ -314,7 +314,7 @@
           "type": "IMAGE",
           "links": [
             7,
-            36
+            41
           ]
         }
       ],
@@ -394,7 +394,7 @@
           "type": "IMAGE",
           "links": [
             8,
-            37
+            42
           ]
         }
       ],
@@ -458,21 +458,21 @@
           }
         },
         {
-          "localized_name": "repair_seconds_per_side",
-          "name": "repair_seconds_per_side",
+          "localized_name": "repair_seconds_total",
+          "name": "repair_seconds_total",
           "type": "FLOAT",
           "link": null,
           "widget": {
-            "name": "repair_seconds_per_side"
+            "name": "repair_seconds_total"
           }
         },
         {
-          "localized_name": "sampling_overscan_seconds_per_side",
-          "name": "sampling_overscan_seconds_per_side",
-          "type": "FLOAT",
+          "localized_name": "guide_frames",
+          "name": "guide_frames",
+          "type": "INT",
           "link": null,
           "widget": {
-            "name": "sampling_overscan_seconds_per_side"
+            "name": "guide_frames"
           }
         },
         {
@@ -494,7 +494,8 @@
             11,
             12,
             19,
-            24
+            24,
+            29
           ]
         },
         {
@@ -504,7 +505,8 @@
           "links": [
             23,
             25,
-            39
+            30,
+            44
           ]
         },
         {
@@ -531,7 +533,7 @@
         24.0,
         2.5,
         1.0,
-        0.5,
+        22,
         362
       ]
     },
@@ -844,7 +846,7 @@
           "type": "MODEL",
           "links": [
             2,
-            27
+            32
           ]
         }
       ],
@@ -953,7 +955,8 @@
           "links": [
             14,
             20,
-            35
+            31,
+            40
           ]
         }
       ],
@@ -996,7 +999,7 @@
           "name": "SAMPLER",
           "type": "SAMPLER",
           "links": [
-            31
+            36
           ]
         }
       ],
@@ -1063,7 +1066,7 @@
           "name": "SIGMAS",
           "type": "SIGMAS",
           "links": [
-            32
+            37
           ]
         }
       ],
@@ -1146,7 +1149,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            28
+            27
           ]
         },
         {
@@ -1154,7 +1157,8 @@
           "name": "latent",
           "type": "LATENT",
           "links": [
-            21
+            21,
+            28
           ]
         },
         {
@@ -1281,7 +1285,7 @@
           "name": "output_opacity",
           "type": "MASK",
           "links": [
-            40
+            45
           ]
         },
         {
@@ -1296,7 +1300,7 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        8,
+        4,
         "cosine"
       ]
     },
@@ -1365,7 +1369,7 @@
           "name": "masked_latent",
           "type": "LATENT",
           "links": [
-            33
+            38
           ]
         },
         {
@@ -1415,7 +1419,7 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            29
+            34
           ]
         }
       ],
@@ -1430,6 +1434,73 @@
     },
     {
       "id": 23,
+      "type": "CauceH3ConfluenceGuides",
+      "pos": [
+        3300,
+        -170
+      ],
+      "size": [
+        360,
+        190
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 27
+        },
+        {
+          "localized_name": "target_latent",
+          "name": "target_latent",
+          "type": "LATENT",
+          "link": 28
+        },
+        {
+          "localized_name": "working_images",
+          "name": "working_images",
+          "type": "IMAGE",
+          "link": 29
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "link": 30
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 31
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            33
+          ]
+        },
+        {
+          "localized_name": "guide_report",
+          "name": "guide_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3ConfluenceGuides",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 24,
       "type": "BasicGuider",
       "pos": [
         3490,
@@ -1440,20 +1511,20 @@
         46
       ],
       "flags": {},
-      "order": 22,
+      "order": 23,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
           "name": "model",
           "type": "MODEL",
-          "link": 27
+          "link": 32
         },
         {
           "localized_name": "conditioning",
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 28
+          "link": 33
         }
       ],
       "outputs": [
@@ -1462,7 +1533,7 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            30
+            35
           ]
         }
       ],
@@ -1472,58 +1543,49 @@
       }
     },
     {
-      "id": 24,
-      "type": "LanPaint_SamplerCustomAdvanced",
+      "id": 25,
+      "type": "SamplerCustomAdvanced",
       "pos": [
         3810,
         100
       ],
       "size": [
-        350,
-        260
+        230,
+        126
       ],
       "flags": {},
-      "order": 23,
+      "order": 24,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "noise",
           "name": "noise",
           "type": "NOISE",
-          "link": 29
+          "link": 34
         },
         {
           "localized_name": "guider",
           "name": "guider",
           "type": "GUIDER",
-          "link": 30
+          "link": 35
         },
         {
           "localized_name": "sampler",
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 31
+          "link": 36
         },
         {
           "localized_name": "sigmas",
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 32
+          "link": 37
         },
         {
           "localized_name": "latent_image",
           "name": "latent_image",
           "type": "LATENT",
-          "link": 33
-        },
-        {
-          "localized_name": "LanPaint_NumSteps",
-          "name": "LanPaint_NumSteps",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "LanPaint_NumSteps"
-          }
+          "link": 38
         }
       ],
       "outputs": [
@@ -1532,7 +1594,7 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            34
+            39
           ]
         },
         {
@@ -1543,19 +1605,12 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "LanPaint_SamplerCustomAdvanced"
-      },
-      "widgets_values": [
-        5,
-        5.0,
-        0.2,
-        "Image First",
-        "LanPaint Custom Sampler Adv.",
-        "lanpaint_star_button"
-      ]
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core"
+      }
     },
     {
-      "id": 25,
+      "id": 26,
       "type": "VAEDecode",
       "pos": [
         4210,
@@ -1566,20 +1621,20 @@
         46
       ],
       "flags": {},
-      "order": 24,
+      "order": 25,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "samples",
           "name": "samples",
           "type": "LATENT",
-          "link": 34
+          "link": 39
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 35
+          "link": 40
         }
       ],
       "outputs": [
@@ -1588,7 +1643,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            38
+            43
           ]
         }
       ],
@@ -1598,7 +1653,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 27,
       "type": "CauceApplySeamPatch",
       "pos": [
         4470,
@@ -1609,32 +1664,32 @@
         138
       ],
       "flags": {},
-      "order": 25,
+      "order": 26,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "left_frames",
           "name": "left_frames",
           "type": "IMAGE",
-          "link": 36
+          "link": 41
         },
         {
           "localized_name": "right_frames",
           "name": "right_frames",
           "type": "IMAGE",
-          "link": 37
+          "link": 42
         },
         {
           "localized_name": "repaired_working_images",
           "name": "repaired_working_images",
           "type": "IMAGE",
-          "link": 38
+          "link": 43
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
-          "link": 39
+          "link": 44
         },
         {
           "localized_name": "decoded_feather_frames",
@@ -1658,7 +1713,7 @@
           "localized_name": "blend_strength",
           "name": "blend_strength",
           "type": "MASK",
-          "link": 40,
+          "link": 45,
           "shape": 7
         }
       ],
@@ -1668,7 +1723,7 @@
           "name": "joined_images",
           "type": "IMAGE",
           "links": [
-            41
+            46
           ]
         },
         {
@@ -1676,7 +1731,7 @@
           "name": "repair_patch",
           "type": "IMAGE",
           "links": [
-            43
+            48
           ]
         },
         {
@@ -1691,12 +1746,12 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        8,
+        4,
         "cosine"
       ]
     },
     {
-      "id": 27,
+      "id": 28,
       "type": "CreateVideo",
       "pos": [
         4780,
@@ -1707,14 +1762,14 @@
         102
       ],
       "flags": {},
-      "order": 26,
+      "order": 27,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 41
+          "link": 46
         },
         {
           "localized_name": "audio",
@@ -1748,7 +1803,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            42
+            47
           ]
         }
       ],
@@ -1762,7 +1817,7 @@
       ]
     },
     {
-      "id": 28,
+      "id": 29,
       "type": "SaveVideo",
       "pos": [
         5110,
@@ -1773,14 +1828,14 @@
         106
       ],
       "flags": {},
-      "order": 27,
+      "order": 28,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 42
+          "link": 47
         },
         {
           "localized_name": "filename_prefix",
@@ -1829,7 +1884,7 @@
       ]
     },
     {
-      "id": 29,
+      "id": 30,
       "type": "CreateVideo",
       "pos": [
         4780,
@@ -1840,14 +1895,14 @@
         102
       ],
       "flags": {},
-      "order": 28,
+      "order": 29,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 43
+          "link": 48
         },
         {
           "localized_name": "audio",
@@ -1881,7 +1936,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            44
+            49
           ]
         }
       ],
@@ -1895,7 +1950,7 @@
       ]
     },
     {
-      "id": 30,
+      "id": 31,
       "type": "SaveVideo",
       "pos": [
         5110,
@@ -1906,14 +1961,14 @@
         106
       ],
       "flags": {},
-      "order": 29,
+      "order": 30,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 44
+          "link": 49
         },
         {
           "localized_name": "filename_prefix",
@@ -2173,119 +2228,119 @@
     ],
     [
       27,
-      13,
+      18,
       0,
       23,
       0,
-      "MODEL"
+      "CONDITIONING"
     ],
     [
       28,
       18,
-      0,
+      1,
       23,
       1,
-      "CONDITIONING"
+      "LATENT"
     ],
     [
       29,
-      22,
+      8,
       0,
-      24,
-      0,
-      "NOISE"
+      23,
+      2,
+      "IMAGE"
     ],
     [
       30,
-      23,
-      0,
-      24,
-      1,
-      "GUIDER"
-    ],
-    [
-      31,
-      16,
-      0,
-      24,
-      2,
-      "SAMPLER"
-    ],
-    [
-      32,
-      17,
-      0,
-      24,
-      3,
-      "SIGMAS"
-    ],
-    [
-      33,
-      21,
-      0,
-      24,
-      4,
-      "LATENT"
-    ],
-    [
-      34,
-      24,
-      0,
-      25,
-      0,
-      "LATENT"
-    ],
-    [
-      35,
-      15,
-      0,
-      25,
-      1,
-      "VAE"
-    ],
-    [
-      36,
-      6,
-      0,
-      26,
-      0,
-      "IMAGE"
-    ],
-    [
-      37,
-      7,
-      0,
-      26,
-      1,
-      "IMAGE"
-    ],
-    [
-      38,
-      25,
-      0,
-      26,
-      2,
-      "IMAGE"
-    ],
-    [
-      39,
       8,
       1,
-      26,
+      23,
       3,
       "CAUCE_SEAM"
     ],
     [
-      40,
-      20,
+      31,
+      15,
+      0,
+      23,
+      4,
+      "VAE"
+    ],
+    [
+      32,
+      13,
+      0,
+      24,
+      0,
+      "MODEL"
+    ],
+    [
+      33,
+      23,
+      0,
+      24,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      34,
+      22,
+      0,
+      25,
+      0,
+      "NOISE"
+    ],
+    [
+      35,
+      24,
+      0,
+      25,
+      1,
+      "GUIDER"
+    ],
+    [
+      36,
+      16,
+      0,
+      25,
       2,
+      "SAMPLER"
+    ],
+    [
+      37,
+      17,
+      0,
+      25,
+      3,
+      "SIGMAS"
+    ],
+    [
+      38,
+      21,
+      0,
+      25,
+      4,
+      "LATENT"
+    ],
+    [
+      39,
+      25,
+      0,
       26,
-      6,
-      "MASK"
+      0,
+      "LATENT"
+    ],
+    [
+      40,
+      15,
+      0,
+      26,
+      1,
+      "VAE"
     ],
     [
       41,
-      26,
+      6,
       0,
       27,
       0,
@@ -2293,25 +2348,65 @@
     ],
     [
       42,
+      7,
+      0,
       27,
-      0,
-      28,
-      0,
-      "VIDEO"
+      1,
+      "IMAGE"
     ],
     [
       43,
       26,
-      1,
-      29,
       0,
+      27,
+      2,
       "IMAGE"
     ],
     [
       44,
+      8,
+      1,
+      27,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      45,
+      20,
+      2,
+      27,
+      6,
+      "MASK"
+    ],
+    [
+      46,
+      27,
+      0,
+      28,
+      0,
+      "IMAGE"
+    ],
+    [
+      47,
+      28,
+      0,
       29,
       0,
+      "VIDEO"
+    ],
+    [
+      48,
+      27,
+      1,
       30,
+      0,
+      "IMAGE"
+    ],
+    [
+      49,
+      30,
+      0,
+      31,
       0,
       "VIDEO"
     ]

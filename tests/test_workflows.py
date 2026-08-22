@@ -86,7 +86,8 @@ class VisualWorkflowTests(unittest.TestCase):
                 "CauceConfluenceFields",
                 "CaucePrepareH3SeamRepair",
                 "CauceApplySeamPatch",
-                "LanPaint_SamplerCustomAdvanced",
+                "CauceH3ConfluenceGuides",
+                "SamplerCustomAdvanced",
             }.issubset(types)
         )
         self.assertNotIn("CauceGenerationWindow", types)
@@ -95,7 +96,7 @@ class VisualWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             build["widgets_values"],
-            [24.0, 24.0, 2.5, 1.0, 0.5, 362],
+            [24.0, 24.0, 2.5, 1.0, 22, 362],
         )
         scales = [node for node in workflow["nodes"] if node["type"] == "ImageScale"]
         self.assertEqual(len(scales), 2)
@@ -105,7 +106,7 @@ class VisualWorkflowTests(unittest.TestCase):
         fields = next(
             node for node in workflow["nodes"] if node["type"] == "CauceConfluenceFields"
         )
-        self.assertEqual(fields["widgets_values"], [8, "cosine"])
+        self.assertEqual(fields["widgets_values"], [4, "cosine"])
         prepare = next(
             node
             for node in workflow["nodes"]

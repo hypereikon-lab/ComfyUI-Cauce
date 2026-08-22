@@ -17,7 +17,7 @@ de 32 GB y 64 GB de RAM. CAUCE no modificó CUDA, PyTorch, ComfyUI ni modelos.
 | Bridge | graph validado | — | — | pendiente GPU |
 | Confluence v1, máscara estándar | runtime sintético verificado; gesto real rechazado | 124 f working → 120 f join / 48 f patch | 42,8 s a 4 steps | previews temporales, prompt `5ea6dc99-...` |
 | Confluence v2, LanPaint + campos continuos | rechazado por revisión de implementación | — | — | LanPaint umbraliza el denoise mask; la supuesta fuerza continua no llega al sampler |
-| Confluence v3, overscan binario + blend continuo | código local validado; activación live pendiente | 124 f working / 72 f sampling / 48 f aceptación | pendiente | requiere actualizar CAUCE y reiniciar ComfyUI |
+| Confluence v3, overscan binario + blend continuo | runtime real verificado; revisión artística por par | 124 f working / 72 f sampling / 48 f aceptación → 248 f join | 487,85 s | `cauce/demos/confluence_repaired_join_00002_.mp4` |
 
 ## Lectura de los resultados
 
@@ -66,10 +66,27 @@ portable el 2026-08-22. La revisión posterior de su ruta de sampling mostró qu
 convierte `denoise_mask` a `(mask > 0.5)`: una curva continua en ese socket se
 vuelve binaria. Confluence v3 separa por eso una región de sampling binaria con
 12 frames de overscan por borde, una aceptación dura más pequeña y una opacidad
-cosenoidal continua aplicada sólo después del decode. La instancia aún expone
-los dos nodos Confluence anteriores; faltan `Confluence Fields` y el preparador
-nuevo hasta actualizar CAUCE y reiniciar ComfyUI. No se requiere modificar
-ComfyUI, CUDA, PyTorch, drivers ni pesos.
+cosenoidal continua aplicada sólo después del decode.
+
+La versión v3 se activó y ejecutó en la instancia real con dos clips H3 de 124
+frames a 24 fps. El join resultante conserva los 248 frames originales
+(10,333 s) y el artifact de diagnóstico contiene exactamente los 48 frames
+aceptados (2 s). Fuera de ese rango, CAUCE no reemplaza ningún frame; los ocho
+frames de cada borde mezclan el resultado decodificado con una curva cosenoidal.
+En una medición luminancia-a-luminancia, el corte duro del par de prueba era un
+pico aislado de 26,38; el frame equivalente del repair midió 20,68 dentro de un
+tramo de movimiento sostenido, por lo que el salto dejó de ser una singularidad.
+El bridge generado introduce un zoom rápido por helechos entre ambos parents:
+el contrato temporal y el splice pasan, pero su pertinencia visual sigue siendo
+un gate artístico por par, no una garantía global.
+
+Durante la carga del ejemplo live se detectó además que Comfy serializa los
+widgets ocultos `left_fps` y `right_fps` aunque estén conectados. El template
+ahora conserva ambos valores antes de los parámetros de contexto para evitar
+que `maximum_frames=362` se desplace al campo de segundos. La portable quedó
+sincronizada con CAUCE `1b9d4a8`; no fue necesario reiniciar otra vez porque ese
+último commit sólo corrige el JSON de ejemplo. No se modificaron ComfyUI, CUDA,
+PyTorch, drivers ni pesos.
 
 Receipt Ref2VA landscape:
 `357751bc96407eda0532dcc7b7a2b459c25838106a7a1a654f56daff219d6bc1`.

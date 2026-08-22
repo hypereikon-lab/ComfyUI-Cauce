@@ -5,6 +5,7 @@ __pycache__/
 .coverage
 .DS_Store
 .cauce/
+.artifacts/
 dist/
 build/
 *.egg-info/

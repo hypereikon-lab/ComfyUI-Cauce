@@ -30,7 +30,7 @@
       "id": "h3-ref2va-motion-reference",
       "path": "workflows/20_h3_ref2va_motion_reference.json",
       "tier": "production-candidate",
-      "status": "landscape-profile-awaits-live-validation",
+      "status": "verified-live-landscape",
       "samples": 1,
       "requires": ["ComfyUI-Cauce", "MiniMax H3 Ref2VA"]
     },
@@ -46,7 +46,7 @@
       "id": "h3-two-window-continuation",
       "path": "workflows/40_h3_two_window_continuation.json",
       "tier": "advanced",
-      "status": "hybrid-continuation-awaits-live-validation",
+      "status": "visual-seam-verified-audio-listen-pending",
       "samples": 2,
       "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
     },

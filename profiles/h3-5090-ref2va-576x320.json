@@ -15,5 +15,5 @@
   "shift_audio": 3.0,
   "minimum_free_reserve_gib": 35,
   "minimum_vram_gib": 30,
-  "status": "candidate-requires-current-lab-validation"
+  "status": "verified-lab-2026-08-22"
 }

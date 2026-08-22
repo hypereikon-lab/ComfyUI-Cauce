@@ -72,9 +72,10 @@ The production default should remain 39 only after these tests confirm it on
 the current model/runtime.
 
 The first live `mask_only` run completed but failed the visible-seam gate. The
-next required comparison is the shipped hybrid: identical 39-frame latent mask
-plus the decoded last accepted frame connected as native FL2VA `first_frame`.
-Completion alone is not a pass.
+shipped hybrid—identical 39-frame latent mask plus the decoded last accepted
+frame connected as native FL2VA `first_frame`—passed the first visual join
+comparison. Repeat it over heterogeneous material and complete the listening
+gate before making it a production preset. Completion alone is not a pass.
 
 For the two-ended bridge, confirm that both copied endpoint tensors are
 byte-identical before sampling, neither context overlaps the middle, and the

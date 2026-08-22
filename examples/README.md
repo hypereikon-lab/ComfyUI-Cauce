@@ -9,9 +9,9 @@ Los ejemplos están organizados por función:
 
 Orden recomendado: `00 → 10 → 20/30 → 40 → 50`.
 
-Estado real: `00` y `10` están verificados; `20` ejecutó y ahora usa un profile
-landscape pendiente de confirmación; `30` requiere un AddGuide oficial más
-nuevo; `40` es un candidato de continuidad híbrida; `50` sigue experimental.
+Estado real: `00`, `10` y `20` están verificados; `30` requiere un AddGuide
+oficial más nuevo; `40` pasó el primer gate visual de continuidad híbrida y
+mantiene pendiente la escucha del join; `50` sigue experimental.
 Consultar [`docs/LAB_RESULTS.md`](../docs/LAB_RESULTS.md) antes de ejecutar jobs
 costosos.
 

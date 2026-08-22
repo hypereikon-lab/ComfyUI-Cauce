@@ -37,9 +37,9 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 |---|---|---:|---|
 | 00 | `00_plate_sketch_handoff.json` | CPU | Componer un plate, asociarlo a tiempo/prompt y exportar PNG + sidecars. |
 | 10 | `10_h3_fl2va_first_last.json` | 1 sample | Baseline first/last con MP4, parent latent y receipt. |
-| 20 | `20_h3_ref2va_motion_reference.json` | 1 sample | Referencias visuales + video de movimiento; profile landscape. |
+| 20 | `20_h3_ref2va_motion_reference.json` | 1 sample | Referencias visuales + video de movimiento; verificado landscape. |
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
-| 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; candidato de validación. |
+| 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
@@ -156,7 +156,10 @@ En el runtime 0.33.1, el latent tail por sí solo ejecutó pero produjo un salto
 visual fuerte. La guía de clip latente pertenece a un core H3 posterior y CAUCE
 la bloquea explícitamente cuando no está disponible. El endpoint decodificado
 es la estrategia compatible que ahora debe pasar el gate comparativo; no se
-declara continuidad “resuelta” sólo porque el sampler termine.
+declara continuidad “resuelta” sólo porque el sampler termine. En la prueba
+del lab, la variante híbrida conservó composición, perspectiva, cauce y árbol
+central a través del join. El audio aún requiere escucha crítica antes de
+promover el recorrido a preset de producción.
 
 ## 50 · Bridge
 

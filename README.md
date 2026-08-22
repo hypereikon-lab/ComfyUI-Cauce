@@ -24,10 +24,11 @@ media
 
 The greenfield core and 36 ComfyUI nodes are implemented. Six visual workflows,
 two API templates, bounded demo assets, and a restartable two-window project are
-included. Plate export, FL2VA first/last, and Ref2VA have executed successfully
-on the live lab RTX 5090. Mask-only continuation also executes, but its first
-visual seam failed the quality gate; the shipped continuation workflow therefore
-adds a decoded endpoint guide and remains an explicit validation candidate.
+included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
+continuation have executed successfully on the live lab RTX 5090. Mask-only
+continuation also executes, but its first visual seam failed the quality gate;
+the shipped hybrid workflow passed that visual comparison. Its audio seam still
+requires a listening gate before production promotion.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.

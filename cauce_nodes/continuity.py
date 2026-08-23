@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from ..cauce.continuity import (
     accept_decoded_window,
-    prepare_bridge,
     prepare_continuation,
     resolve_parent_latent,
 )
@@ -72,54 +71,6 @@ class CauceResolveParentLatent:
         return (resolve_parent_latent(latent, window),)
 
 
-class CaucePrepareBridge:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "positive": ("CONDITIONING",),
-                "target_latent": ("LATENT",),
-                "left_parent": ("LATENT",),
-                "right_parent": ("LATENT",),
-                "context_frames": (
-                    [str(value) for value in range(5, 346, 17)],
-                    {"default": "39"},
-                ),
-                "conditioning_mode": (
-                    ["mask_only", "mask_plus_guide"],
-                    {"default": "mask_only"},
-                ),
-            }
-        }
-
-    RETURN_TYPES = ("CONDITIONING", "LATENT", "INT")
-    RETURN_NAMES = ("positive", "latent", "middle_frames")
-    FUNCTION = "prepare"
-    CATEGORY = "CAUCE/Continuity"
-    DESCRIPTION = (
-        "Protect phase-aligned visual content at both ends of a target and generate "
-        "only the missing middle. H3's internal audio stream stays frozen."
-    )
-
-    def prepare(
-        self,
-        positive,
-        target_latent,
-        left_parent,
-        right_parent,
-        context_frames,
-        conditioning_mode,
-    ):
-        return prepare_bridge(
-            positive,
-            target_latent,
-            left_parent,
-            right_parent,
-            context_frames=int(context_frames),
-            conditioning_mode=conditioning_mode,
-        )
-
-
 class CauceAcceptDecodedWindow:
     @classmethod
     def INPUT_TYPES(cls):
@@ -146,13 +97,11 @@ class CauceAcceptDecodedWindow:
 NODE_CLASS_MAPPINGS = {
     "CaucePrepareContinuation": CaucePrepareContinuation,
     "CauceResolveParentLatent": CauceResolveParentLatent,
-    "CaucePrepareBridge": CaucePrepareBridge,
     "CauceAcceptDecodedWindow": CauceAcceptDecodedWindow,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CaucePrepareContinuation": "CAUCE · Prepare H3 Continuation",
     "CauceResolveParentLatent": "CAUCE · Resolve Parent Latent",
-    "CaucePrepareBridge": "CAUCE · Prepare H3 Visual Bridge",
     "CauceAcceptDecodedWindow": "CAUCE · Accept Decoded Window",
 }

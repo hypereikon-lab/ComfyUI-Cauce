@@ -18,7 +18,7 @@ and community experiments used to challenge the architecture.
   current loader, sampling, decoding, and output graph conventions.
 - [H3 Motion Context / latent-masking experiments at `87de57b`](https://github.com/seitanism/ComfyUI-H3-Motion-Context-MultiRef/tree/87de57ba619297503fa49c9594c0c021d5b0c261):
   independent community evidence around long-form continuation, shared AV
-  boundaries, two-ended bridges, audio feathers, causal decode, persistence,
+  boundaries, two-ended latent conditioning, audio feathers, causal decode, persistence,
   and bounded final assembly. Its GPL code is not included in CAUCE.
 - [Comfy-Org MiniMax-H3 model files](https://huggingface.co/Comfy-Org/MiniMax-H3/tree/main):
   exact paths, byte sizes, and LFS SHA-256 values used by read-only preflight.
@@ -41,7 +41,7 @@ and community experiments used to challenge the architecture.
    streaming, LoRA training, and generated audio are outside the production
    scope rather than hidden dependencies or roadmap items.
 
-## Confluence review — 2026-08-22
+## Temporal inpainting review — 2026-08-22
 
 The v1–v3 graph passed tensor/runtime validation but failed on heterogeneous
 real gestures. The audit found that the failure preceded sampler choice:
@@ -83,7 +83,7 @@ copied into CAUCE:
   inpainting sampler, but it cannot supply H3 model semantics missing from an
   older core. It is no longer a workflow-60 dependency.
 
-Confluence v4 keeps three mathematical objects separate:
+The production temporal-inpainting path keeps three mathematical objects separate:
 
 ```text
 model generation support  s(t,x,y) ∈ {0,1}
@@ -91,12 +91,12 @@ accepted decoded interval          a(t) ∈ {0,1}
 decoded splice opacity             o(t,x,y) ∈ [0,1]
 ```
 
-For the default 124-frame domain with cut `c=62`, CAUCE chooses token
-boundaries `l=51`, `r=73` minimizing `|(r-l)-24|` under `c-l=r-c`. The unknown
-middle is therefore 22 frames. Valid guide clips are
-`G_L=[29,51)` and `G_R=[73,95)`. The standard H3 sampler operates only on
-`[51,73)`; a four-frame raised cosine is used only after decode. H3 audio
-remains zero-masked structural scaffolding and is discarded.
+For the production 124-frame domain with cut `c=62` and a three-second request,
+CAUCE chooses token boundaries `l=26`, `r=98` under `c-l=r-c`. The regenerated
+interval is 72 frames. Valid guide clips are `G_L=[4,26)` and `G_R=[98,120)`.
+The standard H3 sampler operates only on `[26,98)`; a four-frame raised cosine
+is used only after decode. H3 audio remains zero-masked structural scaffolding
+and is discarded.
 
 ## Compatibility policy
 

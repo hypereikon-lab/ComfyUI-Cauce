@@ -196,15 +196,6 @@ SPECS = {
         [("positive", "CONDITIONING"), ("latent", "LATENT"), ("trim_frames", "INT")],
         [330, 142],
     ),
-    "CaucePrepareBridge": (
-        [
-            L("positive", "CONDITIONING"), L("target_latent", "LATENT"),
-            L("left_parent", "LATENT"), L("right_parent", "LATENT"),
-            W("context_frames", "COMBO"), W("conditioning_mode", "COMBO"),
-        ],
-        [("positive", "CONDITIONING"), ("latent", "LATENT"), ("middle_frames", "INT")],
-        [330, 162],
-    ),
     "VAEDecode": ([L("samples", "LATENT"), L("vae", "VAE")], [("IMAGE", "IMAGE")], [160, 46]),
     "VAEDecodeAudio": ([L("samples", "LATENT"), L("vae", "VAE")], [("AUDIO", "AUDIO")], [170, 46]),
     "CauceAcceptDecodedWindow": (
@@ -234,7 +225,7 @@ SPECS = {
         ],
         [360, 154],
     ),
-    "CaucePrepareH3SeamRepair": (
+    "CaucePrepareH3TemporalInpaint": (
         [
             L("target_latent", "LATENT"), L("encoded_video_latent", "LATENT"),
             L("seam", "CAUCE_SEAM"), W("token_projection", "COMBO"),
@@ -243,7 +234,7 @@ SPECS = {
         ],
         [("masked_latent", "LATENT"), ("mask_report", "STRING")], [350, 190],
     ),
-    "CauceConfluenceFields": (
+    "CauceTemporalInpaintFields": (
         [
             L("working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
             W("decoded_blend_frames", "INT"), W("curve", "COMBO"),
@@ -254,7 +245,7 @@ SPECS = {
         ],
         [350, 170],
     ),
-    "CauceH3ConfluenceGuides": (
+    "CauceH3TemporalInpaintGuides": (
         [
             L("positive", "CONDITIONING"), L("target_latent", "LATENT"),
             L("working_images", "IMAGE"), L("seam", "CAUCE_SEAM"),
@@ -697,53 +688,21 @@ valida primero CAUCE 10.""", size=(790, 280))
     return wf.data()
 
 
-def build_bridge():
-    wf = Workflow("50_h3_latent_bridge", scale=0.28, offset=(110, 180))
-    note(wf, (-50, -430), """# CAUCE 50 · Latent bridge
+def build_temporal_inpaint():
+    wf = Workflow("50_h3_temporal_inpainting", scale=0.22, offset=(90, 170))
+    note(wf, (-50, -520), """# CAUCE 50 · H3 temporal inpainting
 
-Carga dos parents AV phase-safe ya guardados. Copia el tail izquierdo al head y
-el head derecho al tail; únicamente el centro permanece generable. Antes de
-ejecutar, ajusta ambos paths/índices a artifacts existentes.""", size=(700, 240))
-    left = wf.add("CauceLoadAVLatent", (0, 0), ["cauce/latents/left_parent", 0])
-    right = wf.add("CauceLoadAVLatent", (0, 180), ["cauce/latents/right_parent", 0])
-    window = wf.add("CauceGenerationWindow", (360, 0), ["bridge_window_001", 10.0, 5.0, "0", "0", "ceil", "nearest_run", 362])
-    profile = wf.add("CauceExecutionProfile", (360, 430), ["h3-5090-fl2va-640"])
-    stack = add_model_stack(wf, 760, 0, "FL2VA")
-    h3 = wf.add("CauceH3FL2VA", (1760, 0), [
-        "Generate only the missing middle between the two inherited visual boundaries. Maintain causal camera motion, spatial direction, water flow, and atmosphere across both joins. No cut or camera reset.",
-    ])
-    bridge = wf.add("CaucePrepareBridge", (2220, 0), ["39", "mask_only"])
-    wf.connect(stack["clip"], "CLIP", h3, "clip"); wf.connect(stack["video_vae"], "VAE", h3, "vae")
-    wf.connect(window, "window", h3, "window"); wf.connect(profile, "profile", h3, "profile")
-    wf.connect(h3, "positive", bridge, "positive"); wf.connect(h3, "latent", bridge, "target_latent")
-    wf.connect(left, "latent", bridge, "left_parent"); wf.connect(right, "latent", bridge, "right_parent")
-    result = add_sample_decode(
-        wf, 2650, 0, stack, (bridge, "positive"), (bridge, "latent"), (window, "window"),
-        seed=2026082106, prefix="cauce/demos/latent_bridge",
-    )
-    save = wf.add("CauceSaveAVLatent", (3300, 360), ["cauce/latents/bridge", 1])
-    wf.connect(result["parent"], "LATENT", save, "latent")
-    wf.group("PARENTS + WINDOW", (-40, -40, 760, 780))
-    wf.group("MODEL STACK", (720, -40, 1000, 850))
-    wf.group("BRIDGE CONDITIONING", (1720, -40, 880, 500))
-    wf.group("SAMPLE → ACCEPT → MP4", (2610, -40, 2130, 760))
-    return wf.data()
-
-
-def build_confluence():
-    wf = Workflow("60_h3_confluence_seam_repair", scale=0.22, offset=(90, 170))
-    note(wf, (-50, -520), """# CAUCE 60 · Confluence bidireccional
-
-Template para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade
-guards simétricos para formar 124 frames H3. El segundo interior solicitado se
-ajusta a 22 frames exactos de la grilla temporal H3. Dos clips guía de 22 frames,
-pegados a ambos bordes, entregan el movimiento entrante y saliente. Sólo ese
-centro se genera; el exterior queda preservado por la máscara oficial de H3.
+Regenera un intervalo localizado alrededor de la unión entre dos videos. Toma
+2,5 s a cada lado del corte, forma una ventana válida de 124 frames H3 y ajusta
+los 3 s solicitados a 72 frames compatibles con la grilla temporal del modelo.
+Dos clips guía de 22 frames, inmediatamente antes y después del intervalo,
+condicionan el movimiento entrante y saliente. Sólo el intervalo enmascarado se
+genera; el resto del latent codificado se preserva.
 
 Requiere un ComfyUI oficial reciente con MiniMaxH3AddGuide y máscara temporal
-por token. CAUCE se niega a ejecutar en runtimes anteriores. Sube
+por token. CAUCE se niega a ejecutar en runtimes incompatibles. Sube
 `gesture_a.mp4` y `gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps.
-El audio master no entra ni se reemplaza con audio generado.""", size=(820, 310))
+No se utiliza, genera ni reemplaza audio.""", size=(820, 330))
     left_video = wf.add("LoadVideo", (0, 0), ["gesture_a.mp4", "image"], title="Gesture A")
     right_video = wf.add("LoadVideo", (0, 340), ["gesture_b.mp4", "image"], title="Gesture B")
     left_parts = wf.add("GetVideoComponents", (330, 0))
@@ -756,33 +715,33 @@ El audio master no entra ni se reemplaza con audio generado.""", size=(820, 310)
     seam = wf.add(
         "CauceBuildSeamWindow",
         (930, 150),
-        [24.0, 24.0, 2.5, 1.0, 22, 362],
+        [24.0, 24.0, 2.5, 3.0, 22, 362],
     )
     first = wf.add("CauceSelectImageFrame", (1320, 0), [0], title="Working first frame")
     last = wf.add("CauceSelectImageFrame", (1320, 340), [-1], title="Working last frame")
     profile = wf.add("CauceExecutionProfile", (1680, 650), ["h3-5090-fl2va-640"])
     stack = add_model_stack(wf, 1720, 0, "FL2VA")
     condition = wf.add("CauceH3FL2VA", (2730, 0), [
-        "Repair only the masked temporal join. Preserve framing, visual content, and motion outside it. Generate one continuous gesture whose position, velocity, and acceleration connect the left state to the right state without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Audio is not part of this repair."
+        "Regenerate only the masked temporal interval. Preserve framing, visual content, and motion outside it. Connect position, velocity, and acceleration from the incoming guide clip to the outgoing guide clip without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Do not generate or condition on audio."
     ])
     encode = wf.add("VAEEncode", (2730, 390))
-    fields = wf.add("CauceConfluenceFields", (3100, 520), [4, "cosine"])
+    fields = wf.add("CauceTemporalInpaintFields", (3100, 520), [4, "cosine"])
     prepare = wf.add(
-        "CaucePrepareH3SeamRepair", (3100, 230), ["cover", 0.5]
+        "CaucePrepareH3TemporalInpaint", (3100, 230), ["cover", 0.5]
     )
     noise = wf.add("RandomNoise", (3490, 0), [2026082201, "fixed"])
-    guides = wf.add("CauceH3ConfluenceGuides", (3300, -170))
+    guides = wf.add("CauceH3TemporalInpaintGuides", (3300, -170))
     guider = wf.add("BasicGuider", (3490, 150))
     sample = wf.add("SamplerCustomAdvanced", (3810, 100))
     decode = wf.add("VAEDecode", (4210, 100))
     apply = wf.add("CauceApplySeamPatch", (4470, 100), [4, "cosine"])
     joined_video = wf.add("CreateVideo", (4780, 0), [24.0, 8])
     joined_save = wf.add("SaveVideo", (5110, 0), [
-        "cauce/demos/confluence_native_join", "mp4", "auto",
+        "cauce/demos/temporal_inpaint_join", "mp4", "auto",
     ])
     patch_video = wf.add("CreateVideo", (4780, 260), [24.0, 8])
     patch_save = wf.add("SaveVideo", (5110, 260), [
-        "cauce/demos/confluence_native_patch", "mp4", "auto",
+        "cauce/demos/temporal_inpaint_patch", "mp4", "auto",
     ])
 
     wf.connect(left_video, "VIDEO", left_parts, "video")
@@ -834,9 +793,9 @@ El audio master no entra ni se reemplaza con audio generado.""", size=(820, 310)
     wf.connect(patch_video, "VIDEO", patch_save, "video")
 
     wf.group("SOURCES · NORMALIZE", (-40, -40, 890, 760))
-    wf.group("CONFLUENCE WINDOW", (880, -40, 760, 600))
+    wf.group("TEMPORAL INPAINT WINDOW", (880, -40, 760, 600))
     wf.group("H3 MODEL + WORKING DOMAIN", (1640, -40, 1420, 960))
-    wf.group("CONDITIONAL SEAM REPAIR", (3060, -40, 1380, 800))
+    wf.group("MASKED TEMPORAL GENERATION", (3060, -40, 1380, 800))
     wf.group("DURATION-PRESERVING SPLICE", (4330, -40, 1110, 620))
     return wf.data()
 
@@ -935,8 +894,7 @@ def main():
         "20_h3_ref2va_motion_reference.json": build_ref2va(),
         "30_h3_timed_guide.json": build_timed_guide(),
         "40_h3_two_window_continuation.json": build_continuation(),
-        "50_h3_latent_bridge.json": build_bridge(),
-        "60_h3_confluence_seam_repair.json": build_confluence(),
+        "50_h3_temporal_inpainting.json": build_temporal_inpaint(),
     }
     for filename, data in visual.items():
         write_json(WORKFLOWS / filename, data)

@@ -1,4 +1,4 @@
-"""Aggregate CAUCE legacy-node mappings without any web UI."""
+"""Aggregate native CAUCE node mappings without any web UI."""
 
 from . import artifacts, audio, continuity, h3, masks, media, plates, profiles, seams, timeline
 

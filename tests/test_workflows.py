@@ -19,8 +19,7 @@ class VisualWorkflowTests(unittest.TestCase):
             "20_h3_ref2va_motion_reference.json",
             "30_h3_timed_guide.json",
             "40_h3_two_window_continuation.json",
-            "50_h3_latent_bridge.json",
-            "60_h3_confluence_seam_repair.json",
+            "50_h3_temporal_inpainting.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
         self.assertEqual({path.name for path in paths}, expected)
@@ -75,18 +74,18 @@ class VisualWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(profile["widgets_values"], ["h3-5090-ref2va-576x320"])
 
-    def test_confluence_demo_owns_its_exact_h3_window(self):
+    def test_temporal_inpaint_demo_owns_its_exact_h3_window(self):
         workflow = json.loads(
-            (WORKFLOW_DIR / "60_h3_confluence_seam_repair.json").read_text()
+            (WORKFLOW_DIR / "50_h3_temporal_inpainting.json").read_text()
         )
         types = {node["type"] for node in workflow["nodes"]}
         self.assertTrue(
             {
                 "CauceBuildSeamWindow",
-                "CauceConfluenceFields",
-                "CaucePrepareH3SeamRepair",
+                "CauceTemporalInpaintFields",
+                "CaucePrepareH3TemporalInpaint",
                 "CauceApplySeamPatch",
-                "CauceH3ConfluenceGuides",
+                "CauceH3TemporalInpaintGuides",
                 "SamplerCustomAdvanced",
             }.issubset(types)
         )
@@ -96,7 +95,7 @@ class VisualWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             build["widgets_values"],
-            [24.0, 24.0, 2.5, 1.0, 22, 362],
+            [24.0, 24.0, 2.5, 3.0, 22, 362],
         )
         scales = [node for node in workflow["nodes"] if node["type"] == "ImageScale"]
         self.assertEqual(len(scales), 2)
@@ -104,13 +103,13 @@ class VisualWorkflowTests(unittest.TestCase):
             all(node["widgets_values"][1:3] == [640, 640] for node in scales)
         )
         fields = next(
-            node for node in workflow["nodes"] if node["type"] == "CauceConfluenceFields"
+            node for node in workflow["nodes"] if node["type"] == "CauceTemporalInpaintFields"
         )
         self.assertEqual(fields["widgets_values"], [4, "cosine"])
         prepare = next(
             node
             for node in workflow["nodes"]
-            if node["type"] == "CaucePrepareH3SeamRepair"
+            if node["type"] == "CaucePrepareH3TemporalInpaint"
         )
         self.assertEqual(prepare["widgets_values"], ["cover", 0.5])
 

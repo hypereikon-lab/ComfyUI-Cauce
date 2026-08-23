@@ -10,7 +10,7 @@ The production soundtrack is a fixed master clock and delivery asset. It is
 not a generative target, latent parent, or mandatory H3 reference. When H3
 requires a nested audiovisual latent internally, CAUCE supplies and preserves
 an empty audio stream as structural scaffolding and discards it after sampling.
-The master soundtrack is never encoded through AudioVAE by Confluence.
+The master soundtrack is never encoded through AudioVAE by temporal inpainting.
 
 ```text
 MediaAsset / actual Comfy media tensors
@@ -142,10 +142,11 @@ boundaries. Accepted decoded spans are assembled afterward.
 Generated H3 audio is not accepted into production. The fixed master soundtrack
 uses `Authoritative Audio` and bypasses AudioVAE entirely.
 
-## Local seam repair / Confluence
+## Localized temporal inpainting
 
-Continuation generates an unknown future from one parent. Confluence instead
-receives two already-decoded clips and repairs their visible join. It does not
+Continuation generates an unknown future from one parent. Temporal inpainting
+instead receives two already-decoded clips and regenerates a localized interval
+around their visible join. It does not
 concatenate independent H3 latents. The source pixels are first assembled into
 one causal VAE domain:
 
@@ -153,7 +154,7 @@ one causal VAE domain:
 duplicate guard + tail(A) + head(B) + duplicate guard
   → one H3 video latent
   → left/right 22-frame H3 guide clips
-  → official H3 per-token mask over a 22-frame center
+  → official H3 per-token mask over the requested center
   → standard H3 sampler
   → decode one repaired working domain
   → accept only the central patch
@@ -162,12 +163,12 @@ duplicate guard + tail(A) + head(B) + duplicate guard
 
 At the default 24 fps geometry, 2.5 seconds from each side gives 120 real
 frames. Two duplicate guards at each edge make a legal 124-frame H3 run. The
-cut is frame 62 of that working domain. A one-second request is snapped to the
-nearest symmetric token boundaries, `[51,73)`: 11 frames from each source, 22
-frames total. Preserved guide clips occupy `[29,51)` and `[73,95)`. The final
-frame count is always `len(A) + len(B)`.
+cut is frame 62 of that working domain. The production three-second request
+resolves to the symmetric token boundaries `[26,98)`: 36 frames from each
+source, 72 frames total. Preserved guide clips occupy `[4,26)` and `[98,120)`.
+The final frame count is always `len(A) + len(B)`.
 
-Confluence deliberately separates three fields:
+Temporal inpainting deliberately separates three fields:
 
 1. `sampling_support` is binary and controls the official H3 per-token denoise
    mask. Its boundaries are exact visual-token boundaries.
@@ -196,12 +197,13 @@ graph appeared to preserve. CAUCE now inspects the native mask hooks and
 
 The two guide clips are causal context, not replacement media. The left clip
 shows incoming position and velocity; the right clip shows the outgoing state.
-Together they make the central bridge bidirectional while leaving media opaque.
+Together they condition the regenerated interval from both temporal directions
+while leaving media opaque.
 
 This is video-only by design. H3's structurally required nested audio stream is
 zero-masked and its output is discarded. The fixed soundtrack remains on
 CAUCE's authoritative sample clock. Long masters should not be encoded or
-loaded into Confluence; repair local clips and place their accepted outputs on
+loaded into temporal inpainting; repair local clips and place their accepted outputs on
 the visual timeline.
 
 ## Persistence

@@ -113,23 +113,3 @@ Prepare Continuation -> Compile AV Mask
 ```
 
 In both cases the copied continuation head remains preserved.
-
-## Two-ended temporal bridge
-
-```text
-left resolved parent ---------------------------┐
-right resolved parent ------------------------┐|
-new H3 positive + empty target latent -------┐||
-                                             vvv
-                           CAUCE Prepare H3 Visual Bridge
-                                             |
-                                  positive + masked latent
-                                             |
-                                          sampler
-```
-
-The left visual tail occupies the target head and the right visual head occupies
-its tail. Both use legal visual context boundaries; the unknown middle alone
-remains generable. H3's internal audio rows are frozen. `mask_plus_guide` can be
-tested explicitly, but `mask_only` is the production baseline until the
-laboratory comparison is measured.

@@ -42,8 +42,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 20 | `20_h3_ref2va_motion_reference.json` | 1 sample | Referencias visuales + video de movimiento; verificado landscape. |
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
-| 50 | `50_h3_latent_bridge.json` | 1 sample | Bridge experimental entre dos parents existentes. |
-| 60 | `60_h3_confluence_seam_repair.json` | 1 sample | Puente bidireccional v4; requiere core H3 oficial actualizado y validación live. |
+| 50 | `50_h3_temporal_inpainting.json` | 1 sample | Temporal inpainting localizado; verificado live con intervalo de 3 s. |
 
 Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
 ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
@@ -165,17 +164,7 @@ del lab, la variante híbrida conservó composición, perspectiva, cauce y árbo
 central a través del join. El audio generado no forma parte de ese gate ni se
 acepta en la pieza.
 
-## 50 · Bridge
-
-Este graph no es “run immediately”. Requiere dos `.safetensors` estructurales
-producidos por `CAUCE · Save AV Latent`. Ajustar los dos paths antes de ejecutar.
-
-El bridge copia 39 frames visuales desde cada extremo y conserva ambos bloques.
-El stream de audio interno queda congelado y se descarta. La intersección
-central permanece generable. Si los contexts se solapan, el nodo falla cerrado
-en vez de inventar un join ambiguo.
-
-## 60 · Confluence: reparación condicional entre dos gestos
+## 50 · Temporal inpainting localizado
 
 Este recorrido parte de dos videos ya existentes, no de parents latentes. Los
 normaliza al profile FL2VA 640, toma 2,5 s de contexto a cada lado y entrega el
@@ -190,20 +179,20 @@ A: últimos 60 frames ┐
 B: primeros 60 frames┘
 
 corte working: frame 62
-clip guía izquierdo:  [29, 51) = 22 frames preservados
-centro generable:      [51, 73) = 22 frames = 0,917 s
-clip guía derecho:     [73, 95) = 22 frames preservados
+clip guía izquierdo:  [4, 26) = 22 frames preservados
+intervalo generable:  [26, 98) = 72 frames = 3 s
+clip guía derecho:    [98, 120) = 22 frames preservados
 output: len(A) + len(B), sin cambio de duración
 ```
 
-El segundo interior pedido no se duplica por lado: son 24 frames solicitados en
-total. CAUCE elige los límites temporales H3 simétricos más cercanos, 22 frames,
-para que ningún token quede parcialmente generado. `CAUCE · H3 Confluence
-Guides` agrega los dos clips preservados al conditioning oficial; el modelo ve
+Los tres segundos pedidos no se duplican por lado: son 72 frames en total,
+36 de la cola de A y 36 del inicio de B. Los límites coinciden con la grilla
+temporal de H3 para que ningún token quede parcialmente generado. `CAUCE · H3
+Temporal Guide Clips` agrega los dos clips preservados al conditioning oficial; el modelo ve
 el movimiento de entrada y de salida, además de first/last y el prompt
 arbitrario.
 
-`CAUCE · Confluence Fields` produce tres `MASK` inspeccionables:
+`CAUCE · Temporal Inpaint Fields` produce tres `MASK` inspeccionables:
 
 ```text
 sampling_support     → soporte binario exacto por token H3
@@ -215,14 +204,15 @@ Después del decode, `output_opacity` usa una curva cosenoidal continua de cuatr
 frames. Ésta suaviza el splice visible; no representa una fuerza de denoise
 fraccional.
 
-La auditoría de v1–v3 encontró dos causas estructurales. Primero, el gráfico
+La auditoría de las implementaciones rechazadas encontró dos causas
+estructurales. Primero, el gráfico
 interpretaba 1 s como 1 s por lado y añadía 0,5 s de overscan por lado: H3
 inventaba 72 frames/3 s. Segundo, ComfyUI v0.33.1 es anterior a la
 implementación oficial que entrega la máscara por token al modelo, etiqueta
 cada fila con su timestep correcto e inyecta el latent preservado a fuerza de
 conditioning. El sampler podía completar sin que el edit fuese válido.
 
-La v4 usa `SamplerCustomAdvanced` oficial y comprueba en runtime:
+La implementación vigente usa `SamplerCustomAdvanced` oficial y comprueba en runtime:
 
 ```text
 MiniMaxH3AddGuide
@@ -240,15 +230,16 @@ los inputs originales. Modificar el exterior no es una solicitud al modelo,
 sino una imposibilidad topológica.
 
 El JSON contiene `gesture_a.mp4` y `gesture_b.mp4` como placeholders. Cada clip
-debe tener al menos 60 frames y ambos deben ser exactamente 24 fps. La primera
-validación debe reutilizar los mismos gestos rechazados y comparar join duro,
-v3 y v4 con seed fijo. Variar después una sola variable: seed, prompt o clips
-guía de 22/39 frames, manteniendo el centro de 22 frames. La resolución queda
-normalizada a 640×640 para el envelope verificado de la 5090.
+debe tener al menos 60 frames y ambos deben ser exactamente 24 fps. Para cada
+evaluación se mantiene fijo el source, seed, prompt, intervalo y clips guía; se
+varía una sola variable por vez.
+La resolución queda normalizada a 640×640 para el envelope verificado de la
+5090.
 
 Las versiones anteriores confirmaron sockets, shapes, decode y splice, pero la
-prueba perceptual fue mala. La v4 debe superar primero ese mismo par de gestos;
-un job exitoso ya no basta para promoverla.
+prueba perceptual fue mala. La implementación vigente superó el par de gestos
+con un intervalo de 3 s; un job exitoso sigue sin bastar para promover nuevos
+pares de material.
 
 El workflow es intencionalmente video-only. El audio master no se conecta, no
 se codifica y no se sustituye. H3 mantiene internamente un stream de audio vacío
@@ -316,10 +307,9 @@ sin perder qué parent produjo la rama anterior.
   context heredado.
 - **`mask_plus_guide` no disponible:** usar el workflow 40 con endpoint
   decodificado; no actualizar ComfyUI automáticamente desde CAUCE.
-- **Bridge sin archivo:** usar el path exacto entregado por `Save AV Latent`.
-- **Confluence rechaza el input:** ambos videos deben ser 24 fps, tener al menos
+- **Temporal inpainting rechaza el input:** ambos videos deben ser 24 fps, tener al menos
   el contexto solicitado y normalizarse al mismo profile antes del VAE.
-- **Confluence carga pero no corrige el gesto:** variar primero seed/prompt;
+- **Temporal inpainting ejecuta pero no corrige el gesto:** variar primero seed/prompt;
   si el nodo reporta runtime incompleto, actualizar primero el core oficial;
   luego comparar clips guía de 22/39 frames sin cambiar a la vez centro,
   resolución y seed.

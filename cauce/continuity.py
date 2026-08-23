@@ -50,24 +50,6 @@ def extract_video_tail(latent: dict[str, Any], context_frames: int):
     return video[:, :, start:].clone()
 
 
-def extract_video_head(latent: dict[str, Any], context_frames: int):
-    video, _ = get_av_streams(latent)
-    context_frames = int(context_frames)
-    if not is_h3_frame_count(context_frames):
-        raise ValueError(
-            "visual context must use the H3 grid: 5, 22, 39, 56, ... frames"
-        )
-    source_frames = pixel_frames_from_video_latent(video)
-    if not is_h3_frame_count(source_frames):
-        raise ValueError(
-            "bridge source is phase-shifted; use a full H3 latent or CAUCE parent latent"
-        )
-    video_steps = visual_token_count_for_span(context_frames)
-    if video_steps >= int(video.shape[2]):
-        raise ValueError("bridge context must be shorter than its source video latent")
-    return video[:, :, :video_steps].clone()
-
-
 def _base_masks(target_latent: dict[str, Any], video: Any, audio: Any):
     import torch
 
@@ -158,94 +140,6 @@ def prepare_continuation(
     out["samples"] = _nested_tensor((video, audio))
     out["noise_mask"] = _nested_tensor((video_mask, audio_mask))
     return conditioned, out, context_frames
-
-
-def prepare_bridge(
-    positive: Any,
-    target_latent: dict[str, Any],
-    left_parent: dict[str, Any],
-    right_parent: dict[str, Any],
-    *,
-    context_frames: int = 39,
-    conditioning_mode: str = "mask_only",
-) -> tuple[Any, dict[str, Any], int]:
-    """Protect phase-aligned visual endpoints and generate only their middle."""
-
-    context_frames = int(context_frames)
-    if context_frames not in VALID_CONTEXT_FRAMES:
-        raise ValueError(f"context_frames must be one of {VALID_CONTEXT_FRAMES}")
-    if conditioning_mode not in {"mask_only", "mask_plus_guide"}:
-        raise ValueError("conditioning_mode must be mask_only or mask_plus_guide")
-
-    target_video, target_audio = get_av_streams(target_latent)
-    left_video = extract_video_tail(left_parent, context_frames)
-    right_video = extract_video_head(right_parent, context_frames)
-    if len(
-        {
-            int(target_video.shape[0]),
-            int(left_video.shape[0]),
-            int(right_video.shape[0]),
-        }
-    ) != 1:
-        raise ValueError("bridge parent and target H3 video latent batch sizes differ")
-    if tuple(left_video.shape[1:2] + left_video.shape[3:]) != tuple(
-        target_video.shape[1:2] + target_video.shape[3:]
-    ) or tuple(right_video.shape[1:2] + right_video.shape[3:]) != tuple(
-        target_video.shape[1:2] + target_video.shape[3:]
-    ):
-        raise ValueError("bridge parent and target video latent geometry differs")
-    video_steps = int(left_video.shape[2])
-    if int(right_video.shape[2]) != video_steps:
-        raise ValueError("bridge endpoints resolved to different visual context lengths")
-    if video_steps * 2 >= int(target_video.shape[2]):
-        raise ValueError("bridge video contexts leave no generable latent middle")
-
-    video = target_video.clone()
-    audio = target_audio.clone()
-    video[:, :, :video_steps] = left_video.to(video)
-    video[:, :, -video_steps:] = right_video.to(video)
-    video_mask, audio_mask = _base_masks(target_latent, video, audio)
-    video_mask[:, :, :video_steps] = 0.0
-    video_mask[:, :, -video_steps:] = 0.0
-    audio_mask.zero_()
-
-    conditioned = positive
-    if conditioning_mode == "mask_plus_guide":
-        from .h3 import official_h3_nodes
-
-        _, _, add_guide = official_h3_nodes()
-        if add_guide is None:
-            raise RuntimeError(
-                "mask_plus_guide needs a ComfyUI H3 runtime with the official "
-                "MiniMaxH3AddGuide clip-keyframe implementation; use mask_only or "
-                "decoded endpoint guides on this runtime"
-            )
-        try:
-            import node_helpers  # type: ignore
-        except ImportError as exc:  # pragma: no cover - requires ComfyUI
-            raise RuntimeError("H3 bridge can only be built inside ComfyUI") from exc
-        target_frames = pixel_frames_from_video_latent(target_video)
-        keyframes = list(positive[0][1].get("minimax_keyframes", []))
-        keyframes.extend(
-            [
-                {
-                    "resolved_frame_index": 0,
-                    "latent": left_video,
-                },
-                {
-                    "resolved_frame_index": target_frames - context_frames,
-                    "latent": right_video,
-                },
-            ]
-        )
-        conditioned = node_helpers.conditioning_set_values(
-            positive, {"minimax_keyframes": keyframes}
-        )
-    out = dict(target_latent)
-    out["samples"] = _nested_tensor((video, audio))
-    out["noise_mask"] = _nested_tensor((video_mask, audio_mask))
-    middle_frames = pixel_frames_from_video_latent(target_video) - 2 * context_frames
-    return conditioned, out, middle_frames
 
 
 def resolve_parent_latent(

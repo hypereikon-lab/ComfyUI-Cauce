@@ -15,20 +15,20 @@ from cauce.seams import (
 )
 
 
-class SeamTests(unittest.TestCase):
-    def test_default_plan_resolves_one_second_request_to_exact_h3_bridge(self):
+class TemporalInpaintTests(unittest.TestCase):
+    def test_default_plan_resolves_three_second_request_to_exact_h3_interval(self):
         plan = make_seam_plan(200, 180)
         self.assertEqual(plan["context_frames_per_side"], 60)
         self.assertEqual(plan["working_frames"], 124)
         self.assertEqual(plan["guard_frames_per_side"], 2)
         self.assertEqual(plan["cut_frame"], 62)
-        self.assertEqual(plan["repair_requested_frames_total"], 24)
-        self.assertEqual(plan["repair_total_frames"], 22)
-        self.assertEqual(plan["repair_frames_per_side"], 11)
-        self.assertEqual((plan["repair_start_frame"], plan["repair_end_frame"]), (51, 73))
-        self.assertEqual((plan["sampling_start_frame"], plan["sampling_end_frame"]), (51, 73))
-        self.assertEqual((plan["left_guide_start_frame"], plan["left_guide_end_frame"]), (29, 51))
-        self.assertEqual((plan["right_guide_start_frame"], plan["right_guide_end_frame"]), (73, 95))
+        self.assertEqual(plan["repair_requested_frames_total"], 72)
+        self.assertEqual(plan["repair_total_frames"], 72)
+        self.assertEqual(plan["repair_frames_per_side"], 36)
+        self.assertEqual((plan["repair_start_frame"], plan["repair_end_frame"]), (26, 98))
+        self.assertEqual((plan["sampling_start_frame"], plan["sampling_end_frame"]), (26, 98))
+        self.assertEqual((plan["left_guide_start_frame"], plan["left_guide_end_frame"]), (4, 26))
+        self.assertEqual((plan["right_guide_start_frame"], plan["right_guide_end_frame"]), (98, 120))
         self.assertEqual((plan["accepted_start_frame"], plan["accepted_end_frame"]), (2, 122))
 
     def test_seam_mask_is_binary_and_exactly_covers_the_token_aligned_gap(self):
@@ -39,7 +39,7 @@ class SeamTests(unittest.TestCase):
         self.assertEqual(values[-1], 0.0)
         self.assertIn(1.0, values)
         self.assertEqual(set(values), {0.0, 1.0})
-        self.assertEqual([index for index, value in enumerate(values) if value], list(range(15, 22)))
+        self.assertEqual([index for index, value in enumerate(values) if value], list(range(8, 29)))
 
     def test_cover_projection_is_a_superset_of_majority(self):
         plan = make_seam_plan(200, 180)
@@ -76,17 +76,17 @@ class SeamTests(unittest.TestCase):
         self.assertEqual(window["accepted_frames"], plan["working_frames"])
         self.assertEqual(window["accept_mode"], "full_render")
 
-    def test_splice_ranges_replace_only_the_token_aligned_inner_second(self):
+    def test_splice_ranges_replace_only_the_token_aligned_inpaint_interval(self):
         plan = make_seam_plan(200, 180)
         self.assertEqual(
             seam_splice_ranges(plan),
             {
-                "left_keep": (0, 189),
-                "working_patch": (51, 73),
-                "right_keep": (11, 180),
+                "left_keep": (0, 164),
+                "working_patch": (26, 98),
+                "right_keep": (36, 180),
             },
         )
-        output_frames = 189 + (73 - 51) + (180 - 11)
+        output_frames = 164 + (98 - 26) + (180 - 36)
         self.assertEqual(output_frames, 380)
 
     @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
@@ -99,10 +99,10 @@ class SeamTests(unittest.TestCase):
             left, right, proposal, plan, feather_frames=8, curve="cosine"
         )
         self.assertEqual(joined.shape[0], 380)
-        numpy.testing.assert_array_equal(joined[:189], left[:189])
-        numpy.testing.assert_array_equal(joined[211:], right[11:])
-        self.assertEqual(float(patch[0, 0, 0, 0]), float(left[-11, 0, 0, 0]))
-        self.assertEqual(float(patch[-1, 0, 0, 0]), float(right[10, 0, 0, 0]))
+        numpy.testing.assert_array_equal(joined[:164], left[:164])
+        numpy.testing.assert_array_equal(joined[236:], right[36:])
+        self.assertEqual(float(patch[0, 0, 0, 0]), float(left[-36, 0, 0, 0]))
+        self.assertEqual(float(patch[-1, 0, 0, 0]), float(right[35, 0, 0, 0]))
         self.assertEqual(float(patch[10, 0, 0, 0]), 5000.0)
 
     def test_plan_rejects_sources_shorter_than_the_context(self):

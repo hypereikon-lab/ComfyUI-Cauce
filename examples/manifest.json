@@ -51,18 +51,10 @@
       "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
     },
     {
-      "id": "h3-latent-bridge",
-      "path": "workflows/50_h3_latent_bridge.json",
+      "id": "h3-temporal-inpainting",
+      "path": "workflows/50_h3_temporal_inpainting.json",
       "tier": "advanced",
-      "status": "graph-only",
-      "samples": 1,
-      "requires": ["two CAUCE AV parent latents"]
-    },
-    {
-      "id": "h3-confluence-seam-repair",
-      "path": "workflows/60_h3_confluence_seam_repair.json",
-      "tier": "advanced",
-      "status": "v1-v3-rejected-v4-native-mask-guides-pending-live",
+      "status": "verified-live-3s",
       "samples": 1,
       "requires": [
         "two 24 fps videos >= 2.5 s",

@@ -1,4 +1,4 @@
-"""Native ComfyUI nodes for local temporal seam repair."""
+"""Native ComfyUI nodes for localized temporal video inpainting."""
 
 from __future__ import annotations
 
@@ -7,17 +7,17 @@ import json
 from ..cauce.seams import (
     MASK_CURVES,
     TOKEN_PROJECTIONS,
-    add_h3_seam_guides,
+    add_h3_temporal_inpaint_guides,
     build_seam_window,
     make_seam_window,
     make_seam_plan,
-    prepare_h3_seam_repair,
-    seam_visible_fields,
+    prepare_h3_temporal_inpaint,
+    temporal_inpaint_fields,
     splice_seam_patch,
 )
 
 
-CATEGORY = "CAUCE/Seams"
+CATEGORY = "CAUCE/Temporal Inpainting"
 
 
 class CauceBuildSeamWindow:
@@ -35,7 +35,7 @@ class CauceBuildSeamWindow:
                 ),
                 "repair_seconds_total": (
                     "FLOAT",
-                    {"default": 1.0, "min": 1 / 24, "max": 5.0, "step": 1 / 24},
+                    {"default": 3.0, "min": 1 / 24, "max": 5.0, "step": 1 / 24},
                 ),
                 "guide_frames": (
                     "INT",
@@ -70,7 +70,7 @@ class CauceBuildSeamWindow:
         maximum_frames,
     ):
         if abs(float(left_fps) - 24.0) > 1e-3 or abs(float(right_fps) - 24.0) > 1e-3:
-            raise ValueError("Confluence currently requires both source videos at 24 fps")
+            raise ValueError("H3 temporal inpainting requires both source videos at 24 fps")
         plan = make_seam_plan(
             int(left_frames.shape[0]),
             int(right_frames.shape[0]),
@@ -84,7 +84,7 @@ class CauceBuildSeamWindow:
         return working, plan, window, json.dumps(plan, ensure_ascii=False, indent=2)
 
 
-class CaucePrepareH3SeamRepair:
+class CaucePrepareH3TemporalInpaint:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -121,7 +121,7 @@ class CaucePrepareH3SeamRepair:
         sampling_threshold=0.5,
         generation_support=None,
     ):
-        latent, report = prepare_h3_seam_repair(
+        latent, report = prepare_h3_temporal_inpaint(
             target_latent,
             encoded_video_latent,
             seam,
@@ -132,7 +132,7 @@ class CaucePrepareH3SeamRepair:
         return latent, json.dumps(report, ensure_ascii=False, indent=2)
 
 
-class CauceConfluenceFields:
+class CauceTemporalInpaintFields:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -168,7 +168,7 @@ class CauceConfluenceFields:
         decoded_blend_frames,
         curve,
     ):
-        generation, acceptance, opacity, report = seam_visible_fields(
+        generation, acceptance, opacity, report = temporal_inpaint_fields(
             working_images,
             seam,
             decoded_blend_frames=decoded_blend_frames,
@@ -179,7 +179,7 @@ class CauceConfluenceFields:
         )
 
 
-class CauceH3ConfluenceGuides:
+class CauceH3TemporalInpaintGuides:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -202,7 +202,7 @@ class CauceH3ConfluenceGuides:
     )
 
     def apply(self, positive, target_latent, working_images, seam, vae):
-        conditioned, report = add_h3_seam_guides(
+        conditioned, report = add_h3_temporal_inpaint_guides(
             positive, target_latent, working_images, seam, vae
         )
         return conditioned, json.dumps(report, ensure_ascii=False, indent=2)
@@ -261,16 +261,16 @@ class CauceApplySeamPatch:
 
 NODE_CLASS_MAPPINGS = {
     "CauceBuildSeamWindow": CauceBuildSeamWindow,
-    "CauceConfluenceFields": CauceConfluenceFields,
-    "CauceH3ConfluenceGuides": CauceH3ConfluenceGuides,
-    "CaucePrepareH3SeamRepair": CaucePrepareH3SeamRepair,
+    "CauceTemporalInpaintFields": CauceTemporalInpaintFields,
+    "CauceH3TemporalInpaintGuides": CauceH3TemporalInpaintGuides,
+    "CaucePrepareH3TemporalInpaint": CaucePrepareH3TemporalInpaint,
     "CauceApplySeamPatch": CauceApplySeamPatch,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CauceBuildSeamWindow": "CAUCE · Build Confluence Window",
-    "CauceConfluenceFields": "CAUCE · Confluence Fields",
-    "CauceH3ConfluenceGuides": "CAUCE · H3 Confluence Guides",
-    "CaucePrepareH3SeamRepair": "CAUCE · Prepare H3 Seam Repair",
-    "CauceApplySeamPatch": "CAUCE · Apply Confluence Patch",
+    "CauceBuildSeamWindow": "CAUCE · Build Temporal Inpaint Window",
+    "CauceTemporalInpaintFields": "CAUCE · Temporal Inpaint Fields",
+    "CauceH3TemporalInpaintGuides": "CAUCE · H3 Temporal Guide Clips",
+    "CaucePrepareH3TemporalInpaint": "CAUCE · Prepare H3 Temporal Inpaint",
+    "CauceApplySeamPatch": "CAUCE · Splice Temporal Inpaint Patch",
 }

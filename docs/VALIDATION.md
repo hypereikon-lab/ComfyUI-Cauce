@@ -72,10 +72,6 @@ frame connected as native FL2VA `first_frame`—passed the first visual join
 comparison. Repeat it over heterogeneous material before making it a production
 preset. Completion alone is not a pass.
 
-For the two-ended bridge, confirm that both copied endpoint tensors are
-byte-identical before sampling, neither context overlaps the middle, and the
-right endpoint enters at the intended visual frame.
-
 ## Gate 6 — decode domain
 
 Decode every phase-safe parent independently, accept its decoded range, then
@@ -107,14 +103,14 @@ are committed as receipts and documented measurements.
 - Confirm failed windows remain explicitly failed.
 - Confirm remote mode fails closed without a valid Cloudflare service token.
 
-## Gate 9 — local seam repair / Confluence
+## Gate 9 — localized temporal inpainting
 
 - Reject either input unless its reported frame rate is exactly 24 fps.
 - Reject either input when it is shorter than the requested context.
-- Confirm the default plan is 124 working frames, cut 62, and token-aligned
-  sampling/acceptance `[51,73)`.
-- Confirm guide clips are exactly `[29,51)` and `[73,95)`, 22 frames each.
-- On ComfyUI v0.33.1, confirm Confluence fails before sampling and reports the
+- Confirm the production plan is 124 working frames, cut 62, and token-aligned
+  sampling/acceptance `[26,98)` for the three-second request.
+- Confirm guide clips are exactly `[4,26)` and `[98,120)`, 22 frames each.
+- On ComfyUI v0.33.1, confirm temporal inpainting fails before sampling and reports the
   missing official AddGuide/per-token mask capabilities.
 - On the updated core, confirm both guide clips appear as native H3 keyframes.
 - Confirm the VAE-encoded composite and FL2VA target have identical shapes.
@@ -127,12 +123,12 @@ are committed as receipts and documented measurements.
   token projection.
 - Confirm the H3 internal audio mask is all zero, the master audio is never
   encoded, and no generated audio is accepted.
-- Confirm the splice replaces 22 frames and returns exactly `len(A) + len(B)`.
+- Confirm the splice replaces 72 frames and returns exactly `len(A) + len(B)`.
 - Checksum every frame outside the replacement range.
 - Compare position, velocity, acceleration, optical flow, and perceptual seam
   energy over five frames on both patch edges and around the original cut.
-- Compare decoded blend widths of 2, 4 and 6 frames while keeping the 22-frame
+- Compare decoded blend widths of 2, 4 and 6 frames while keeping the 72-frame
   accepted repair, guides, source, prompt, seed and profile fixed.
-- Compare 22- and 39-frame guide clips only after the 22-frame center passes.
+- Compare 22- and 39-frame guide clips only after the 72-frame interval passes.
 - Verify graph execution synthetically, then promote only after the exact real
   gesture pairs that rejected v1 pass blind visual inspection.

@@ -1,4 +1,4 @@
-"""Local, duration-preserving temporal seam repair for opaque video batches."""
+"""Localized, duration-preserving temporal inpainting for opaque video batches."""
 
 from __future__ import annotations
 
@@ -141,16 +141,16 @@ def make_seam_plan(
     right_frame_count: int,
     *,
     context_seconds_per_side: float = 2.5,
-    repair_seconds_total: float = 1.0,
+    repair_seconds_total: float = 3.0,
     guide_frames: int = 22,
     maximum_frames: int = 362,
 ) -> dict[str, Any]:
-    """Resolve one cut into a small, token-aligned bidirectional bridge.
+    """Resolve one cut into a token-aligned temporal inpaint interval.
 
     The requested repair duration is the *entire* interval across the cut, not
     a duration per side.  The interval is snapped to symmetric H3 token
-    boundaries and surrounded by valid multi-frame guide clips.  This keeps
-    the unknown middle small while exposing incoming and outgoing motion.
+    boundaries and surrounded by valid multi-frame guide clips. This keeps the
+    generated interval explicit while exposing incoming and outgoing motion.
     """
 
     left_count = int(left_frame_count)
@@ -262,7 +262,7 @@ def make_seam_window(plan: dict[str, Any]) -> dict[str, Any]:
     _validate_seam(plan)
     working_frames = int(plan["working_frames"])
     window = make_window(
-        f"confluence-{str(plan['hash'])[:12]}",
+        f"temporal-inpaint-{str(plan['hash'])[:12]}",
         0,
         frames_to_seconds(working_frames),
         context_frames=0,
@@ -373,7 +373,7 @@ def seam_visible_frame_values(
     return tuple(sampling_values), tuple(acceptance_values), tuple(blend_values)
 
 
-def seam_visible_fields(
+def temporal_inpaint_fields(
     working_images: Any,
     plan: dict[str, Any],
     *,
@@ -429,7 +429,7 @@ def seam_visible_fields(
         ).copy()
         sampling_mean = float(sampling.mean())
     report = {
-        "schema": "cauce.confluence-fields/2",
+        "schema": "cauce.temporal-inpaint-fields/1",
         "seam_hash": plan["hash"],
         "curve": curve,
         "decoded_blend_frames": int(decoded_blend_frames),
@@ -509,7 +509,7 @@ def _video_samples(video_latent: dict[str, Any]):
     return samples
 
 
-def prepare_h3_seam_repair(
+def prepare_h3_temporal_inpaint(
     target_latent: dict[str, Any],
     encoded_video_latent: dict[str, Any],
     plan: dict[str, Any],
@@ -525,7 +525,7 @@ def prepare_h3_seam_repair(
     try:
         import comfy.nested_tensor  # type: ignore
     except ImportError as exc:  # pragma: no cover - requires ComfyUI
-        raise RuntimeError("H3 seam repair can only be prepared inside ComfyUI") from exc
+        raise RuntimeError("H3 temporal inpainting can only be prepared inside ComfyUI") from exc
 
     _validate_seam(plan)
     capabilities = require_h3_temporal_edit_runtime()
@@ -577,7 +577,7 @@ def prepare_h3_seam_repair(
     out["samples"] = comfy.nested_tensor.NestedTensor((video, audio))
     out["noise_mask"] = comfy.nested_tensor.NestedTensor((video_mask, audio_mask))
     report = {
-        "schema": "cauce.seam-mask-report/2",
+        "schema": "cauce.temporal-inpaint-mask-report/1",
         "seam_hash": plan["hash"],
         "working_frames": int(plan["working_frames"]),
         "repair_start_frame": int(plan["repair_start_frame"]),
@@ -599,7 +599,7 @@ def prepare_h3_seam_repair(
     return out, report
 
 
-def add_h3_seam_guides(
+def add_h3_temporal_inpaint_guides(
     positive: Any,
     target_latent: dict[str, Any],
     working_images: Any,
@@ -621,7 +621,7 @@ def add_h3_seam_guides(
     if int(left_clip.shape[0]) != int(plan["guide_frames"]) or int(
         right_clip.shape[0]
     ) != int(plan["guide_frames"]):
-        raise RuntimeError("confluence guide extraction produced an invalid H3 clip")
+        raise RuntimeError("temporal inpaint guide extraction produced an invalid H3 clip")
     conditioned = execute_add_guide(
         positive=positive,
         latent=target_latent,
@@ -637,7 +637,7 @@ def add_h3_seam_guides(
         image=right_clip,
     )
     report = {
-        "schema": "cauce.confluence-guides/1",
+        "schema": "cauce.temporal-inpaint-guides/1",
         "seam_hash": plan["hash"],
         "guide_frames": int(plan["guide_frames"]),
         "left_range": [left_start, left_end],

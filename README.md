@@ -17,25 +17,25 @@ media
   -> rational timeline
   -> generation windows
   -> native H3 conditioning
-  -> AV masks / continuation
+  -> temporal denoise masks / continuation
   -> accepted ranges / decode domains
   -> versioned artifacts
 ```
 
 ## Current status
 
-The greenfield core and 41 ComfyUI nodes are implemented. Seven visual workflows,
+The greenfield core and 40 ComfyUI nodes are implemented. Six visual workflows,
 two API templates, bounded demo assets, and a restartable two-window project are
 included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
 continuation have executed successfully on the live lab RTX 5090. Mask-only
 continuation also executes, but its first visual seam failed the quality gate;
-the shipped hybrid workflow passed that visual comparison. The original
-standard-masked Confluence completed end-to-end but failed on real gesture
-pairs. The audit found that the laboratory's ComfyUI v0.33.1 predates official
-H3 per-token denoise masks and arbitrary clip guides. Confluence v4 now fails
-closed on that runtime, generates only a token-aligned 22-frame center, and
-anchors preserved 22-frame motion clips on both sides. Live visual promotion is
-pending after the official ComfyUI core is updated.
+the shipped hybrid workflow passed that visual comparison. Localized temporal
+inpainting is validated live on the updated official H3 runtime: it VAE-encodes
+the existing video, regenerates only a binary token-aligned interval, conditions
+on preserved guide clips immediately before and after it, and inserts the decoded
+patch without changing total duration. The verified 3-second run used a
+124-frame working window, 72 generated frames, 22-frame guide clips on both
+sides, 20 sampling steps, and denoise 1.0 inside the mask only.
 
 The previous Hypereikon H3 repository is not a dependency and no compatibility
 layer is included.
@@ -95,8 +95,9 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
   never a source of generative audio.
 - **CAUCE / Continuity** — phase-safe visual parents, masked continuation, and
   exact decoded acceptance; H3 audio rows stay frozen.
-- **CAUCE / Seams** — decoded-domain confluence windows, explicit sampling and
-  acceptance regions, soft output opacity, and duration-preserving replacement.
+- **CAUCE / Temporal Inpainting** — localized H3 temporal denoise masks,
+  bidirectional guide clips, decoded output opacity, and duration-preserving
+  patch insertion.
 - **CAUCE / Artifacts** — receipts and atomic nested AV latent save/load.
 - **CAUCE / Runtime** — bounded 5090 profiles and read-only preflight.
 
@@ -105,7 +106,9 @@ See [Node catalog](docs/NODE_CATALOG.md),
 [H3 wiring](docs/H3_WIRING.md), and
 [workflow guide](docs/WORKFLOWS.md),
 [validation matrix](docs/VALIDATION.md), and
-[laboratory results](docs/LAB_RESULTS.md). The current upstream and community
+[laboratory results](docs/LAB_RESULTS.md). The canonical terminology and run
+report format are defined in [technical language](docs/TECHNICAL_LANGUAGE.md).
+The current upstream and community
 comparison is recorded in [research notes](docs/RESEARCH.md).
 
 ## Tests

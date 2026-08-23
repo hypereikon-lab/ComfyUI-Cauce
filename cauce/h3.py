@@ -259,7 +259,7 @@ def require_h3_temporal_edit_runtime() -> dict[str, Any]:
     if not capabilities["ready"]:
         detail = "; ".join(capabilities["problems"])
         raise RuntimeError(
-            "CAUCE Confluence needs a newer official ComfyUI H3 runtime with "
+            "CAUCE temporal inpainting needs a newer official ComfyUI H3 runtime with "
             "MiniMaxH3AddGuide and per-token denoise masks (upstream PRs #15439 "
             f"and #15375). Current runtime is unsafe for temporal editing: {detail}"
         )

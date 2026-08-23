@@ -1,5 +1,5 @@
 {
-  "id": "af6f91da-624a-5bfd-895d-58bd4584f328",
+  "id": "af717287-b843-54b1-8e5e-f55399f6b991",
   "revision": 0,
   "last_node_id": 31,
   "last_link_id": 49,
@@ -13,7 +13,7 @@
       ],
       "size": [
         820,
-        310
+        330
       ],
       "flags": {},
       "order": 0,
@@ -22,7 +22,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "# CAUCE 60 · Confluence bidireccional\n\nTemplate para dos videos arbitrarios. Toma 2,5 s a cada lado del corte, añade\nguards simétricos para formar 124 frames H3. El segundo interior solicitado se\najusta a 22 frames exactos de la grilla temporal H3. Dos clips guía de 22 frames,\npegados a ambos bordes, entregan el movimiento entrante y saliente. Sólo ese\ncentro se genera; el exterior queda preservado por la máscara oficial de H3.\n\nRequiere un ComfyUI oficial reciente con MiniMaxH3AddGuide y máscara temporal\npor token. CAUCE se niega a ejecutar en runtimes anteriores. Sube\n`gesture_a.mp4` y `gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps.\nEl audio master no entra ni se reemplaza con audio generado."
+        "# CAUCE 50 · H3 temporal inpainting\n\nRegenera un intervalo localizado alrededor de la unión entre dos videos. Toma\n2,5 s a cada lado del corte, forma una ventana válida de 124 frames H3 y ajusta\nlos 3 s solicitados a 72 frames compatibles con la grilla temporal del modelo.\nDos clips guía de 22 frames, inmediatamente antes y después del intervalo,\ncondicionan el movimiento entrante y saliente. Sólo el intervalo enmascarado se\ngenera; el resto del latent codificado se preserva.\n\nRequiere un ComfyUI oficial reciente con MiniMaxH3AddGuide y máscara temporal\npor token. CAUCE se niega a ejecutar en runtimes incompatibles. Sube\n`gesture_a.mp4` y `gesture_b.mp4`; ambos necesitan al menos 60 frames a 24 fps.\nNo se utiliza, genera ni reemplaza audio."
       ],
       "color": "#24382a",
       "bgcolor": "#132019"
@@ -532,7 +532,7 @@
         24.0,
         24.0,
         2.5,
-        1.0,
+        3.0,
         22,
         362
       ]
@@ -1173,7 +1173,7 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        "Repair only the masked temporal join. Preserve framing, visual content, and motion outside it. Generate one continuous gesture whose position, velocity, and acceleration connect the left state to the right state without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Audio is not part of this repair."
+        "Regenerate only the masked temporal interval. Preserve framing, visual content, and motion outside it. Connect position, velocity, and acceleration from the incoming guide clip to the outgoing guide clip without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Do not generate or condition on audio."
       ]
     },
     {
@@ -1221,7 +1221,7 @@
     },
     {
       "id": 20,
-      "type": "CauceConfluenceFields",
+      "type": "CauceTemporalInpaintFields",
       "pos": [
         3100,
         520
@@ -1296,7 +1296,7 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "CauceConfluenceFields",
+        "Node name for S&R": "CauceTemporalInpaintFields",
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
@@ -1306,7 +1306,7 @@
     },
     {
       "id": 21,
-      "type": "CaucePrepareH3SeamRepair",
+      "type": "CaucePrepareH3TemporalInpaint",
       "pos": [
         3100,
         230
@@ -1380,7 +1380,7 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "CaucePrepareH3SeamRepair",
+        "Node name for S&R": "CaucePrepareH3TemporalInpaint",
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
@@ -1434,7 +1434,7 @@
     },
     {
       "id": 23,
-      "type": "CauceH3ConfluenceGuides",
+      "type": "CauceH3TemporalInpaintGuides",
       "pos": [
         3300,
         -170
@@ -1495,7 +1495,7 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "CauceH3ConfluenceGuides",
+        "Node name for S&R": "CauceH3TemporalInpaintGuides",
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       }
     },
@@ -1878,7 +1878,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/demos/confluence_native_join",
+        "cauce/demos/temporal_inpaint_join",
         "mp4",
         "auto"
       ]
@@ -2011,7 +2011,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/demos/confluence_native_patch",
+        "cauce/demos/temporal_inpaint_patch",
         "mp4",
         "auto"
       ]
@@ -2426,7 +2426,7 @@
     },
     {
       "id": 2,
-      "title": "CONFLUENCE WINDOW",
+      "title": "TEMPORAL INPAINT WINDOW",
       "bounding": [
         880,
         -40,
@@ -2450,7 +2450,7 @@
     },
     {
       "id": 4,
-      "title": "CONDITIONAL SEAM REPAIR",
+      "title": "MASKED TEMPORAL GENERATION",
       "bounding": [
         3060,
         -40,

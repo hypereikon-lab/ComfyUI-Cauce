@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-cauce"
-version = "0.5.0"
+version = "0.6.0"
 description = "Media, exact time, and localized temporal video inpainting in ComfyUI"
 readme = "README.md"
 requires-python = ">=3.10"

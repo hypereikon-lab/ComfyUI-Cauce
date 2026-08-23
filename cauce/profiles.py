@@ -67,6 +67,9 @@ def _profile(name: str, family: str, width: int, height: int, tiled_vae: bool):
 
 PROFILES = {
     "h3-5090-fl2va-640": _profile("h3-5090-fl2va-640", "FL2VA", 640, 640, False),
+    "h3-5090-fl2va-768x512": _profile(
+        "h3-5090-fl2va-768x512", "FL2VA", 768, 512, False
+    ),
     "h3-5090-fl2va-800-tiled": _profile(
         "h3-5090-fl2va-800-tiled", "FL2VA", 800, 800, True
     ),

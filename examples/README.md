@@ -11,12 +11,11 @@ Orden recomendado: `00 → 10 → 20/30 → 40 → 50/60`.
 
 Estado real: `00`, `10` y `20` están verificados; `30` requiere un AddGuide
 oficial más nuevo; `40` pasó el primer gate visual de continuidad híbrida y
-descarta el audio H3; `50` sigue experimental. Las versiones v1–v3 de `60`
-ejecutaron pero fallaron con gestos reales. La auditoría identificó un core H3
-anterior a las máscaras temporales correctas y un intervalo generado tres veces
-mayor que el solicitado. La v4 usa máscara oficial por token, un centro de 22
-frames y clips guía bidireccionales de 22 frames; se niega a ejecutar sobre el
-runtime antiguo y está pendiente de validación live tras actualizar ComfyUI.
+descarta el audio H3; `50` está verificado live para inpainting desde MP4. `60`
+es el recorrido nativo nuevo: conserva los AV latents finales de A→B y B→A,
+repara las uniones B y A con contexto bidireccional por token y ensambla un loop
+de duración idéntica. Su topología y geometría están verificadas localmente y
+su calidad visual queda pendiente del primer job live.
 Consultar [`docs/LAB_RESULTS.md`](../docs/LAB_RESULTS.md) antes de ejecutar jobs
 costosos.
 

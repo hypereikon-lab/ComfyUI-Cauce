@@ -24,7 +24,7 @@ media
 
 ## Current status
 
-The greenfield core and 42 ComfyUI nodes are implemented. Six visual workflows,
+The greenfield core and 45 ComfyUI nodes are implemented. Seven visual workflows,
 one maintenance workflow, two API templates, bounded demo assets, and a
 restartable two-window project are included. Plate export, FL2VA first/last,
 Ref2VA landscape, and endpoint-guided

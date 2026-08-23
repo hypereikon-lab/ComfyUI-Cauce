@@ -6,6 +6,9 @@ except ImportError:  # CAUCE itself adds no local Python dependencies
     numpy = None
 
 from cauce.seams import (
+    assemble_native_two_clip_loop,
+    build_native_latent_seam_window,
+    make_native_latent_seam_plan,
     make_seam_plan,
     make_seam_window,
     seam_splice_ranges,
@@ -16,6 +19,65 @@ from cauce.seams import (
 
 
 class TemporalInpaintTests(unittest.TestCase):
+    def test_native_plan_is_phase_safe_and_uses_real_bidirectional_context(self):
+        plan = make_native_latent_seam_plan(124, 124)
+        self.assertEqual(plan["mode"], "native_av_latent_bidirectional")
+        self.assertEqual(plan["working_frames"], 124)
+        self.assertEqual(plan["working_video_tokens"], 37)
+        self.assertEqual(plan["context_frames_per_side"], 39)
+        self.assertEqual(plan["context_tokens_per_side"], 12)
+        self.assertEqual((plan["repair_start_frame"], plan["repair_end_frame"]), (39, 85))
+        self.assertEqual(plan["repair_frames_per_side"], 23)
+        self.assertEqual((plan["left_target_start_token"], plan["left_target_end_token"]), (0, 12))
+        self.assertEqual((plan["right_target_start_token"], plan["right_target_end_token"]), (25, 37))
+        self.assertEqual(plan["left_latent_source_start_token"] % 5, 0)
+
+    @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
+    def test_native_working_domain_is_62_tail_plus_62_head(self):
+        plan = make_native_latent_seam_plan(124, 124)
+        left = numpy.arange(124, dtype=numpy.float32).reshape(124, 1, 1, 1)
+        right = (1000 + numpy.arange(124, dtype=numpy.float32)).reshape(124, 1, 1, 1)
+        working = build_native_latent_seam_window(left, right, plan)
+        self.assertEqual(working.shape[0], 124)
+        numpy.testing.assert_array_equal(working[:62], left[-62:])
+        numpy.testing.assert_array_equal(working[62:], right[:62])
+
+    @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
+    def test_native_two_seam_loop_preserves_duration_and_repairs_wrap_boundary(self):
+        forward = make_native_latent_seam_plan(124, 124)
+        wrap = make_native_latent_seam_plan(124, 124)
+        first = numpy.arange(124, dtype=numpy.float32).reshape(124, 1, 1, 1)
+        second = (1000 + numpy.arange(124, dtype=numpy.float32)).reshape(124, 1, 1, 1)
+        forward_proposal = numpy.full((124, 1, 1, 1), 5000.0, dtype=numpy.float32)
+        wrap_proposal = numpy.full((124, 1, 1, 1), 6000.0, dtype=numpy.float32)
+        loop, first_fixed, second_fixed, forward_patch, wrap_patch, report = (
+            assemble_native_two_clip_loop(
+                first,
+                second,
+                forward_proposal,
+                forward,
+                wrap_proposal,
+                wrap,
+                feather_frames=4,
+            )
+        )
+        self.assertEqual(loop.shape[0], 248)
+        self.assertEqual(first_fixed.shape[0], 124)
+        self.assertEqual(second_fixed.shape[0], 124)
+        self.assertEqual(forward_patch.shape[0], 46)
+        self.assertEqual(wrap_patch.shape[0], 46)
+        numpy.testing.assert_array_equal(loop[:124], first_fixed)
+        numpy.testing.assert_array_equal(loop[124:], second_fixed)
+        numpy.testing.assert_array_equal(first_fixed[23:-23], first[23:-23])
+        numpy.testing.assert_array_equal(second_fixed[23:-23], second[23:-23])
+        self.assertEqual(float(first_fixed[0, 0, 0, 0]), float(first[0, 0, 0, 0]))
+        self.assertEqual(float(second_fixed[-1, 0, 0, 0]), float(second[-1, 0, 0, 0]))
+        self.assertEqual(report["loop_frames"], 248)
+
+    def test_native_plan_rejects_phase_unsafe_source_lengths(self):
+        with self.assertRaisesRegex(ValueError, "complete H3 runs"):
+            make_native_latent_seam_plan(125, 124)
+
     def test_default_plan_resolves_three_second_request_to_exact_h3_interval(self):
         plan = make_seam_plan(200, 180)
         self.assertEqual(plan["context_frames_per_side"], 60)

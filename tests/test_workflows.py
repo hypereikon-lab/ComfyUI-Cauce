@@ -20,6 +20,7 @@ class VisualWorkflowTests(unittest.TestCase):
             "30_h3_timed_guide.json",
             "40_h3_two_window_continuation.json",
             "50_h3_temporal_inpainting.json",
+            "60_h3_native_latent_loop.json",
             "90_storage_maintenance.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
@@ -113,6 +114,28 @@ class VisualWorkflowTests(unittest.TestCase):
             if node["type"] == "CaucePrepareH3TemporalInpaint"
         )
         self.assertEqual(prepare["widgets_values"], ["cover", 0.5])
+
+    def test_native_loop_demo_preserves_source_latents_and_repairs_both_seams(self):
+        workflow = json.loads(
+            (WORKFLOW_DIR / "60_h3_native_latent_loop.json").read_text()
+        )
+        types = [node["type"] for node in workflow["nodes"]]
+        self.assertEqual(types.count("CauceBuildNativeLatentSeam"), 2)
+        self.assertEqual(types.count("CaucePrepareH3NativeLatentInpaint"), 2)
+        self.assertEqual(types.count("CauceAssembleNativeTwoClipLoop"), 1)
+        self.assertEqual(types.count("CauceSaveAVLatent"), 2)
+        profile = next(
+            node for node in workflow["nodes"] if node["type"] == "CauceExecutionProfile"
+        )
+        self.assertEqual(profile["widgets_values"], ["h3-5090-fl2va-768x512"])
+        seams = [
+            node for node in workflow["nodes"] if node["type"] == "CauceBuildNativeLatentSeam"
+        ]
+        self.assertTrue(all(node["widgets_values"] == [24.0, 24.0, "39", "124"] for node in seams))
+        assembly = next(
+            node for node in workflow["nodes"] if node["type"] == "CauceAssembleNativeTwoClipLoop"
+        )
+        self.assertEqual(assembly["widgets_values"], [4, "cosine"])
 
     def test_demo_assets_exist_and_are_bounded(self):
         assets = ROOT / "examples" / "assets"

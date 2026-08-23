@@ -1,0 +1,5066 @@
+{
+  "id": "40027410-62de-55f0-b374-ac7daa262b2d",
+  "revision": 0,
+  "last_node_id": 63,
+  "last_link_id": 111,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "pos": [
+        -50,
+        -600
+      ],
+      "size": [
+        880,
+        360
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# CAUCE 60 · H3 native-latent A→B→A loop\n\nGenera dos FL2VA completos (A→B y B→A), conserva sus AV latents limpios y\nrepara ambas uniones sin recodificar MP4. Cada reparación usa 39 frames de\ncontexto latente protegido a cada lado y genera sólo 46 frames centrales dentro\nde una ventana H3 de 124 frames. La posición de los tokens está alineada con el\nciclo causal del VAE. El ensamblaje sustituye 23 frames por lado, aplica un\nfeather coseno de 4 frames y mantiene exactamente 248 frames (10,333 s).\n\nEl audio interno de H3 se congela y descarta. Los outputs incluyen ambos tramos,\nambas ventanas reparadas, ambos patches y el loop cerrado final."
+      ],
+      "color": "#24382a",
+      "bgcolor": "#132019"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        282,
+        102
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "image"
+          }
+        },
+        {
+          "localized_name": "upload",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "link": null,
+          "widget": {
+            "name": "upload"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            109
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core"
+      },
+      "title": "Frame A",
+      "widgets_values": [
+        "cauce_forest_a.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        0,
+        330
+      ],
+      "size": [
+        282,
+        102
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "image"
+          }
+        },
+        {
+          "localized_name": "upload",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "link": null,
+          "widget": {
+            "name": "upload"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            110
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core"
+      },
+      "title": "Frame B",
+      "widgets_values": [
+        "cauce_forest_b.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "ImageScale",
+      "pos": [
+        330,
+        0
+      ],
+      "size": [
+        270,
+        130
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 109
+        },
+        {
+          "localized_name": "upscale_method",
+          "name": "upscale_method",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "upscale_method"
+          }
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "width"
+          }
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "height"
+          }
+        },
+        {
+          "localized_name": "crop",
+          "name": "crop",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "crop"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11,
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScale",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "lanczos",
+        768,
+        512,
+        "center"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "ImageScale",
+      "pos": [
+        330,
+        330
+      ],
+      "size": [
+        270,
+        130
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 110
+        },
+        {
+          "localized_name": "upscale_method",
+          "name": "upscale_method",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "upscale_method"
+          }
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "width"
+          }
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "height"
+          }
+        },
+        {
+          "localized_name": "crop",
+          "name": "crop",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "crop"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            12,
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScale",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "lanczos",
+        768,
+        512,
+        "center"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "CauceGenerationWindow",
+      "pos": [
+        700,
+        0
+      ],
+      "size": [
+        323,
+        386
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "window_id",
+          "name": "window_id",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "window_id"
+          }
+        },
+        {
+          "localized_name": "accepted_start_seconds",
+          "name": "accepted_start_seconds",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "accepted_start_seconds"
+          }
+        },
+        {
+          "localized_name": "accepted_duration_seconds",
+          "name": "accepted_duration_seconds",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "accepted_duration_seconds"
+          }
+        },
+        {
+          "localized_name": "context_frames",
+          "name": "context_frames",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "context_frames"
+          }
+        },
+        {
+          "localized_name": "duplicate_prefix_frames",
+          "name": "duplicate_prefix_frames",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "duplicate_prefix_frames"
+          }
+        },
+        {
+          "localized_name": "snap_mode",
+          "name": "snap_mode",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "snap_mode"
+          }
+        },
+        {
+          "localized_name": "accept_mode",
+          "name": "accept_mode",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "accept_mode"
+          }
+        },
+        {
+          "localized_name": "maximum_frames",
+          "name": "maximum_frames",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "maximum_frames"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": [
+            5,
+            9,
+            23,
+            27,
+            38,
+            42
+          ]
+        },
+        {
+          "localized_name": "timeline_item",
+          "name": "timeline_item",
+          "type": "CAUCE_ITEM",
+          "links": null
+        },
+        {
+          "localized_name": "length",
+          "name": "length",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_offset_frames",
+          "name": "accepted_offset_frames",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_duration_seconds",
+          "name": "accepted_duration_seconds",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_end_seconds",
+          "name": "accepted_end_seconds",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "localized_name": "summary",
+          "name": "summary",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "localized_name": "window_json",
+          "name": "window_json",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceGenerationWindow",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "widgets_values": [
+        "native_loop_124f",
+        0.0,
+        5.166666667,
+        "0",
+        "0",
+        "nearest",
+        "full_render",
+        124
+      ]
+    },
+    {
+      "id": 7,
+      "type": "CauceExecutionProfile",
+      "pos": [
+        700,
+        430
+      ],
+      "size": [
+        272,
+        238
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "profile_name",
+          "name": "profile_name",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "profile_name"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "profile",
+          "name": "profile",
+          "type": "CAUCE_PROFILE",
+          "links": [
+            6,
+            10,
+            54,
+            58,
+            111
+          ]
+        },
+        {
+          "localized_name": "profile_name",
+          "name": "profile_name",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "localized_name": "family",
+          "name": "family",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "tiled_vae",
+          "name": "tiled_vae",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "localized_name": "tile_size",
+          "name": "tile_size",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "overlap",
+          "name": "overlap",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "temporal_size",
+          "name": "temporal_size",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "temporal_overlap",
+          "name": "temporal_overlap",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceExecutionProfile",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "widgets_values": [
+        "h3-5090-fl2va-768x512"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "CaucePreflight",
+      "pos": [
+        700,
+        720
+      ],
+      "size": [
+        315,
+        82
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "profile",
+          "name": "profile",
+          "type": "CAUCE_PROFILE",
+          "link": 111
+        },
+        {
+          "localized_name": "minimum_free_reserve_gib",
+          "name": "minimum_free_reserve_gib",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "minimum_free_reserve_gib"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "ready",
+          "name": "ready",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "localized_name": "report",
+          "name": "report",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "localized_name": "preflight",
+          "name": "preflight",
+          "type": "CAUCE_PREFLIGHT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CaucePreflight",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "widgets_values": [
+        35.0
+      ]
+    },
+    {
+      "id": 9,
+      "type": "UNETLoader",
+      "pos": [
+        1100,
+        0
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "unet_name"
+          }
+        },
+        {
+          "localized_name": "weight_dtype",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "weight_dtype"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
+        "default"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "MiniMaxH3SigmaShift",
+      "pos": [
+        1420,
+        0
+      ],
+      "size": [
+        277,
+        82
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        },
+        {
+          "localized_name": "shift_video",
+          "name": "shift_video",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "shift_video"
+          }
+        },
+        {
+          "localized_name": "shift_audio",
+          "name": "shift_audio",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "shift_audio"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2,
+            15,
+            30,
+            67,
+            82
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MiniMaxH3SigmaShift",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        12.0,
+        3.0
+      ]
+    },
+    {
+      "id": 11,
+      "type": "CLIPLoader",
+      "pos": [
+        1100,
+        150
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "clip_name"
+          }
+        },
+        {
+          "localized_name": "type",
+          "name": "type",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "type"
+          }
+        },
+        {
+          "localized_name": "device",
+          "name": "device",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "device"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            3,
+            7,
+            51,
+            55
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "minimax",
+        "default"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "VAELoader",
+      "pos": [
+        1100,
+        320
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "vae_name"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            4,
+            8,
+            25,
+            40,
+            52,
+            56,
+            77,
+            92
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_fp16.safetensors"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "KSamplerSelect",
+      "pos": [
+        1750,
+        0
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "sampler_name",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "sampler_name"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "SAMPLER",
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            19,
+            34,
+            71,
+            86
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "res_multistep"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "BasicScheduler",
+      "pos": [
+        1750,
+        100
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "localized_name": "scheduler",
+          "name": "scheduler",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "scheduler"
+          }
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "steps"
+          }
+        },
+        {
+          "localized_name": "denoise",
+          "name": "denoise",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "denoise"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "SIGMAS",
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            20,
+            35,
+            72,
+            87
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicScheduler",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "simple",
+        20,
+        1.0
+      ]
+    },
+    {
+      "id": 15,
+      "type": "CauceH3FL2VA",
+      "pos": [
+        2120,
+        0
+      ],
+      "size": [
+        400,
+        238
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 3
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 4
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 5
+        },
+        {
+          "localized_name": "profile",
+          "name": "profile",
+          "type": "CAUCE_PROFILE",
+          "link": 6
+        },
+        {
+          "localized_name": "first_frame",
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": 11,
+          "shape": 7
+        },
+        {
+          "localized_name": "last_frame",
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": 12,
+          "shape": 7
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "prompt"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            16
+          ]
+        },
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            21
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3FL2VA",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "FL2VA A → B",
+      "widgets_values": [
+        "A single uninterrupted accelerating forward camera push through dense temperate rainforest and fern fronds, an infinite rapid zoom that preserves natural forest geometry and resolves exactly into the destination frame beneath the moss-covered branch. Continuous forward momentum, coherent optical flow, no cut, no dissolve, no pause, no camera reset, no new objects."
+      ]
+    },
+    {
+      "id": 16,
+      "type": "CauceH3FL2VA",
+      "pos": [
+        2120,
+        420
+      ],
+      "size": [
+        400,
+        238
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 7
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 8
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 9
+        },
+        {
+          "localized_name": "profile",
+          "name": "profile",
+          "type": "CAUCE_PROFILE",
+          "link": 10
+        },
+        {
+          "localized_name": "first_frame",
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": 13,
+          "shape": 7
+        },
+        {
+          "localized_name": "last_frame",
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": 14,
+          "shape": 7
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "prompt"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            31
+          ]
+        },
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            36
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3FL2VA",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "FL2VA B → A",
+      "widgets_values": [
+        "A single uninterrupted accelerating forward camera push beneath the moss-covered branch and through dense temperate rainforest, an infinite rapid zoom that preserves natural forest geometry and resolves exactly into the destination fern hillside. Continuous forward momentum, coherent optical flow, no cut, no dissolve, no pause, no camera reset, no new objects."
+      ]
+    },
+    {
+      "id": 17,
+      "type": "RandomNoise",
+      "pos": [
+        2600,
+        0
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise_seed",
+          "name": "noise_seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "noise_seed"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "NOISE",
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        2026082301,
+        "fixed"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "BasicGuider",
+      "pos": [
+        2600,
+        130
+      ],
+      "size": [
+        180,
+        46
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 15
+        },
+        {
+          "localized_name": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "GUIDER",
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 19,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        2920,
+        60
+      ],
+      "size": [
+        230,
+        126
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise",
+          "name": "noise",
+          "type": "NOISE",
+          "link": 17
+        },
+        {
+          "localized_name": "guider",
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 18
+        },
+        {
+          "localized_name": "sampler",
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 19
+        },
+        {
+          "localized_name": "sigmas",
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 20
+        },
+        {
+          "localized_name": "latent_image",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            22
+          ]
+        },
+        {
+          "localized_name": "denoised_output",
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 20,
+      "type": "CauceResolveParentLatent",
+      "pos": [
+        3210,
+        60
+      ],
+      "size": [
+        244,
+        46
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "link": 22
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            24,
+            45,
+            60,
+            65
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceResolveParentLatent",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 21,
+      "type": "VAEDecode",
+      "pos": [
+        3500,
+        0
+      ],
+      "size": [
+        160,
+        46
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "samples",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 24
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            26
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 22,
+      "type": "CauceAcceptDecodedWindow",
+      "pos": [
+        3720,
+        40
+      ],
+      "size": [
+        270,
+        66
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 26
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 27
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            28,
+            47,
+            50,
+            97
+          ]
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_frames",
+          "name": "accepted_frames",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceAcceptDecodedWindow",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 23,
+      "type": "CreateVideo",
+      "pos": [
+        4030,
+        40
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 28
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            29
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 24,
+      "type": "SaveVideo",
+      "pos": [
+        4350,
+        40
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 29
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/01_ab_raw",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "RandomNoise",
+      "pos": [
+        2600,
+        700
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise_seed",
+          "name": "noise_seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "noise_seed"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "NOISE",
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            32
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        2026082302,
+        "fixed"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "BasicGuider",
+      "pos": [
+        2600,
+        830
+      ],
+      "size": [
+        180,
+        46
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 30
+        },
+        {
+          "localized_name": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 31
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "GUIDER",
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            33
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 27,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        2920,
+        760
+      ],
+      "size": [
+        230,
+        126
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise",
+          "name": "noise",
+          "type": "NOISE",
+          "link": 32
+        },
+        {
+          "localized_name": "guider",
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 33
+        },
+        {
+          "localized_name": "sampler",
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 34
+        },
+        {
+          "localized_name": "sigmas",
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 35
+        },
+        {
+          "localized_name": "latent_image",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 36
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            37
+          ]
+        },
+        {
+          "localized_name": "denoised_output",
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 28,
+      "type": "CauceResolveParentLatent",
+      "pos": [
+        3210,
+        760
+      ],
+      "size": [
+        244,
+        46
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "link": 37
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 38
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            39,
+            46,
+            61,
+            64
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceResolveParentLatent",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 29,
+      "type": "VAEDecode",
+      "pos": [
+        3500,
+        700
+      ],
+      "size": [
+        160,
+        46
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "samples",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 39
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 40
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            41
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 30,
+      "type": "CauceAcceptDecodedWindow",
+      "pos": [
+        3720,
+        740
+      ],
+      "size": [
+        270,
+        66
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 41
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 42
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            43,
+            48,
+            49,
+            98
+          ]
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_frames",
+          "name": "accepted_frames",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceAcceptDecodedWindow",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 31,
+      "type": "CreateVideo",
+      "pos": [
+        4030,
+        740
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 43
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            44
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 32,
+      "type": "SaveVideo",
+      "pos": [
+        4350,
+        740
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 44
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/02_ba_raw",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
+      "id": 33,
+      "type": "CauceSaveAVLatent",
+      "pos": [
+        3380,
+        540
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "link": 45
+        },
+        {
+          "localized_name": "receipt",
+          "name": "receipt",
+          "type": "CAUCE_RECEIPT",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "artifact_index",
+          "name": "artifact_index",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "artifact_index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "latent_path",
+          "name": "latent_path",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceSaveAVLatent",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "widgets_values": [
+        "cauce/native_loop/latents/ab",
+        1
+      ]
+    },
+    {
+      "id": 34,
+      "type": "CauceSaveAVLatent",
+      "pos": [
+        3380,
+        1240
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "link": 46
+        },
+        {
+          "localized_name": "receipt",
+          "name": "receipt",
+          "type": "CAUCE_RECEIPT",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "artifact_index",
+          "name": "artifact_index",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "artifact_index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "latent_path",
+          "name": "latent_path",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceSaveAVLatent",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "widgets_values": [
+        "cauce/native_loop/latents/ba",
+        1
+      ]
+    },
+    {
+      "id": 35,
+      "type": "CauceBuildNativeLatentSeam",
+      "pos": [
+        4850,
+        0
+      ],
+      "size": [
+        370,
+        142
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "left_frames",
+          "name": "left_frames",
+          "type": "IMAGE",
+          "link": 47
+        },
+        {
+          "localized_name": "right_frames",
+          "name": "right_frames",
+          "type": "IMAGE",
+          "link": 48
+        },
+        {
+          "localized_name": "left_fps",
+          "name": "left_fps",
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "right_fps",
+          "name": "right_fps",
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "context_frames_per_side",
+          "name": "context_frames_per_side",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "context_frames_per_side"
+          }
+        },
+        {
+          "localized_name": "working_frames",
+          "name": "working_frames",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "working_frames"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "working_images",
+          "name": "working_images",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "links": [
+            62,
+            100
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": [
+            53,
+            75,
+            79
+          ]
+        },
+        {
+          "localized_name": "seam_json",
+          "name": "seam_json",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceBuildNativeLatentSeam",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Native seam at B",
+      "widgets_values": [
+        24.0,
+        24.0,
+        "39",
+        "124"
+      ]
+    },
+    {
+      "id": 36,
+      "type": "CauceBuildNativeLatentSeam",
+      "pos": [
+        4850,
+        700
+      ],
+      "size": [
+        370,
+        142
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "left_frames",
+          "name": "left_frames",
+          "type": "IMAGE",
+          "link": 49
+        },
+        {
+          "localized_name": "right_frames",
+          "name": "right_frames",
+          "type": "IMAGE",
+          "link": 50
+        },
+        {
+          "localized_name": "left_fps",
+          "name": "left_fps",
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "right_fps",
+          "name": "right_fps",
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "context_frames_per_side",
+          "name": "context_frames_per_side",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "context_frames_per_side"
+          }
+        },
+        {
+          "localized_name": "working_frames",
+          "name": "working_frames",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "working_frames"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "working_images",
+          "name": "working_images",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "links": [
+            66,
+            102
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": [
+            57,
+            90,
+            94
+          ]
+        },
+        {
+          "localized_name": "seam_json",
+          "name": "seam_json",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceBuildNativeLatentSeam",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Native seam at A / wrap",
+      "widgets_values": [
+        24.0,
+        24.0,
+        "39",
+        "124"
+      ]
+    },
+    {
+      "id": 37,
+      "type": "CauceH3FL2VA",
+      "pos": [
+        5260,
+        0
+      ],
+      "size": [
+        400,
+        238
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 51
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 52
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 53
+        },
+        {
+          "localized_name": "profile",
+          "name": "profile",
+          "type": "CAUCE_PROFILE",
+          "link": 54
+        },
+        {
+          "localized_name": "first_frame",
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "last_frame",
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "prompt"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            68
+          ]
+        },
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            59
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3FL2VA",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Condition seam B",
+      "widgets_values": [
+        "Continue the same rapid forward camera trajectory through the forest. Preserve direction, velocity, acceleration, scale progression, lighting, and optical flow across the masked interval. One continuous shot; no cut, dissolve, pause, camera reset, new object, or scene change."
+      ]
+    },
+    {
+      "id": 38,
+      "type": "CauceH3FL2VA",
+      "pos": [
+        5260,
+        700
+      ],
+      "size": [
+        400,
+        238
+      ],
+      "flags": {},
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 55
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 56
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 57
+        },
+        {
+          "localized_name": "profile",
+          "name": "profile",
+          "type": "CAUCE_PROFILE",
+          "link": 58
+        },
+        {
+          "localized_name": "first_frame",
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "last_frame",
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "prompt"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            83
+          ]
+        },
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            63
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3FL2VA",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Condition seam A",
+      "widgets_values": [
+        "Continue the same rapid forward camera trajectory through the forest. Preserve direction, velocity, acceleration, scale progression, lighting, and optical flow across the masked interval. One continuous shot; no cut, dissolve, pause, camera reset, new object, or scene change."
+      ]
+    },
+    {
+      "id": 39,
+      "type": "CaucePrepareH3NativeLatentInpaint",
+      "pos": [
+        5680,
+        0
+      ],
+      "size": [
+        370,
+        126
+      ],
+      "flags": {},
+      "order": 38,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "target_latent",
+          "name": "target_latent",
+          "type": "LATENT",
+          "link": 59
+        },
+        {
+          "localized_name": "left_latent",
+          "name": "left_latent",
+          "type": "LATENT",
+          "link": 60
+        },
+        {
+          "localized_name": "right_latent",
+          "name": "right_latent",
+          "type": "LATENT",
+          "link": 61
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "link": 62
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "masked_latent",
+          "name": "masked_latent",
+          "type": "LATENT",
+          "links": [
+            73
+          ]
+        },
+        {
+          "localized_name": "mask_report",
+          "name": "mask_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CaucePrepareH3NativeLatentInpaint",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 40,
+      "type": "CaucePrepareH3NativeLatentInpaint",
+      "pos": [
+        5680,
+        700
+      ],
+      "size": [
+        370,
+        126
+      ],
+      "flags": {},
+      "order": 39,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "target_latent",
+          "name": "target_latent",
+          "type": "LATENT",
+          "link": 63
+        },
+        {
+          "localized_name": "left_latent",
+          "name": "left_latent",
+          "type": "LATENT",
+          "link": 64
+        },
+        {
+          "localized_name": "right_latent",
+          "name": "right_latent",
+          "type": "LATENT",
+          "link": 65
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "link": 66
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "masked_latent",
+          "name": "masked_latent",
+          "type": "LATENT",
+          "links": [
+            88
+          ]
+        },
+        {
+          "localized_name": "mask_report",
+          "name": "mask_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CaucePrepareH3NativeLatentInpaint",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 41,
+      "type": "RandomNoise",
+      "pos": [
+        6100,
+        0
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 40,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise_seed",
+          "name": "noise_seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "noise_seed"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "NOISE",
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            69
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        2026082311,
+        "fixed"
+      ]
+    },
+    {
+      "id": 42,
+      "type": "BasicGuider",
+      "pos": [
+        6100,
+        130
+      ],
+      "size": [
+        180,
+        46
+      ],
+      "flags": {},
+      "order": 41,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 67
+        },
+        {
+          "localized_name": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 68
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "GUIDER",
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            70
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 43,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        6420,
+        60
+      ],
+      "size": [
+        230,
+        126
+      ],
+      "flags": {},
+      "order": 42,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise",
+          "name": "noise",
+          "type": "NOISE",
+          "link": 69
+        },
+        {
+          "localized_name": "guider",
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 70
+        },
+        {
+          "localized_name": "sampler",
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 71
+        },
+        {
+          "localized_name": "sigmas",
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 72
+        },
+        {
+          "localized_name": "latent_image",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 73
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            74
+          ]
+        },
+        {
+          "localized_name": "denoised_output",
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 44,
+      "type": "CauceResolveParentLatent",
+      "pos": [
+        6710,
+        60
+      ],
+      "size": [
+        244,
+        46
+      ],
+      "flags": {},
+      "order": 43,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "link": 74
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 75
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            76
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceResolveParentLatent",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 45,
+      "type": "VAEDecode",
+      "pos": [
+        7000,
+        0
+      ],
+      "size": [
+        160,
+        46
+      ],
+      "flags": {},
+      "order": 44,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "samples",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 76
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 77
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            78
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 46,
+      "type": "CauceAcceptDecodedWindow",
+      "pos": [
+        7220,
+        40
+      ],
+      "size": [
+        270,
+        66
+      ],
+      "flags": {},
+      "order": 45,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 78
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 79
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            80,
+            99
+          ]
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_frames",
+          "name": "accepted_frames",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceAcceptDecodedWindow",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 47,
+      "type": "CreateVideo",
+      "pos": [
+        7530,
+        40
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 46,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 80
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            81
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 48,
+      "type": "SaveVideo",
+      "pos": [
+        7850,
+        40
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 47,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 81
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/03_seam_b_working",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
+      "id": 49,
+      "type": "RandomNoise",
+      "pos": [
+        6100,
+        700
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 48,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise_seed",
+          "name": "noise_seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "noise_seed"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "NOISE",
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            84
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        2026082312,
+        "fixed"
+      ]
+    },
+    {
+      "id": 50,
+      "type": "BasicGuider",
+      "pos": [
+        6100,
+        830
+      ],
+      "size": [
+        180,
+        46
+      ],
+      "flags": {},
+      "order": 49,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 82
+        },
+        {
+          "localized_name": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 83
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "GUIDER",
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            85
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 51,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        6420,
+        760
+      ],
+      "size": [
+        230,
+        126
+      ],
+      "flags": {},
+      "order": 50,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "noise",
+          "name": "noise",
+          "type": "NOISE",
+          "link": 84
+        },
+        {
+          "localized_name": "guider",
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 85
+        },
+        {
+          "localized_name": "sampler",
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 86
+        },
+        {
+          "localized_name": "sigmas",
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 87
+        },
+        {
+          "localized_name": "latent_image",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 88
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            89
+          ]
+        },
+        {
+          "localized_name": "denoised_output",
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 52,
+      "type": "CauceResolveParentLatent",
+      "pos": [
+        6710,
+        760
+      ],
+      "size": [
+        244,
+        46
+      ],
+      "flags": {},
+      "order": 51,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "link": 89
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 90
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            91
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceResolveParentLatent",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 53,
+      "type": "VAEDecode",
+      "pos": [
+        7000,
+        700
+      ],
+      "size": [
+        160,
+        46
+      ],
+      "flags": {},
+      "order": 52,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "samples",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 91
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 92
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            93
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core"
+      }
+    },
+    {
+      "id": 54,
+      "type": "CauceAcceptDecodedWindow",
+      "pos": [
+        7220,
+        740
+      ],
+      "size": [
+        270,
+        66
+      ],
+      "flags": {},
+      "order": 53,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 93
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "link": 94
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            95,
+            101
+          ]
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "localized_name": "accepted_frames",
+          "name": "accepted_frames",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceAcceptDecodedWindow",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 55,
+      "type": "CreateVideo",
+      "pos": [
+        7530,
+        740
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 54,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 95
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            96
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 56,
+      "type": "SaveVideo",
+      "pos": [
+        7850,
+        740
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 55,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 96
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/04_seam_a_working",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
+      "id": 57,
+      "type": "CauceAssembleNativeTwoClipLoop",
+      "pos": [
+        8270,
+        300
+      ],
+      "size": [
+        410,
+        230
+      ],
+      "flags": {},
+      "order": 56,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "first_clip",
+          "name": "first_clip",
+          "type": "IMAGE",
+          "link": 97
+        },
+        {
+          "localized_name": "second_clip",
+          "name": "second_clip",
+          "type": "IMAGE",
+          "link": 98
+        },
+        {
+          "localized_name": "forward_repaired_working",
+          "name": "forward_repaired_working",
+          "type": "IMAGE",
+          "link": 99
+        },
+        {
+          "localized_name": "forward_seam",
+          "name": "forward_seam",
+          "type": "CAUCE_SEAM",
+          "link": 100
+        },
+        {
+          "localized_name": "wrap_repaired_working",
+          "name": "wrap_repaired_working",
+          "type": "IMAGE",
+          "link": 101
+        },
+        {
+          "localized_name": "wrap_seam",
+          "name": "wrap_seam",
+          "type": "CAUCE_SEAM",
+          "link": 102
+        },
+        {
+          "localized_name": "decoded_feather_frames",
+          "name": "decoded_feather_frames",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "decoded_feather_frames"
+          }
+        },
+        {
+          "localized_name": "blend_curve",
+          "name": "blend_curve",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "blend_curve"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "loop",
+          "name": "loop",
+          "type": "IMAGE",
+          "links": [
+            103
+          ]
+        },
+        {
+          "localized_name": "first_repaired",
+          "name": "first_repaired",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "second_repaired",
+          "name": "second_repaired",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "forward_patch",
+          "name": "forward_patch",
+          "type": "IMAGE",
+          "links": [
+            105
+          ]
+        },
+        {
+          "localized_name": "wrap_patch",
+          "name": "wrap_patch",
+          "type": "IMAGE",
+          "links": [
+            107
+          ]
+        },
+        {
+          "localized_name": "assembly_report",
+          "name": "assembly_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceAssembleNativeTwoClipLoop",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "widgets_values": [
+        4,
+        "cosine"
+      ]
+    },
+    {
+      "id": 58,
+      "type": "CreateVideo",
+      "pos": [
+        8730,
+        250
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 57,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 103
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            104
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 59,
+      "type": "SaveVideo",
+      "pos": [
+        9040,
+        250
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 58,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 104
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/05_ab_ba_loop",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
+      "id": 60,
+      "type": "CreateVideo",
+      "pos": [
+        8730,
+        520
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 59,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 105
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            106
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 61,
+      "type": "SaveVideo",
+      "pos": [
+        9040,
+        520
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 60,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 106
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/06_patch_b",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
+      "id": 62,
+      "type": "CreateVideo",
+      "pos": [
+        8730,
+        760
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 61,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 107
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            108
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 63,
+      "type": "SaveVideo",
+      "pos": [
+        9040,
+        760
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 62,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 108
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop/07_patch_a",
+        "mp4",
+        "auto"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      9,
+      0,
+      10,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      10,
+      0,
+      14,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      11,
+      0,
+      15,
+      0,
+      "CLIP"
+    ],
+    [
+      4,
+      12,
+      0,
+      15,
+      1,
+      "VAE"
+    ],
+    [
+      5,
+      6,
+      0,
+      15,
+      2,
+      "CAUCE_WINDOW"
+    ],
+    [
+      6,
+      7,
+      0,
+      15,
+      3,
+      "CAUCE_PROFILE"
+    ],
+    [
+      7,
+      11,
+      0,
+      16,
+      0,
+      "CLIP"
+    ],
+    [
+      8,
+      12,
+      0,
+      16,
+      1,
+      "VAE"
+    ],
+    [
+      9,
+      6,
+      0,
+      16,
+      2,
+      "CAUCE_WINDOW"
+    ],
+    [
+      10,
+      7,
+      0,
+      16,
+      3,
+      "CAUCE_PROFILE"
+    ],
+    [
+      11,
+      4,
+      0,
+      15,
+      4,
+      "IMAGE"
+    ],
+    [
+      12,
+      5,
+      0,
+      15,
+      5,
+      "IMAGE"
+    ],
+    [
+      13,
+      5,
+      0,
+      16,
+      4,
+      "IMAGE"
+    ],
+    [
+      14,
+      4,
+      0,
+      16,
+      5,
+      "IMAGE"
+    ],
+    [
+      15,
+      10,
+      0,
+      18,
+      0,
+      "MODEL"
+    ],
+    [
+      16,
+      15,
+      0,
+      18,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      17,
+      17,
+      0,
+      19,
+      0,
+      "NOISE"
+    ],
+    [
+      18,
+      18,
+      0,
+      19,
+      1,
+      "GUIDER"
+    ],
+    [
+      19,
+      13,
+      0,
+      19,
+      2,
+      "SAMPLER"
+    ],
+    [
+      20,
+      14,
+      0,
+      19,
+      3,
+      "SIGMAS"
+    ],
+    [
+      21,
+      15,
+      1,
+      19,
+      4,
+      "LATENT"
+    ],
+    [
+      22,
+      19,
+      0,
+      20,
+      0,
+      "LATENT"
+    ],
+    [
+      23,
+      6,
+      0,
+      20,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      24,
+      20,
+      0,
+      21,
+      0,
+      "LATENT"
+    ],
+    [
+      25,
+      12,
+      0,
+      21,
+      1,
+      "VAE"
+    ],
+    [
+      26,
+      21,
+      0,
+      22,
+      0,
+      "IMAGE"
+    ],
+    [
+      27,
+      6,
+      0,
+      22,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      28,
+      22,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      29,
+      23,
+      0,
+      24,
+      0,
+      "VIDEO"
+    ],
+    [
+      30,
+      10,
+      0,
+      26,
+      0,
+      "MODEL"
+    ],
+    [
+      31,
+      16,
+      0,
+      26,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      32,
+      25,
+      0,
+      27,
+      0,
+      "NOISE"
+    ],
+    [
+      33,
+      26,
+      0,
+      27,
+      1,
+      "GUIDER"
+    ],
+    [
+      34,
+      13,
+      0,
+      27,
+      2,
+      "SAMPLER"
+    ],
+    [
+      35,
+      14,
+      0,
+      27,
+      3,
+      "SIGMAS"
+    ],
+    [
+      36,
+      16,
+      1,
+      27,
+      4,
+      "LATENT"
+    ],
+    [
+      37,
+      27,
+      0,
+      28,
+      0,
+      "LATENT"
+    ],
+    [
+      38,
+      6,
+      0,
+      28,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      39,
+      28,
+      0,
+      29,
+      0,
+      "LATENT"
+    ],
+    [
+      40,
+      12,
+      0,
+      29,
+      1,
+      "VAE"
+    ],
+    [
+      41,
+      29,
+      0,
+      30,
+      0,
+      "IMAGE"
+    ],
+    [
+      42,
+      6,
+      0,
+      30,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      43,
+      30,
+      0,
+      31,
+      0,
+      "IMAGE"
+    ],
+    [
+      44,
+      31,
+      0,
+      32,
+      0,
+      "VIDEO"
+    ],
+    [
+      45,
+      20,
+      0,
+      33,
+      0,
+      "LATENT"
+    ],
+    [
+      46,
+      28,
+      0,
+      34,
+      0,
+      "LATENT"
+    ],
+    [
+      47,
+      22,
+      0,
+      35,
+      0,
+      "IMAGE"
+    ],
+    [
+      48,
+      30,
+      0,
+      35,
+      1,
+      "IMAGE"
+    ],
+    [
+      49,
+      30,
+      0,
+      36,
+      0,
+      "IMAGE"
+    ],
+    [
+      50,
+      22,
+      0,
+      36,
+      1,
+      "IMAGE"
+    ],
+    [
+      51,
+      11,
+      0,
+      37,
+      0,
+      "CLIP"
+    ],
+    [
+      52,
+      12,
+      0,
+      37,
+      1,
+      "VAE"
+    ],
+    [
+      53,
+      35,
+      2,
+      37,
+      2,
+      "CAUCE_WINDOW"
+    ],
+    [
+      54,
+      7,
+      0,
+      37,
+      3,
+      "CAUCE_PROFILE"
+    ],
+    [
+      55,
+      11,
+      0,
+      38,
+      0,
+      "CLIP"
+    ],
+    [
+      56,
+      12,
+      0,
+      38,
+      1,
+      "VAE"
+    ],
+    [
+      57,
+      36,
+      2,
+      38,
+      2,
+      "CAUCE_WINDOW"
+    ],
+    [
+      58,
+      7,
+      0,
+      38,
+      3,
+      "CAUCE_PROFILE"
+    ],
+    [
+      59,
+      37,
+      1,
+      39,
+      0,
+      "LATENT"
+    ],
+    [
+      60,
+      20,
+      0,
+      39,
+      1,
+      "LATENT"
+    ],
+    [
+      61,
+      28,
+      0,
+      39,
+      2,
+      "LATENT"
+    ],
+    [
+      62,
+      35,
+      1,
+      39,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      63,
+      38,
+      1,
+      40,
+      0,
+      "LATENT"
+    ],
+    [
+      64,
+      28,
+      0,
+      40,
+      1,
+      "LATENT"
+    ],
+    [
+      65,
+      20,
+      0,
+      40,
+      2,
+      "LATENT"
+    ],
+    [
+      66,
+      36,
+      1,
+      40,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      67,
+      10,
+      0,
+      42,
+      0,
+      "MODEL"
+    ],
+    [
+      68,
+      37,
+      0,
+      42,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      69,
+      41,
+      0,
+      43,
+      0,
+      "NOISE"
+    ],
+    [
+      70,
+      42,
+      0,
+      43,
+      1,
+      "GUIDER"
+    ],
+    [
+      71,
+      13,
+      0,
+      43,
+      2,
+      "SAMPLER"
+    ],
+    [
+      72,
+      14,
+      0,
+      43,
+      3,
+      "SIGMAS"
+    ],
+    [
+      73,
+      39,
+      0,
+      43,
+      4,
+      "LATENT"
+    ],
+    [
+      74,
+      43,
+      0,
+      44,
+      0,
+      "LATENT"
+    ],
+    [
+      75,
+      35,
+      2,
+      44,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      76,
+      44,
+      0,
+      45,
+      0,
+      "LATENT"
+    ],
+    [
+      77,
+      12,
+      0,
+      45,
+      1,
+      "VAE"
+    ],
+    [
+      78,
+      45,
+      0,
+      46,
+      0,
+      "IMAGE"
+    ],
+    [
+      79,
+      35,
+      2,
+      46,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      80,
+      46,
+      0,
+      47,
+      0,
+      "IMAGE"
+    ],
+    [
+      81,
+      47,
+      0,
+      48,
+      0,
+      "VIDEO"
+    ],
+    [
+      82,
+      10,
+      0,
+      50,
+      0,
+      "MODEL"
+    ],
+    [
+      83,
+      38,
+      0,
+      50,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      84,
+      49,
+      0,
+      51,
+      0,
+      "NOISE"
+    ],
+    [
+      85,
+      50,
+      0,
+      51,
+      1,
+      "GUIDER"
+    ],
+    [
+      86,
+      13,
+      0,
+      51,
+      2,
+      "SAMPLER"
+    ],
+    [
+      87,
+      14,
+      0,
+      51,
+      3,
+      "SIGMAS"
+    ],
+    [
+      88,
+      40,
+      0,
+      51,
+      4,
+      "LATENT"
+    ],
+    [
+      89,
+      51,
+      0,
+      52,
+      0,
+      "LATENT"
+    ],
+    [
+      90,
+      36,
+      2,
+      52,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      91,
+      52,
+      0,
+      53,
+      0,
+      "LATENT"
+    ],
+    [
+      92,
+      12,
+      0,
+      53,
+      1,
+      "VAE"
+    ],
+    [
+      93,
+      53,
+      0,
+      54,
+      0,
+      "IMAGE"
+    ],
+    [
+      94,
+      36,
+      2,
+      54,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      95,
+      54,
+      0,
+      55,
+      0,
+      "IMAGE"
+    ],
+    [
+      96,
+      55,
+      0,
+      56,
+      0,
+      "VIDEO"
+    ],
+    [
+      97,
+      22,
+      0,
+      57,
+      0,
+      "IMAGE"
+    ],
+    [
+      98,
+      30,
+      0,
+      57,
+      1,
+      "IMAGE"
+    ],
+    [
+      99,
+      46,
+      0,
+      57,
+      2,
+      "IMAGE"
+    ],
+    [
+      100,
+      35,
+      1,
+      57,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      101,
+      54,
+      0,
+      57,
+      4,
+      "IMAGE"
+    ],
+    [
+      102,
+      36,
+      1,
+      57,
+      5,
+      "CAUCE_SEAM"
+    ],
+    [
+      103,
+      57,
+      0,
+      58,
+      0,
+      "IMAGE"
+    ],
+    [
+      104,
+      58,
+      0,
+      59,
+      0,
+      "VIDEO"
+    ],
+    [
+      105,
+      57,
+      3,
+      60,
+      0,
+      "IMAGE"
+    ],
+    [
+      106,
+      60,
+      0,
+      61,
+      0,
+      "VIDEO"
+    ],
+    [
+      107,
+      57,
+      4,
+      62,
+      0,
+      "IMAGE"
+    ],
+    [
+      108,
+      62,
+      0,
+      63,
+      0,
+      "VIDEO"
+    ],
+    [
+      109,
+      2,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      110,
+      3,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      111,
+      7,
+      0,
+      8,
+      0,
+      "CAUCE_PROFILE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "A / B + 124F PROFILE",
+      "bounding": [
+        -40,
+        -40,
+        1100,
+        980
+      ],
+      "color": "#315f46",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "SHARED H3 MODEL STACK",
+      "bounding": [
+        1060,
+        -40,
+        1020,
+        980
+      ],
+      "color": "#315f46",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "GENERATE A→B AND B→A",
+      "bounding": [
+        2080,
+        -40,
+        2700,
+        1580
+      ],
+      "color": "#315f46",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "NATIVE LATENT SEAM B / A",
+      "bounding": [
+        4800,
+        -40,
+        3400,
+        1580
+      ],
+      "color": "#315f46",
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "DURATION-PRESERVING CLOSED LOOP",
+      "bounding": [
+        8200,
+        -40,
+        1200,
+        1120
+      ],
+      "color": "#315f46",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.15,
+      "offset": [
+        80,
+        190
+      ]
+    }
+  },
+  "version": 0.4
+}

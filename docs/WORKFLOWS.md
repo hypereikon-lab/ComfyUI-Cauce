@@ -43,6 +43,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_temporal_inpainting.json` | 1 sample | Temporal inpainting localizado; verificado live con intervalo de 3 s. |
+| 60 | `60_h3_native_latent_loop.json` | 4 samples | A→B→A con dos seams nativos sobre los AV latents originales. |
 | 90 | `90_storage_maintenance.json` | CPU | Inventario físico y limpieza en dos fases de `input/` u `output/`. |
 
 Los workflows visuales 00–50 fueron cargados y resueltos por el frontend real
@@ -248,6 +249,48 @@ se codifica y no se sustituye. H3 mantiene internamente un stream de audio vací
 y enmascarado sólo porque su latent es estructuralmente AV; ese resultado se
 descarta. Para una pieza larga se corrigen clips locales y luego se colocan
 sobre el reloj del master fijo.
+
+## 60 · Loop FL2VA con dos seams nativos
+
+Este recorrido genera A→B y B→A bajo el mismo profile landscape
+`h3-5090-fl2va-768x512`. Guarda los dos AV latents finales antes de decodificar
+y los usa directamente como contexto para dos operaciones distintas:
+
+```text
+seam B: tail latent de A→B + centro generado + head latent de B→A
+seam A: tail latent de B→A + centro generado + head latent de A→B
+```
+
+No concatena latents independientes ni vuelve a codificar los MP4. Para el
+preset de 124 frames, la geometría visible y latent es:
+
+```text
+video visible: 39 protegidos + 46 generados + 39 protegidos = 124
+video latent:  12 protegidos + 13 generados + 12 protegidos = 37 tokens
+rangos target: [0,12) preserve · [12,25) generate · [25,37) preserve
+```
+
+El token 25 vuelve a fase cero en el ciclo temporal `(1,4,4,4,4)` del VAE H3.
+Por eso el head del segundo parent puede ocupar `[25,37)` sin reinterpretar la
+duración visible de sus filas. El tail del primer parent también comienza en
+token 25 para un source de 124 frames. CAUCE rechaza automáticamente longitudes
+o combinaciones que rompan esta igualdad de fase.
+
+Cada sample de seam se decodifica como una ventana de inspección de 124 frames,
+pero el montaje sólo acepta sus 46 frames centrales. Éstos reemplazan 23 frames
+de cada clip. Un feather coseno de cuatro frames opera después del decode; no
+cambia el mask de denoise ni permite que H3 reescriba el contexto protegido.
+
+El montaje final conserva exactamente:
+
+```text
+124 frames A→B reparados + 124 frames B→A reparados
+= 248 frames / 10,333 s a 24 fps
+```
+
+El seam B queda dentro del MP4. El seam A se divide entre el final y el primer
+frame del archivo, por lo que se evalúa reproduciendo el output en loop. El
+audio H3 se congela y descarta; el master fijo se monta posteriormente.
 
 ## 90 · Mantenimiento de storage
 

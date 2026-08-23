@@ -63,6 +63,19 @@
         "MiniMaxH3AddGuide",
         "official H3 per-token denoise masks"
       ]
+    },
+    {
+      "id": "h3-native-latent-loop",
+      "path": "workflows/60_h3_native_latent_loop.json",
+      "tier": "advanced",
+      "status": "candidate-pending-live-validation",
+      "samples": 4,
+      "requires": [
+        "two endpoint images",
+        "ComfyUI-Cauce 0.6.0",
+        "MiniMax H3 FL2VA",
+        "official H3 per-token denoise masks"
+      ]
     }
   ]
 }

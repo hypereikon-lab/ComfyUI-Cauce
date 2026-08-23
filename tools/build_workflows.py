@@ -264,6 +264,40 @@ SPECS = {
         [("joined_images", "IMAGE"), ("repair_patch", "IMAGE"), ("splice_report", "STRING")],
         [360, 138],
     ),
+    "CauceBuildNativeLatentSeam": (
+        [
+            L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
+            L("left_fps", "FLOAT"), L("right_fps", "FLOAT"),
+            W("context_frames_per_side", "COMBO"), W("working_frames", "COMBO"),
+        ],
+        [
+            ("working_images", "IMAGE"), ("seam", "CAUCE_SEAM"),
+            ("window", "CAUCE_WINDOW"), ("seam_json", "STRING"),
+        ],
+        [370, 142],
+    ),
+    "CaucePrepareH3NativeLatentInpaint": (
+        [
+            L("target_latent", "LATENT"), L("left_latent", "LATENT"),
+            L("right_latent", "LATENT"), L("seam", "CAUCE_SEAM"),
+        ],
+        [("masked_latent", "LATENT"), ("mask_report", "STRING")],
+        [370, 126],
+    ),
+    "CauceAssembleNativeTwoClipLoop": (
+        [
+            L("first_clip", "IMAGE"), L("second_clip", "IMAGE"),
+            L("forward_repaired_working", "IMAGE"), L("forward_seam", "CAUCE_SEAM"),
+            L("wrap_repaired_working", "IMAGE"), L("wrap_seam", "CAUCE_SEAM"),
+            W("decoded_feather_frames", "INT"), W("blend_curve", "COMBO"),
+        ],
+        [
+            ("loop", "IMAGE"), ("first_repaired", "IMAGE"),
+            ("second_repaired", "IMAGE"), ("forward_patch", "IMAGE"),
+            ("wrap_patch", "IMAGE"), ("assembly_report", "STRING"),
+        ],
+        [410, 230],
+    ),
     "CreateVideo": (
         [L("images", "IMAGE"), L("audio", "AUDIO", True), W("fps", "FLOAT"), W("bit_depth", "INT")],
         [("VIDEO", "VIDEO")], [270, 102],
@@ -800,6 +834,136 @@ No se utiliza, genera ni reemplaza audio.""", size=(820, 330))
     return wf.data()
 
 
+def build_native_latent_loop():
+    wf = Workflow("60_h3_native_latent_loop", scale=0.15, offset=(80, 190))
+    note(wf, (-50, -600), """# CAUCE 60 · H3 native-latent A→B→A loop
+
+Genera dos FL2VA completos (A→B y B→A), conserva sus AV latents limpios y
+repara ambas uniones sin recodificar MP4. Cada reparación usa 39 frames de
+contexto latente protegido a cada lado y genera sólo 46 frames centrales dentro
+de una ventana H3 de 124 frames. La posición de los tokens está alineada con el
+ciclo causal del VAE. El ensamblaje sustituye 23 frames por lado, aplica un
+feather coseno de 4 frames y mantiene exactamente 248 frames (10,333 s).
+
+El audio interno de H3 se congela y descarta. Los outputs incluyen ambos tramos,
+ambas ventanas reparadas, ambos patches y el loop cerrado final.""", size=(880, 360))
+    first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"], title="Frame A")
+    second = wf.add("LoadImage", (0, 330), ["cauce_forest_b.jpg", "image"], title="Frame B")
+    first_scale = wf.add("ImageScale", (330, 0), ["lanczos", 768, 512, "center"])
+    second_scale = wf.add("ImageScale", (330, 330), ["lanczos", 768, 512, "center"])
+    window = wf.add(
+        "CauceGenerationWindow",
+        (700, 0),
+        ["native_loop_124f", 0.0, 5.166666667, "0", "0", "nearest", "full_render", 124],
+    )
+    profile = wf.add("CauceExecutionProfile", (700, 430), ["h3-5090-fl2va-768x512"])
+    preflight = wf.add("CaucePreflight", (700, 720), [35.0])
+    stack = add_model_stack(wf, 1100, 0, "FL2VA")
+    prompt_ab = (
+        "A single uninterrupted accelerating forward camera push through dense temperate "
+        "rainforest and fern fronds, an infinite rapid zoom that preserves natural forest "
+        "geometry and resolves exactly into the destination frame beneath the moss-covered "
+        "branch. Continuous forward momentum, coherent optical flow, no cut, no dissolve, "
+        "no pause, no camera reset, no new objects."
+    )
+    prompt_ba = (
+        "A single uninterrupted accelerating forward camera push beneath the moss-covered "
+        "branch and through dense temperate rainforest, an infinite rapid zoom that preserves "
+        "natural forest geometry and resolves exactly into the destination fern hillside. "
+        "Continuous forward momentum, coherent optical flow, no cut, no dissolve, no pause, "
+        "no camera reset, no new objects."
+    )
+    cond_ab = wf.add("CauceH3FL2VA", (2120, 0), [prompt_ab], title="FL2VA A → B")
+    cond_ba = wf.add("CauceH3FL2VA", (2120, 420), [prompt_ba], title="FL2VA B → A")
+    for condition in (cond_ab, cond_ba):
+        wf.connect(stack["clip"], "CLIP", condition, "clip")
+        wf.connect(stack["video_vae"], "VAE", condition, "vae")
+        wf.connect(window, "window", condition, "window")
+        wf.connect(profile, "profile", condition, "profile")
+    wf.connect(first_scale, "IMAGE", cond_ab, "first_frame")
+    wf.connect(second_scale, "IMAGE", cond_ab, "last_frame")
+    wf.connect(second_scale, "IMAGE", cond_ba, "first_frame")
+    wf.connect(first_scale, "IMAGE", cond_ba, "last_frame")
+    result_ab = add_sample_decode(
+        wf, 2600, 0, stack, (cond_ab, "positive"), (cond_ab, "latent"),
+        (window, "window"), seed=2026082301, prefix="cauce/native_loop/01_ab_raw",
+    )
+    result_ba = add_sample_decode(
+        wf, 2600, 700, stack, (cond_ba, "positive"), (cond_ba, "latent"),
+        (window, "window"), seed=2026082302, prefix="cauce/native_loop/02_ba_raw",
+    )
+    save_ab = wf.add("CauceSaveAVLatent", (3380, 540), ["cauce/native_loop/latents/ab", 1])
+    save_ba = wf.add("CauceSaveAVLatent", (3380, 1240), ["cauce/native_loop/latents/ba", 1])
+    wf.connect(result_ab["parent"], "LATENT", save_ab, "latent")
+    wf.connect(result_ba["parent"], "LATENT", save_ba, "latent")
+
+    seam_b = wf.add("CauceBuildNativeLatentSeam", (4850, 0), [24.0, 24.0, "39", "124"], title="Native seam at B")
+    seam_a = wf.add("CauceBuildNativeLatentSeam", (4850, 700), [24.0, 24.0, "39", "124"], title="Native seam at A / wrap")
+    wf.connect(result_ab["accept"], "images", seam_b, "left_frames")
+    wf.connect(result_ba["accept"], "images", seam_b, "right_frames")
+    wf.connect(result_ba["accept"], "images", seam_a, "left_frames")
+    wf.connect(result_ab["accept"], "images", seam_a, "right_frames")
+    seam_prompt = (
+        "Continue the same rapid forward camera trajectory through the forest. Preserve "
+        "direction, velocity, acceleration, scale progression, lighting, and optical flow "
+        "across the masked interval. One continuous shot; no cut, dissolve, pause, camera "
+        "reset, new object, or scene change."
+    )
+    cond_seam_b = wf.add("CauceH3FL2VA", (5260, 0), [seam_prompt], title="Condition seam B")
+    cond_seam_a = wf.add("CauceH3FL2VA", (5260, 700), [seam_prompt], title="Condition seam A")
+    for condition, seam in ((cond_seam_b, seam_b), (cond_seam_a, seam_a)):
+        wf.connect(stack["clip"], "CLIP", condition, "clip")
+        wf.connect(stack["video_vae"], "VAE", condition, "vae")
+        wf.connect(seam, "window", condition, "window")
+        wf.connect(profile, "profile", condition, "profile")
+    prepare_b = wf.add("CaucePrepareH3NativeLatentInpaint", (5680, 0))
+    prepare_a = wf.add("CaucePrepareH3NativeLatentInpaint", (5680, 700))
+    wf.connect(cond_seam_b, "latent", prepare_b, "target_latent")
+    wf.connect(result_ab["parent"], "LATENT", prepare_b, "left_latent")
+    wf.connect(result_ba["parent"], "LATENT", prepare_b, "right_latent")
+    wf.connect(seam_b, "seam", prepare_b, "seam")
+    wf.connect(cond_seam_a, "latent", prepare_a, "target_latent")
+    wf.connect(result_ba["parent"], "LATENT", prepare_a, "left_latent")
+    wf.connect(result_ab["parent"], "LATENT", prepare_a, "right_latent")
+    wf.connect(seam_a, "seam", prepare_a, "seam")
+    repaired_b = add_sample_decode(
+        wf, 6100, 0, stack, (cond_seam_b, "positive"), (prepare_b, "masked_latent"),
+        (seam_b, "window"), seed=2026082311, prefix="cauce/native_loop/03_seam_b_working",
+    )
+    repaired_a = add_sample_decode(
+        wf, 6100, 700, stack, (cond_seam_a, "positive"), (prepare_a, "masked_latent"),
+        (seam_a, "window"), seed=2026082312, prefix="cauce/native_loop/04_seam_a_working",
+    )
+    assemble = wf.add("CauceAssembleNativeTwoClipLoop", (8270, 300), [4, "cosine"])
+    wf.connect(result_ab["accept"], "images", assemble, "first_clip")
+    wf.connect(result_ba["accept"], "images", assemble, "second_clip")
+    wf.connect(repaired_b["accept"], "images", assemble, "forward_repaired_working")
+    wf.connect(seam_b, "seam", assemble, "forward_seam")
+    wf.connect(repaired_a["accept"], "images", assemble, "wrap_repaired_working")
+    wf.connect(seam_a, "seam", assemble, "wrap_seam")
+    loop_video = wf.add("CreateVideo", (8730, 250), [24.0, 8])
+    loop_save = wf.add("SaveVideo", (9040, 250), ["cauce/native_loop/05_ab_ba_loop", "mp4", "auto"])
+    forward_video = wf.add("CreateVideo", (8730, 520), [24.0, 8])
+    forward_save = wf.add("SaveVideo", (9040, 520), ["cauce/native_loop/06_patch_b", "mp4", "auto"])
+    wrap_video = wf.add("CreateVideo", (8730, 760), [24.0, 8])
+    wrap_save = wf.add("SaveVideo", (9040, 760), ["cauce/native_loop/07_patch_a", "mp4", "auto"])
+    wf.connect(assemble, "loop", loop_video, "images")
+    wf.connect(loop_video, "VIDEO", loop_save, "video")
+    wf.connect(assemble, "forward_patch", forward_video, "images")
+    wf.connect(forward_video, "VIDEO", forward_save, "video")
+    wf.connect(assemble, "wrap_patch", wrap_video, "images")
+    wf.connect(wrap_video, "VIDEO", wrap_save, "video")
+    wf.connect(first, "IMAGE", first_scale, "image")
+    wf.connect(second, "IMAGE", second_scale, "image")
+    wf.connect(profile, "profile", preflight, "profile")
+    wf.group("A / B + 124F PROFILE", (-40, -40, 1100, 980))
+    wf.group("SHARED H3 MODEL STACK", (1060, -40, 1020, 980))
+    wf.group("GENERATE A→B AND B→A", (2080, -40, 2700, 1580))
+    wf.group("NATIVE LATENT SEAM B / A", (4800, -40, 3400, 1580))
+    wf.group("DURATION-PRESERVING CLOSED LOOP", (8200, -40, 1200, 1120))
+    return wf.data()
+
+
 def api_fl2va():
     return {
         "1": {"class_type": "CauceGenerationWindow", "inputs": {
@@ -895,6 +1059,7 @@ def main():
         "30_h3_timed_guide.json": build_timed_guide(),
         "40_h3_two_window_continuation.json": build_continuation(),
         "50_h3_temporal_inpainting.json": build_temporal_inpaint(),
+        "60_h3_native_latent_loop.json": build_native_latent_loop(),
     }
     for filename, data in visual.items():
         write_json(WORKFLOWS / filename, data)

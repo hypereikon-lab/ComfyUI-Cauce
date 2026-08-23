@@ -93,6 +93,9 @@ The image endpoint and the inherited latent tail are complementary constraints.
 - `CAUCE · H3 Temporal Guide Clips`
 - `CAUCE · Prepare H3 Temporal Inpaint`
 - `CAUCE · Splice Temporal Inpaint Patch`
+- `CAUCE · Build Native Latent Seam`
+- `CAUCE · Prepare Native Latent Inpaint`
+- `CAUCE · Assemble Native Two-Clip Loop`
 
 Temporal inpainting operates on two already-decoded, opaque video batches. The first
 node extracts equal tail/head contexts, adds symmetric duplicate guards until
@@ -111,6 +114,11 @@ original combined frame count; exterior frames are copied without change.
 
 Workflow 50 uses the official standard sampler. H3's internal audio latent is
 zero-masked and discarded; the fixed production audio never enters these nodes.
+
+The three native-latent nodes implement workflow 60. They preserve phase-matched
+tail/head rows from the two final H3 AV latents, expose only the central rows to
+the official masked sampler, and apply both decoded proposals to a closed
+two-clip loop without changing either source duration.
 
 ## Artifacts
 

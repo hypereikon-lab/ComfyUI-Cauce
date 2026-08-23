@@ -20,6 +20,8 @@ from .timebase import (
     h3_visual_latent_frames,
     is_h3_frame_count,
     seconds_to_frames,
+    visual_span_for_tokens,
+    visual_token_count_for_span,
     visual_token_spans,
 )
 
@@ -42,6 +44,8 @@ def _concat_image_batches(parts: list[Any]):
 
 MASK_CURVES = ("cosine", "smoothstep", "linear")
 TOKEN_PROJECTIONS = ("cover", "majority")
+NATIVE_SEAM_CONTEXT_FRAMES = (22, 39, 56, 73)
+NATIVE_SEAM_WORKING_FRAMES = tuple(range(124, 363, 34))
 
 
 def _curve_value(value: float, curve: str) -> float:
@@ -256,6 +260,134 @@ def make_seam_plan(
     return plan
 
 
+def make_native_latent_seam_plan(
+    left_frame_count: int,
+    right_frame_count: int,
+    *,
+    context_frames_per_side: int = 39,
+    working_frames: int = 124,
+) -> dict[str, Any]:
+    """Plan a phase-safe H3 seam using clean source AV latents directly.
+
+    The target is divided into protected source context, a generated center,
+    and protected destination context. Both context clips begin at visual
+    token-cycle phase zero, so no latent row is reinterpreted with a different
+    causal VAE span. With the production defaults this is exactly
+    ``39 protected + 46 generated + 39 protected = 124`` visible frames.
+    """
+
+    left_count = int(left_frame_count)
+    right_count = int(right_frame_count)
+    context = int(context_frames_per_side)
+    target_frames = int(working_frames)
+    if context not in NATIVE_SEAM_CONTEXT_FRAMES:
+        raise ValueError(
+            "context_frames_per_side must be one of "
+            f"{NATIVE_SEAM_CONTEXT_FRAMES}"
+        )
+    if target_frames not in NATIVE_SEAM_WORKING_FRAMES:
+        raise ValueError(
+            "working_frames must be an even trained H3 length: "
+            f"{NATIVE_SEAM_WORKING_FRAMES}"
+        )
+    if not is_h3_frame_count(left_count) or not is_h3_frame_count(right_count):
+        raise ValueError("native seam sources must be complete H3 runs on the 17k+5 grid")
+
+    half = target_frames // 2
+    if left_count < half or right_count < half:
+        raise ValueError(
+            f"each source needs at least {half} visible frames for this native seam"
+        )
+    context_tokens = visual_token_count_for_span(context)
+    target_tokens = h3_visual_latent_frames(target_frames)
+    right_context_start_token = target_tokens - context_tokens
+    if right_context_start_token <= context_tokens:
+        raise ValueError("native seam working domain leaves no generated center")
+    if right_context_start_token % 5 != 0:
+        raise ValueError(
+            "destination context would begin at a different H3 visual-token phase"
+        )
+
+    left_source_tokens = h3_visual_latent_frames(left_count)
+    left_source_start_token = left_source_tokens - context_tokens
+    if left_source_start_token % 5 != 0:
+        raise ValueError(
+            "source tail does not begin at H3 visual-token-cycle phase zero"
+        )
+    generated_start = context
+    generated_end = visual_span_for_tokens(right_context_start_token)
+    if generated_end != target_frames - context:
+        raise RuntimeError("native seam token and visible-frame geometry disagree")
+    generated_total = generated_end - generated_start
+    if generated_total < 2 or generated_total % 2:
+        raise ValueError("native seam generated interval must split evenly across the cut")
+    repair_per_side = generated_total // 2
+
+    plan = {
+        "schema": SEAM_SCHEMA,
+        "mode": "native_av_latent_bidirectional",
+        "fps": int(H3_FPS),
+        "left_total_frames": left_count,
+        "right_total_frames": right_count,
+        "context_frames_per_side": context,
+        "context_tokens_per_side": context_tokens,
+        "working_frames": target_frames,
+        "working_video_tokens": target_tokens,
+        "guard_frames_per_side": 0,
+        "cut_frame": half,
+        "repair_requested_frames_total": generated_total,
+        "repair_frames_per_side": repair_per_side,
+        "repair_total_frames": generated_total,
+        "repair_start_frame": generated_start,
+        "repair_end_frame": generated_end,
+        "sampling_start_frame": generated_start,
+        "sampling_end_frame": generated_end,
+        "sampling_total_frames": generated_total,
+        "accepted_start_frame": 0,
+        "accepted_end_frame": target_frames,
+        "accepted_frames": target_frames,
+        "working_duration_seconds": float(frames_to_seconds(target_frames)),
+        "accepted_duration_seconds": float(frames_to_seconds(target_frames)),
+        "repair_requested_duration_seconds": float(frames_to_seconds(generated_total)),
+        "repair_duration_seconds": float(frames_to_seconds(generated_total)),
+        "sampling_duration_seconds": float(frames_to_seconds(generated_total)),
+        "left_working_source_start_frame": left_count - half,
+        "right_working_source_end_frame": half,
+        "left_latent_source_start_frame": left_count - context,
+        "right_latent_source_end_frame": context,
+        "left_latent_source_start_token": left_source_start_token,
+        "left_target_start_token": 0,
+        "left_target_end_token": context_tokens,
+        "right_source_start_token": 0,
+        "right_source_end_token": context_tokens,
+        "right_target_start_token": right_context_start_token,
+        "right_target_end_token": target_tokens,
+    }
+    plan["hash"] = content_hash(plan)
+    return plan
+
+
+def build_native_latent_seam_window(
+    left_frames: Any,
+    right_frames: Any,
+    plan: dict[str, Any],
+):
+    """Build the decoded seam domain without guard duplication."""
+
+    _validate_native_latent_seam(plan)
+    if int(left_frames.shape[0]) != int(plan["left_total_frames"]):
+        raise ValueError("left image batch no longer matches the native seam plan")
+    if int(right_frames.shape[0]) != int(plan["right_total_frames"]):
+        raise ValueError("right image batch no longer matches the native seam plan")
+    if tuple(left_frames.shape[1:]) != tuple(right_frames.shape[1:]):
+        raise ValueError("left and right videos must share resolution and channel layout")
+    half = int(plan["cut_frame"])
+    working = _concat_image_batches([left_frames[-half:], right_frames[:half]])
+    if int(working.shape[0]) != int(plan["working_frames"]):
+        raise RuntimeError("native seam working image batch has an unexpected length")
+    return working
+
+
 def make_seam_window(plan: dict[str, Any]) -> dict[str, Any]:
     """Compile the working seam domain into the matching exact H3 window."""
 
@@ -281,6 +413,18 @@ def _validate_seam(plan: dict[str, Any]) -> None:
         raise ValueError(f"seam schema must be {SEAM_SCHEMA}")
     if not is_h3_frame_count(int(plan["working_frames"])):
         raise ValueError("seam working frame count is not a legal H3 run")
+
+
+def _validate_native_latent_seam(plan: dict[str, Any]) -> None:
+    _validate_seam(plan)
+    if plan.get("mode") != "native_av_latent_bidirectional":
+        raise ValueError("seam plan is not a native AV-latent seam")
+    context_tokens = int(plan["context_tokens_per_side"])
+    target_tokens = int(plan["working_video_tokens"])
+    if int(plan["left_target_end_token"]) != context_tokens:
+        raise ValueError("native seam left context token range is inconsistent")
+    if int(plan["right_target_start_token"]) != target_tokens - context_tokens:
+        raise ValueError("native seam right context token range is inconsistent")
 
 
 def build_seam_window(left_frames: Any, right_frames: Any, plan: dict[str, Any]):
@@ -599,6 +743,94 @@ def prepare_h3_temporal_inpaint(
     return out, report
 
 
+def prepare_h3_native_latent_temporal_inpaint(
+    target_latent: dict[str, Any],
+    left_latent: dict[str, Any],
+    right_latent: dict[str, Any],
+    plan: dict[str, Any],
+):
+    """Pin clean source tail/head latents and generate only the central gap."""
+
+    import torch
+
+    try:
+        import comfy.nested_tensor  # type: ignore
+    except ImportError as exc:  # pragma: no cover - requires ComfyUI
+        raise RuntimeError("native H3 temporal inpainting requires ComfyUI") from exc
+
+    _validate_native_latent_seam(plan)
+    capabilities = require_h3_temporal_edit_runtime()
+    target_video, target_audio = get_av_streams(target_latent)
+    left_video, _ = get_av_streams(left_latent)
+    right_video, _ = get_av_streams(right_latent)
+    if pixel_frames_from_video_latent(target_video) != int(plan["working_frames"]):
+        raise ValueError("target H3 latent length does not match the native seam domain")
+    if pixel_frames_from_video_latent(left_video) != int(plan["left_total_frames"]):
+        raise ValueError("left source latent length does not match the native seam plan")
+    if pixel_frames_from_video_latent(right_video) != int(plan["right_total_frames"]):
+        raise ValueError("right source latent length does not match the native seam plan")
+    expected_geometry = tuple(target_video.shape[:2] + target_video.shape[3:])
+    if tuple(left_video.shape[:2] + left_video.shape[3:]) != expected_geometry or tuple(
+        right_video.shape[:2] + right_video.shape[3:]
+    ) != expected_geometry:
+        raise ValueError(
+            "native seam latents must share batch, channels, height, and width; "
+            "generate both clips with the same CAUCE execution profile"
+        )
+
+    left_source_start = int(plan["left_latent_source_start_token"])
+    context_tokens = int(plan["context_tokens_per_side"])
+    right_target_start = int(plan["right_target_start_token"])
+    left_context = left_video[:, :, left_source_start:].to(target_video)
+    right_context = right_video[:, :, :context_tokens].to(target_video)
+    if int(left_context.shape[2]) != context_tokens or int(right_context.shape[2]) != context_tokens:
+        raise RuntimeError("native source-context extraction returned an unexpected token count")
+
+    video = target_video.clone()
+    audio = target_audio.clone()
+    video[:, :, :context_tokens] = left_context
+    video[:, :, right_target_start:] = right_context
+    video_mask = torch.ones(
+        (
+            int(video.shape[0]),
+            1,
+            int(video.shape[2]),
+            int(video.shape[3]),
+            int(video.shape[4]),
+        ),
+        dtype=torch.float32,
+        device=video.device,
+    )
+    video_mask[:, :, :context_tokens] = 0.0
+    video_mask[:, :, right_target_start:] = 0.0
+    audio_mask = torch.zeros(
+        (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[-1])),
+        dtype=torch.float32,
+        device=audio.device,
+    )
+    out = copy.copy(target_latent)
+    out["samples"] = comfy.nested_tensor.NestedTensor((video, audio))
+    out["noise_mask"] = comfy.nested_tensor.NestedTensor((video_mask, audio_mask))
+    report = {
+        "schema": "cauce.native-latent-temporal-inpaint/1",
+        "seam_hash": plan["hash"],
+        "working_frames": int(plan["working_frames"]),
+        "video_tokens": int(video.shape[2]),
+        "left_protected_tokens": [0, context_tokens],
+        "generated_tokens": [context_tokens, right_target_start],
+        "right_protected_tokens": [right_target_start, int(video.shape[2])],
+        "left_source_tokens": [left_source_start, int(left_video.shape[2])],
+        "right_source_tokens": [0, context_tokens],
+        "sampling_mask_mode": "official_h3_per-token_binary_native-latent",
+        "video_generate_tokens": right_target_start - context_tokens,
+        "video_preserved_tokens": context_tokens * 2,
+        "audio_mode": "internal-zero-mask-discarded",
+        "decoded_acceptance": "duration-preserving-cosine-splice",
+        "runtime_capabilities": capabilities,
+    }
+    return out, report
+
+
 def add_h3_temporal_inpaint_guides(
     positive: Any,
     target_latent: dict[str, Any],
@@ -714,3 +946,104 @@ def splice_seam_patch(
         "blend_source": "connected_mask" if blend_strength is not None else "temporal_curve",
     }
     return joined, patch, report
+
+
+def assemble_native_two_clip_loop(
+    first_clip: Any,
+    second_clip: Any,
+    forward_repaired_working: Any,
+    forward_plan: dict[str, Any],
+    wrap_repaired_working: Any,
+    wrap_plan: dict[str, Any],
+    *,
+    feather_frames: int = 4,
+    curve: str = "cosine",
+):
+    """Apply first→second and second→first seam proposals as a closed loop."""
+
+    _validate_native_latent_seam(forward_plan)
+    _validate_native_latent_seam(wrap_plan)
+    first_count = int(first_clip.shape[0])
+    second_count = int(second_clip.shape[0])
+    if (first_count, second_count) != (
+        int(forward_plan["left_total_frames"]),
+        int(forward_plan["right_total_frames"]),
+    ):
+        raise ValueError("forward seam plan does not match first→second clips")
+    if (second_count, first_count) != (
+        int(wrap_plan["left_total_frames"]),
+        int(wrap_plan["right_total_frames"]),
+    ):
+        raise ValueError("wrap seam plan does not match second→first clips")
+    shapes = {
+        tuple(first_clip.shape[1:]),
+        tuple(second_clip.shape[1:]),
+        tuple(forward_repaired_working.shape[1:]),
+        tuple(wrap_repaired_working.shape[1:]),
+    }
+    if len(shapes) != 1:
+        raise ValueError("all source and repaired videos must share resolution and channels")
+    for repaired, plan, label in (
+        (forward_repaired_working, forward_plan, "forward"),
+        (wrap_repaired_working, wrap_plan, "wrap"),
+    ):
+        if int(repaired.shape[0]) != int(plan["working_frames"]):
+            raise ValueError(f"{label} repaired batch does not match its seam plan")
+
+    forward_repair = int(forward_plan["repair_frames_per_side"])
+    wrap_repair = int(wrap_plan["repair_frames_per_side"])
+    if forward_repair != wrap_repair:
+        raise ValueError("closed-loop seams must replace the same frames per side")
+    repair = forward_repair
+    if repair * 2 >= min(first_count, second_count):
+        raise ValueError("seam patches overlap; use longer source clips or a smaller repair")
+
+    forward_start = int(forward_plan["repair_start_frame"])
+    forward_end = int(forward_plan["repair_end_frame"])
+    wrap_start = int(wrap_plan["repair_start_frame"])
+    wrap_end = int(wrap_plan["repair_end_frame"])
+    forward_patch = forward_repaired_working[forward_start:forward_end]
+    wrap_patch = wrap_repaired_working[wrap_start:wrap_end]
+    forward_original = _concat_image_batches(
+        [first_clip[-repair:], second_clip[:repair]]
+    )
+    wrap_original = _concat_image_batches([second_clip[-repair:], first_clip[:repair]])
+    forward_patch = _blend_patch(
+        forward_patch, forward_original, feather_frames, curve
+    )
+    wrap_patch = _blend_patch(wrap_patch, wrap_original, feather_frames, curve)
+
+    first_repaired = _concat_image_batches(
+        [
+            wrap_patch[repair:],
+            first_clip[repair : first_count - repair],
+            forward_patch[:repair],
+        ]
+    )
+    second_repaired = _concat_image_batches(
+        [
+            forward_patch[repair:],
+            second_clip[repair : second_count - repair],
+            wrap_patch[:repair],
+        ]
+    )
+    loop = _concat_image_batches([first_repaired, second_repaired])
+    if int(first_repaired.shape[0]) != first_count or int(
+        second_repaired.shape[0]
+    ) != second_count:
+        raise RuntimeError("native seam assembly changed an individual clip duration")
+    if int(loop.shape[0]) != first_count + second_count:
+        raise RuntimeError("native seam assembly changed the loop duration")
+    report = {
+        "schema": "cauce.native-two-clip-loop/1",
+        "first_frames": first_count,
+        "second_frames": second_count,
+        "loop_frames": int(loop.shape[0]),
+        "forward_seam_hash": forward_plan["hash"],
+        "wrap_seam_hash": wrap_plan["hash"],
+        "replacement_frames_per_side": repair,
+        "decoded_feather_frames": int(feather_frames),
+        "blend_curve": curve,
+        "loop_boundary": "repaired-second-to-first",
+    }
+    return loop, first_repaired, second_repaired, forward_patch, wrap_patch, report

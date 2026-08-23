@@ -131,3 +131,21 @@ steps, CFG, workflow hash, and parents.
 Preflight is read-only. A failure reports missing models, unexpected sizes,
 disk reserve, and current torch/CUDA/device information; it never repairs the
 environment.
+
+## Maintenance
+
+- `CAUCE · Storage Inventory`
+- `CAUCE · Storage Cleanup`
+
+Inventory recursively scans one explicit Comfy root: `input/` or `output/`.
+It produces a hashed plan containing only relative paths, sizes, and modification
+times. It supports a relative subfolder, include/exclude globs, minimum age, and
+marker preservation. Symlinks, absolute paths, and parent traversal are rejected.
+
+Cleanup is inert while `armed = false` and stages that exact plan under Comfy's
+user directory. When armed, it requires the staged plan plus its exact
+confirmation code and rechecks every planned file. New, missing,
+modified, symlinked, or otherwise mismatched files are never deleted. Successful
+operations write a receipt under Comfy's user directory, outside both cleaned
+roots. No maintenance node can address models, workflows, custom nodes, or any
+arbitrary filesystem path.

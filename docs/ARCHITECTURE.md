@@ -46,10 +46,19 @@ same point when a different model, sampler, precision, or GPU is selected.
 | `cauce.decode-domain/1` | Accepted decoded artifacts assembled together |
 | `cauce.execution-profile/1` | Hardware/model/runtime decisions |
 | `cauce.receipt/1` | Reproducibility and parentage |
+| `cauce.storage-plan/1` | Hashed, root-scoped physical file deletion plan |
+| `cauce.storage-receipt/1` | Exact deleted/skipped paths and reclaimed bytes |
 
 Contract values are plain dictionaries so Comfy can carry them as custom
 sockets and workflows can persist their constructor widgets. Time values are
 stored as `{numerator, denominator}` plus derived convenience seconds.
+
+Storage plans are intentionally outside the media/timeline ontology. They may
+name only files under Comfy's resolved `input/` or `output/` root. Plans contain
+relative paths plus size and modification time; cleanup recomputes the plan hash
+and requires the same plan to have been staged by an earlier unarmed run. It
+restats every file before unlinking it. A plan cannot become a general file
+browser or address model, workflow, user, custom-node, or operating-system paths.
 
 ## Clock model
 

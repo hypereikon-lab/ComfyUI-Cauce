@@ -1,6 +1,18 @@
 """Aggregate native CAUCE node mappings without any web UI."""
 
-from . import artifacts, audio, continuity, h3, masks, media, plates, profiles, seams, timeline
+from . import (
+    artifacts,
+    audio,
+    continuity,
+    h3,
+    maintenance,
+    masks,
+    media,
+    plates,
+    profiles,
+    seams,
+    timeline,
+)
 
 
 MODULES = (
@@ -14,6 +26,7 @@ MODULES = (
     seams,
     artifacts,
     profiles,
+    maintenance,
 )
 
 NODE_CLASS_MAPPINGS = {}

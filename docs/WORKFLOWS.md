@@ -43,10 +43,12 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 30 | `30_h3_timed_guide.json` | 1 sample | Anclar una imagen intermedia; bloqueado en H3 0.33.1. |
 | 40 | `40_h3_two_window_continuation.json` | 2 samples | Latent tail + endpoint visual; seam visual verificado. |
 | 50 | `50_h3_temporal_inpainting.json` | 1 sample | Temporal inpainting localizado; verificado live con intervalo de 3 s. |
+| 90 | `90_storage_maintenance.json` | CPU | Inventario físico y limpieza en dos fases de `input/` u `output/`. |
 
-Todos fueron cargados y resueltos por el frontend real de la instancia del lab:
-ningún graph contiene nodos desconocidos ni depende de los packs legacy. Los
-resultados ejecutados, sus tiempos y los gates pendientes están en
+Los workflows visuales 00–50 fueron cargados y resueltos por el frontend real
+de la instancia del lab: ningún graph contiene nodos desconocidos ni depende de
+los packs legacy. El workflow 90 se valida localmente antes de su activación en
+el lab. Los resultados ejecutados, sus tiempos y los gates pendientes están en
 [`LAB_RESULTS.md`](LAB_RESULTS.md). “Graph validado” no equivale a “calidad
 visual aprobada”.
 
@@ -246,6 +248,35 @@ se codifica y no se sustituye. H3 mantiene internamente un stream de audio vací
 y enmascarado sólo porque su latent es estructuralmente AV; ese resultado se
 descarta. Para una pieza larga se corrigen clips locales y luego se colocan
 sobre el reloj del master fijo.
+
+## 90 · Mantenimiento de storage
+
+Este workflow no usa GPU. `Storage Inventory` inspecciona físicamente una raíz
+de Comfy y produce un `CAUCE_STORAGE_PLAN`, un report JSON, el número de
+archivos, los GiB lógicos y un código de confirmación. Con `root = input` puede
+encontrar uploads aunque Assets no los muestre; con `root = output` incluye
+generaciones antiguas o no indexadas.
+
+La primera corrida siempre se hace con `armed = false`. Cleanup recibe el plan
+y el código por links, permanece inerte y guarda ese plan exacto fuera de las
+raíces limpiables. Tras revisar el report se cambia únicamente `armed = true` y
+se vuelve a ejecutar. Un plan nuevo o modificado que no haya pasado por la
+corrida desarmada se rechaza. Cada archivo se valida contra
+el plan inmediatamente antes de borrarse. Los archivos nuevos o modificados se
+omiten; las carpetas vacías sólo se retiran si eran padres de archivos realmente
+eliminados. El receipt queda bajo `user/cauce/maintenance/receipts/`, fuera de
+la limpieza.
+
+Defaults para vaciar una raíz conservando markers:
+
+```text
+relative_subfolder = .
+include_glob = *
+exclude_glob =
+recursive = true
+minimum_age_minutes = 0
+preserve_markers = true
+```
 
 ## Runner: secuencia reiniciable
 

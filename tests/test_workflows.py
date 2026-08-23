@@ -20,6 +20,7 @@ class VisualWorkflowTests(unittest.TestCase):
             "30_h3_timed_guide.json",
             "40_h3_two_window_continuation.json",
             "50_h3_temporal_inpainting.json",
+            "90_storage_maintenance.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
         self.assertEqual({path.name for path in paths}, expected)

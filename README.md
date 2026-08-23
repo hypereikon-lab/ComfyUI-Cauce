@@ -24,9 +24,10 @@ media
 
 ## Current status
 
-The greenfield core and 40 ComfyUI nodes are implemented. Six visual workflows,
-two API templates, bounded demo assets, and a restartable two-window project are
-included. Plate export, FL2VA first/last, Ref2VA landscape, and endpoint-guided
+The greenfield core and 42 ComfyUI nodes are implemented. Six visual workflows,
+one maintenance workflow, two API templates, bounded demo assets, and a
+restartable two-window project are included. Plate export, FL2VA first/last,
+Ref2VA landscape, and endpoint-guided
 continuation have executed successfully on the live lab RTX 5090. Mask-only
 continuation also executes, but its first visual seam failed the quality gate;
 the shipped hybrid workflow passed that visual comparison. Localized temporal
@@ -100,6 +101,9 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
   patch insertion.
 - **CAUCE / Artifacts** — receipts and atomic nested AV latent save/load.
 - **CAUCE / Runtime** — bounded 5090 profiles and read-only preflight.
+- **CAUCE / Maintenance** — two-phase, root-scoped physical inventory and
+  cleanup for ComfyUI `input/` and `output/`; never models, workflows, or
+  custom nodes.
 
 See [Node catalog](docs/NODE_CATALOG.md),
 [architecture](docs/ARCHITECTURE.md),

@@ -1878,7 +1878,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/demos/confluence_repaired_join",
+        "cauce/demos/confluence_native_join",
         "mp4",
         "auto"
       ]
@@ -2011,7 +2011,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/demos/confluence_patch",
+        "cauce/demos/confluence_native_patch",
         "mp4",
         "auto"
       ]

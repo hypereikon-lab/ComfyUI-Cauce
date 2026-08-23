@@ -778,11 +778,11 @@ El audio master no entra ni se reemplaza con audio generado.""", size=(820, 310)
     apply = wf.add("CauceApplySeamPatch", (4470, 100), [4, "cosine"])
     joined_video = wf.add("CreateVideo", (4780, 0), [24.0, 8])
     joined_save = wf.add("SaveVideo", (5110, 0), [
-        "cauce/demos/confluence_repaired_join", "mp4", "auto",
+        "cauce/demos/confluence_native_join", "mp4", "auto",
     ])
     patch_video = wf.add("CreateVideo", (4780, 260), [24.0, 8])
     patch_save = wf.add("SaveVideo", (5110, 260), [
-        "cauce/demos/confluence_patch", "mp4", "auto",
+        "cauce/demos/confluence_native_patch", "mp4", "auto",
     ])
 
     wf.connect(left_video, "VIDEO", left_parts, "video")

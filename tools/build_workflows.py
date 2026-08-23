@@ -206,6 +206,11 @@ SPECS = {
         [L("images", "IMAGE"), W("frame_index", "INT")],
         [("image", "IMAGE"), ("resolved_frame_index", "INT")], [260, 58],
     ),
+    "PrimitiveInt": (
+        [W("value", "INT")],
+        [("INT", "INT")],
+        [210, 58],
+    ),
     "VAEEncode": (
         [L("pixels", "IMAGE"), L("vae", "VAE")],
         [("LATENT", "LATENT")], [160, 46],
@@ -269,7 +274,7 @@ SPECS = {
             L("left_frames", "IMAGE"), L("right_frames", "IMAGE"),
             L("left_fps", "FLOAT"), L("right_fps", "FLOAT"),
             W("context_frames_per_side", "COMBO"), W("working_frames", "COMBO"),
-            W("accepted_repair_frames", "INT"),
+            L("accepted_repair_frames", "INT"),
         ],
         [
             ("working_images", "IMAGE"), ("seam", "CAUCE_SEAM"),
@@ -887,8 +892,16 @@ ambas ventanas reparadas, ambos patches y el loop cerrado final.""", size=(880, 
     wf.connect(result_ab["parent"], "LATENT", save_ab, "latent")
     wf.connect(result_ba["parent"], "LATENT", save_ba, "latent")
 
-    seam_b = wf.add("CauceBuildNativeLatentSeam", (4850, 0), [24.0, 24.0, "22", "124", 72], title="Native seam at B")
-    seam_a = wf.add("CauceBuildNativeLatentSeam", (4850, 760), [24.0, 24.0, "22", "124", 72], title="Native seam at A / wrap")
+    accepted_repair = wf.add(
+        "PrimitiveInt",
+        (4520, 660),
+        [72],
+        title="Accepted repair · 72f / 3s",
+    )
+    seam_b = wf.add("CauceBuildNativeLatentSeam", (4850, 0), [24.0, 24.0, "22", "124"], title="Native seam at B")
+    seam_a = wf.add("CauceBuildNativeLatentSeam", (4850, 760), [24.0, 24.0, "22", "124"], title="Native seam at A / wrap")
+    wf.connect(accepted_repair, "INT", seam_b, "accepted_repair_frames")
+    wf.connect(accepted_repair, "INT", seam_a, "accepted_repair_frames")
     wf.connect(result_ab["accept"], "images", seam_b, "left_frames")
     wf.connect(result_ba["accept"], "images", seam_b, "right_frames")
     wf.connect(result_ba["accept"], "images", seam_a, "left_frames")

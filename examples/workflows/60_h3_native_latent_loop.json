@@ -1,8 +1,8 @@
 {
   "id": "40027410-62de-55f0-b374-ac7daa262b2d",
   "revision": 0,
-  "last_node_id": 69,
-  "last_link_id": 129,
+  "last_node_id": 70,
+  "last_link_id": 131,
   "nodes": [
     {
       "id": 1,
@@ -67,7 +67,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            127
+            129
           ]
         },
         {
@@ -127,7 +127,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            128
+            130
           ]
         },
         {
@@ -166,7 +166,7 @@
           "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
-          "link": 127
+          "link": 129
         },
         {
           "localized_name": "upscale_method",
@@ -246,7 +246,7 @@
           "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
-          "link": 128
+          "link": 130
         },
         {
           "localized_name": "upscale_method",
@@ -506,9 +506,9 @@
           "links": [
             6,
             10,
-            54,
-            58,
-            129
+            56,
+            60,
+            131
           ]
         },
         {
@@ -593,7 +593,7 @@
           "localized_name": "profile",
           "name": "profile",
           "type": "CAUCE_PROFILE",
-          "link": 129
+          "link": 131
         },
         {
           "localized_name": "minimum_free_reserve_gib",
@@ -735,8 +735,8 @@
             2,
             15,
             30,
-            85,
-            100
+            87,
+            102
           ]
         }
       ],
@@ -800,8 +800,8 @@
           "links": [
             3,
             7,
-            51,
-            55
+            53,
+            57
           ]
         }
       ],
@@ -850,12 +850,12 @@
             8,
             25,
             40,
-            52,
-            56,
-            79,
-            84,
-            95,
-            110
+            54,
+            58,
+            81,
+            86,
+            97,
+            112
           ]
         }
       ],
@@ -900,8 +900,8 @@
           "links": [
             19,
             34,
-            89,
-            104
+            91,
+            106
           ]
         }
       ],
@@ -970,8 +970,8 @@
           "links": [
             20,
             35,
-            90,
-            105
+            92,
+            107
           ]
         }
       ],
@@ -1367,8 +1367,8 @@
           "links": [
             24,
             45,
-            68,
-            73
+            70,
+            75
           ]
         }
       ],
@@ -1462,9 +1462,9 @@
           "type": "IMAGE",
           "links": [
             28,
-            47,
-            50,
-            115
+            49,
+            52,
+            117
           ]
         },
         {
@@ -1808,8 +1808,8 @@
           "links": [
             39,
             46,
-            69,
-            72
+            71,
+            74
           ]
         }
       ],
@@ -1903,9 +1903,9 @@
           "type": "IMAGE",
           "links": [
             43,
-            48,
-            49,
-            116
+            50,
+            51,
+            118
           ]
         },
         {
@@ -2189,119 +2189,46 @@
     },
     {
       "id": 35,
-      "type": "CauceBuildNativeLatentSeam",
+      "type": "PrimitiveInt",
       "pos": [
-        4850,
-        0
+        4520,
+        660
       ],
       "size": [
-        370,
-        142
+        210,
+        58
       ],
       "flags": {},
       "order": 34,
       "mode": 0,
       "inputs": [
         {
-          "localized_name": "left_frames",
-          "name": "left_frames",
-          "type": "IMAGE",
-          "link": 47
-        },
-        {
-          "localized_name": "right_frames",
-          "name": "right_frames",
-          "type": "IMAGE",
-          "link": 48
-        },
-        {
-          "localized_name": "left_fps",
-          "name": "left_fps",
-          "type": "FLOAT",
-          "link": null
-        },
-        {
-          "localized_name": "right_fps",
-          "name": "right_fps",
-          "type": "FLOAT",
-          "link": null
-        },
-        {
-          "localized_name": "context_frames_per_side",
-          "name": "context_frames_per_side",
-          "type": "COMBO",
-          "link": null,
-          "widget": {
-            "name": "context_frames_per_side"
-          }
-        },
-        {
-          "localized_name": "working_frames",
-          "name": "working_frames",
-          "type": "COMBO",
-          "link": null,
-          "widget": {
-            "name": "working_frames"
-          }
-        },
-        {
-          "localized_name": "accepted_repair_frames",
-          "name": "accepted_repair_frames",
+          "localized_name": "value",
+          "name": "value",
           "type": "INT",
           "link": null,
           "widget": {
-            "name": "accepted_repair_frames"
+            "name": "value"
           }
         }
       ],
       "outputs": [
         {
-          "localized_name": "working_images",
-          "name": "working_images",
-          "type": "IMAGE",
+          "localized_name": "INT",
+          "name": "INT",
+          "type": "INT",
           "links": [
-            59,
-            60,
-            77
+            47,
+            48
           ]
-        },
-        {
-          "localized_name": "seam",
-          "name": "seam",
-          "type": "CAUCE_SEAM",
-          "links": [
-            70,
-            78,
-            118
-          ]
-        },
-        {
-          "localized_name": "window",
-          "name": "window",
-          "type": "CAUCE_WINDOW",
-          "links": [
-            53,
-            93,
-            97
-          ]
-        },
-        {
-          "localized_name": "seam_json",
-          "name": "seam_json",
-          "type": "STRING",
-          "links": null
         }
       ],
       "properties": {
-        "Node name for S&R": "CauceBuildNativeLatentSeam",
-        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+        "Node name for S&R": "PrimitiveInt",
+        "cnr_id": "comfy-core"
       },
-      "title": "Native seam at B",
+      "title": "Accepted repair · 72f / 3s",
       "widgets_values": [
-        24.0,
-        24.0,
-        "22",
-        "124",
         72
       ]
     },
@@ -2310,7 +2237,7 @@
       "type": "CauceBuildNativeLatentSeam",
       "pos": [
         4850,
-        760
+        0
       ],
       "size": [
         370,
@@ -2366,10 +2293,7 @@
           "localized_name": "accepted_repair_frames",
           "name": "accepted_repair_frames",
           "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "accepted_repair_frames"
-          }
+          "link": 47
         }
       ],
       "outputs": [
@@ -2378,9 +2302,9 @@
           "name": "working_images",
           "type": "IMAGE",
           "links": [
-            63,
-            64,
-            82
+            61,
+            62,
+            79
           ]
         },
         {
@@ -2388,8 +2312,8 @@
           "name": "seam",
           "type": "CAUCE_SEAM",
           "links": [
-            74,
-            83,
+            72,
+            80,
             120
           ]
         },
@@ -2398,9 +2322,123 @@
           "name": "window",
           "type": "CAUCE_WINDOW",
           "links": [
-            57,
-            108,
-            112
+            55,
+            95,
+            99
+          ]
+        },
+        {
+          "localized_name": "seam_json",
+          "name": "seam_json",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceBuildNativeLatentSeam",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Native seam at B",
+      "widgets_values": [
+        24.0,
+        24.0,
+        "22",
+        "124"
+      ]
+    },
+    {
+      "id": 37,
+      "type": "CauceBuildNativeLatentSeam",
+      "pos": [
+        4850,
+        760
+      ],
+      "size": [
+        370,
+        142
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "left_frames",
+          "name": "left_frames",
+          "type": "IMAGE",
+          "link": 51
+        },
+        {
+          "localized_name": "right_frames",
+          "name": "right_frames",
+          "type": "IMAGE",
+          "link": 52
+        },
+        {
+          "localized_name": "left_fps",
+          "name": "left_fps",
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "right_fps",
+          "name": "right_fps",
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "context_frames_per_side",
+          "name": "context_frames_per_side",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "context_frames_per_side"
+          }
+        },
+        {
+          "localized_name": "working_frames",
+          "name": "working_frames",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "working_frames"
+          }
+        },
+        {
+          "localized_name": "accepted_repair_frames",
+          "name": "accepted_repair_frames",
+          "type": "INT",
+          "link": 48
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "working_images",
+          "name": "working_images",
+          "type": "IMAGE",
+          "links": [
+            65,
+            66,
+            84
+          ]
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "links": [
+            76,
+            85,
+            122
+          ]
+        },
+        {
+          "localized_name": "window",
+          "name": "window",
+          "type": "CAUCE_WINDOW",
+          "links": [
+            59,
+            110,
+            114
           ]
         },
         {
@@ -2419,12 +2457,11 @@
         24.0,
         24.0,
         "22",
-        "124",
-        72
+        "124"
       ]
     },
     {
-      "id": 37,
+      "id": 38,
       "type": "CauceH3FL2VA",
       "pos": [
         5260,
@@ -2435,45 +2472,45 @@
         238
       ],
       "flags": {},
-      "order": 36,
+      "order": 37,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "clip",
           "name": "clip",
           "type": "CLIP",
-          "link": 51
+          "link": 53
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 52
+          "link": 54
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 53
+          "link": 55
         },
         {
           "localized_name": "profile",
           "name": "profile",
           "type": "CAUCE_PROFILE",
-          "link": 54
+          "link": 56
         },
         {
           "localized_name": "first_frame",
           "name": "first_frame",
           "type": "IMAGE",
-          "link": 61,
+          "link": 63,
           "shape": 7
         },
         {
           "localized_name": "last_frame",
           "name": "last_frame",
           "type": "IMAGE",
-          "link": 62,
+          "link": 64,
           "shape": 7
         },
         {
@@ -2492,7 +2529,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            75
+            77
           ]
         },
         {
@@ -2500,7 +2537,7 @@
           "name": "latent",
           "type": "LATENT",
           "links": [
-            67
+            69
           ]
         },
         {
@@ -2520,7 +2557,7 @@
       ]
     },
     {
-      "id": 38,
+      "id": 39,
       "type": "CauceH3FL2VA",
       "pos": [
         5260,
@@ -2531,45 +2568,45 @@
         238
       ],
       "flags": {},
-      "order": 37,
+      "order": 38,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "clip",
           "name": "clip",
           "type": "CLIP",
-          "link": 55
+          "link": 57
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 56
+          "link": 58
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 57
+          "link": 59
         },
         {
           "localized_name": "profile",
           "name": "profile",
           "type": "CAUCE_PROFILE",
-          "link": 58
+          "link": 60
         },
         {
           "localized_name": "first_frame",
           "name": "first_frame",
           "type": "IMAGE",
-          "link": 65,
+          "link": 67,
           "shape": 7
         },
         {
           "localized_name": "last_frame",
           "name": "last_frame",
           "type": "IMAGE",
-          "link": 66,
+          "link": 68,
           "shape": 7
         },
         {
@@ -2588,7 +2625,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            80
+            82
           ]
         },
         {
@@ -2596,7 +2633,7 @@
           "name": "latent",
           "type": "LATENT",
           "links": [
-            71
+            73
           ]
         },
         {
@@ -2616,7 +2653,7 @@
       ]
     },
     {
-      "id": 39,
+      "id": 40,
       "type": "CauceSelectImageFrame",
       "pos": [
         5260,
@@ -2627,14 +2664,14 @@
         58
       ],
       "flags": {},
-      "order": 38,
+      "order": 39,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 59
+          "link": 61
         },
         {
           "localized_name": "frame_index",
@@ -2652,7 +2689,7 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            61
+            63
           ]
         },
         {
@@ -2672,7 +2709,7 @@
       ]
     },
     {
-      "id": 40,
+      "id": 41,
       "type": "CauceSelectImageFrame",
       "pos": [
         5260,
@@ -2683,14 +2720,14 @@
         58
       ],
       "flags": {},
-      "order": 39,
+      "order": 40,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 60
+          "link": 62
         },
         {
           "localized_name": "frame_index",
@@ -2708,7 +2745,7 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            62
+            64
           ]
         },
         {
@@ -2728,7 +2765,7 @@
       ]
     },
     {
-      "id": 41,
+      "id": 42,
       "type": "CauceSelectImageFrame",
       "pos": [
         5260,
@@ -2739,14 +2776,14 @@
         58
       ],
       "flags": {},
-      "order": 40,
+      "order": 41,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 63
+          "link": 65
         },
         {
           "localized_name": "frame_index",
@@ -2764,7 +2801,7 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            65
+            67
           ]
         },
         {
@@ -2784,7 +2821,7 @@
       ]
     },
     {
-      "id": 42,
+      "id": 43,
       "type": "CauceSelectImageFrame",
       "pos": [
         5260,
@@ -2795,14 +2832,14 @@
         58
       ],
       "flags": {},
-      "order": 41,
+      "order": 42,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 64
+          "link": 66
         },
         {
           "localized_name": "frame_index",
@@ -2820,7 +2857,7 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            66
+            68
           ]
         },
         {
@@ -2840,73 +2877,11 @@
       ]
     },
     {
-      "id": 43,
-      "type": "CaucePrepareH3NativeLatentInpaint",
-      "pos": [
-        5680,
-        0
-      ],
-      "size": [
-        370,
-        126
-      ],
-      "flags": {},
-      "order": 42,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "target_latent",
-          "name": "target_latent",
-          "type": "LATENT",
-          "link": 67
-        },
-        {
-          "localized_name": "left_latent",
-          "name": "left_latent",
-          "type": "LATENT",
-          "link": 68
-        },
-        {
-          "localized_name": "right_latent",
-          "name": "right_latent",
-          "type": "LATENT",
-          "link": 69
-        },
-        {
-          "localized_name": "seam",
-          "name": "seam",
-          "type": "CAUCE_SEAM",
-          "link": 70
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "masked_latent",
-          "name": "masked_latent",
-          "type": "LATENT",
-          "links": [
-            76,
-            91
-          ]
-        },
-        {
-          "localized_name": "mask_report",
-          "name": "mask_report",
-          "type": "STRING",
-          "links": null
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CaucePrepareH3NativeLatentInpaint",
-        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
-      }
-    },
-    {
       "id": 44,
       "type": "CaucePrepareH3NativeLatentInpaint",
       "pos": [
         5680,
-        760
+        0
       ],
       "size": [
         370,
@@ -2920,25 +2895,25 @@
           "localized_name": "target_latent",
           "name": "target_latent",
           "type": "LATENT",
-          "link": 71
+          "link": 69
         },
         {
           "localized_name": "left_latent",
           "name": "left_latent",
           "type": "LATENT",
-          "link": 72
+          "link": 70
         },
         {
           "localized_name": "right_latent",
           "name": "right_latent",
           "type": "LATENT",
-          "link": 73
+          "link": 71
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
-          "link": 74
+          "link": 72
         }
       ],
       "outputs": [
@@ -2947,8 +2922,8 @@
           "name": "masked_latent",
           "type": "LATENT",
           "links": [
-            81,
-            106
+            78,
+            93
           ]
         },
         {
@@ -2965,6 +2940,68 @@
     },
     {
       "id": 45,
+      "type": "CaucePrepareH3NativeLatentInpaint",
+      "pos": [
+        5680,
+        760
+      ],
+      "size": [
+        370,
+        126
+      ],
+      "flags": {},
+      "order": 44,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "target_latent",
+          "name": "target_latent",
+          "type": "LATENT",
+          "link": 73
+        },
+        {
+          "localized_name": "left_latent",
+          "name": "left_latent",
+          "type": "LATENT",
+          "link": 74
+        },
+        {
+          "localized_name": "right_latent",
+          "name": "right_latent",
+          "type": "LATENT",
+          "link": 75
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "link": 76
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "masked_latent",
+          "name": "masked_latent",
+          "type": "LATENT",
+          "links": [
+            83,
+            108
+          ]
+        },
+        {
+          "localized_name": "mask_report",
+          "name": "mask_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CaucePrepareH3NativeLatentInpaint",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      }
+    },
+    {
+      "id": 46,
       "type": "CauceH3TemporalInpaintGuides",
       "pos": [
         6100,
@@ -2975,38 +3012,38 @@
         190
       ],
       "flags": {},
-      "order": 44,
+      "order": 45,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "positive",
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 75
+          "link": 77
         },
         {
           "localized_name": "target_latent",
           "name": "target_latent",
           "type": "LATENT",
-          "link": 76
+          "link": 78
         },
         {
           "localized_name": "working_images",
           "name": "working_images",
           "type": "IMAGE",
-          "link": 77
+          "link": 79
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
-          "link": 78
+          "link": 80
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 79
+          "link": 81
         }
       ],
       "outputs": [
@@ -3015,7 +3052,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            86
+            88
           ]
         },
         {
@@ -3032,7 +3069,7 @@
       "title": "22f incoming + outgoing guides at B"
     },
     {
-      "id": 46,
+      "id": 47,
       "type": "CauceH3TemporalInpaintGuides",
       "pos": [
         6100,
@@ -3043,38 +3080,38 @@
         190
       ],
       "flags": {},
-      "order": 45,
+      "order": 46,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "positive",
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 80
+          "link": 82
         },
         {
           "localized_name": "target_latent",
           "name": "target_latent",
           "type": "LATENT",
-          "link": 81
+          "link": 83
         },
         {
           "localized_name": "working_images",
           "name": "working_images",
           "type": "IMAGE",
-          "link": 82
+          "link": 84
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
-          "link": 83
+          "link": 85
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 84
+          "link": 86
         }
       ],
       "outputs": [
@@ -3083,7 +3120,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            101
+            103
           ]
         },
         {
@@ -3100,7 +3137,7 @@
       "title": "22f incoming + outgoing guides at A"
     },
     {
-      "id": 47,
+      "id": 48,
       "type": "RandomNoise",
       "pos": [
         6520,
@@ -3111,7 +3148,7 @@
         82
       ],
       "flags": {},
-      "order": 46,
+      "order": 47,
       "mode": 0,
       "inputs": [
         {
@@ -3130,7 +3167,7 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            87
+            89
           ]
         }
       ],
@@ -3144,7 +3181,7 @@
       ]
     },
     {
-      "id": 48,
+      "id": 49,
       "type": "BasicGuider",
       "pos": [
         6520,
@@ -3155,20 +3192,20 @@
         46
       ],
       "flags": {},
-      "order": 47,
+      "order": 48,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
           "name": "model",
           "type": "MODEL",
-          "link": 85
+          "link": 87
         },
         {
           "localized_name": "conditioning",
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 86
+          "link": 88
         }
       ],
       "outputs": [
@@ -3177,7 +3214,7 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            88
+            90
           ]
         }
       ],
@@ -3187,7 +3224,7 @@
       }
     },
     {
-      "id": 49,
+      "id": 50,
       "type": "SamplerCustomAdvanced",
       "pos": [
         6840,
@@ -3198,38 +3235,38 @@
         126
       ],
       "flags": {},
-      "order": 48,
+      "order": 49,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "noise",
           "name": "noise",
           "type": "NOISE",
-          "link": 87
+          "link": 89
         },
         {
           "localized_name": "guider",
           "name": "guider",
           "type": "GUIDER",
-          "link": 88
+          "link": 90
         },
         {
           "localized_name": "sampler",
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 89
+          "link": 91
         },
         {
           "localized_name": "sigmas",
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 90
+          "link": 92
         },
         {
           "localized_name": "latent_image",
           "name": "latent_image",
           "type": "LATENT",
-          "link": 91
+          "link": 93
         }
       ],
       "outputs": [
@@ -3238,7 +3275,7 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            92
+            94
           ]
         },
         {
@@ -3254,7 +3291,7 @@
       }
     },
     {
-      "id": 50,
+      "id": 51,
       "type": "CauceResolveParentLatent",
       "pos": [
         7130,
@@ -3265,20 +3302,20 @@
         46
       ],
       "flags": {},
-      "order": 49,
+      "order": 50,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "latent",
           "name": "latent",
           "type": "LATENT",
-          "link": 92
+          "link": 94
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 93
+          "link": 95
         }
       ],
       "outputs": [
@@ -3287,7 +3324,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            94
+            96
           ]
         }
       ],
@@ -3297,7 +3334,7 @@
       }
     },
     {
-      "id": 51,
+      "id": 52,
       "type": "VAEDecode",
       "pos": [
         7420,
@@ -3308,20 +3345,20 @@
         46
       ],
       "flags": {},
-      "order": 50,
+      "order": 51,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "samples",
           "name": "samples",
           "type": "LATENT",
-          "link": 94
+          "link": 96
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 95
+          "link": 97
         }
       ],
       "outputs": [
@@ -3330,7 +3367,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            96
+            98
           ]
         }
       ],
@@ -3340,7 +3377,7 @@
       }
     },
     {
-      "id": 52,
+      "id": 53,
       "type": "CauceAcceptDecodedWindow",
       "pos": [
         7640,
@@ -3351,20 +3388,20 @@
         66
       ],
       "flags": {},
-      "order": 51,
+      "order": 52,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 96
+          "link": 98
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 97
+          "link": 99
         },
         {
           "localized_name": "audio",
@@ -3380,8 +3417,8 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            98,
-            117
+            100,
+            119
           ]
         },
         {
@@ -3403,7 +3440,7 @@
       }
     },
     {
-      "id": 53,
+      "id": 54,
       "type": "CreateVideo",
       "pos": [
         7950,
@@ -3414,14 +3451,14 @@
         102
       ],
       "flags": {},
-      "order": 52,
+      "order": 53,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 98
+          "link": 100
         },
         {
           "localized_name": "audio",
@@ -3455,7 +3492,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            99
+            101
           ]
         }
       ],
@@ -3469,7 +3506,7 @@
       ]
     },
     {
-      "id": 54,
+      "id": 55,
       "type": "SaveVideo",
       "pos": [
         8270,
@@ -3480,14 +3517,14 @@
         106
       ],
       "flags": {},
-      "order": 53,
+      "order": 54,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 99
+          "link": 101
         },
         {
           "localized_name": "filename_prefix",
@@ -3536,7 +3573,7 @@
       ]
     },
     {
-      "id": 55,
+      "id": 56,
       "type": "RandomNoise",
       "pos": [
         6520,
@@ -3547,7 +3584,7 @@
         82
       ],
       "flags": {},
-      "order": 54,
+      "order": 55,
       "mode": 0,
       "inputs": [
         {
@@ -3566,7 +3603,7 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            102
+            104
           ]
         }
       ],
@@ -3580,7 +3617,7 @@
       ]
     },
     {
-      "id": 56,
+      "id": 57,
       "type": "BasicGuider",
       "pos": [
         6520,
@@ -3591,20 +3628,20 @@
         46
       ],
       "flags": {},
-      "order": 55,
+      "order": 56,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
           "name": "model",
           "type": "MODEL",
-          "link": 100
+          "link": 102
         },
         {
           "localized_name": "conditioning",
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 101
+          "link": 103
         }
       ],
       "outputs": [
@@ -3613,7 +3650,7 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            103
+            105
           ]
         }
       ],
@@ -3623,7 +3660,7 @@
       }
     },
     {
-      "id": 57,
+      "id": 58,
       "type": "SamplerCustomAdvanced",
       "pos": [
         6840,
@@ -3634,38 +3671,38 @@
         126
       ],
       "flags": {},
-      "order": 56,
+      "order": 57,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "noise",
           "name": "noise",
           "type": "NOISE",
-          "link": 102
+          "link": 104
         },
         {
           "localized_name": "guider",
           "name": "guider",
           "type": "GUIDER",
-          "link": 103
+          "link": 105
         },
         {
           "localized_name": "sampler",
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 104
+          "link": 106
         },
         {
           "localized_name": "sigmas",
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 105
+          "link": 107
         },
         {
           "localized_name": "latent_image",
           "name": "latent_image",
           "type": "LATENT",
-          "link": 106
+          "link": 108
         }
       ],
       "outputs": [
@@ -3674,7 +3711,7 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            107
+            109
           ]
         },
         {
@@ -3690,7 +3727,7 @@
       }
     },
     {
-      "id": 58,
+      "id": 59,
       "type": "CauceResolveParentLatent",
       "pos": [
         7130,
@@ -3701,20 +3738,20 @@
         46
       ],
       "flags": {},
-      "order": 57,
+      "order": 58,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "latent",
           "name": "latent",
           "type": "LATENT",
-          "link": 107
+          "link": 109
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 108
+          "link": 110
         }
       ],
       "outputs": [
@@ -3723,7 +3760,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            109
+            111
           ]
         }
       ],
@@ -3733,7 +3770,7 @@
       }
     },
     {
-      "id": 59,
+      "id": 60,
       "type": "VAEDecode",
       "pos": [
         7420,
@@ -3744,20 +3781,20 @@
         46
       ],
       "flags": {},
-      "order": 58,
+      "order": 59,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "samples",
           "name": "samples",
           "type": "LATENT",
-          "link": 109
+          "link": 111
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 110
+          "link": 112
         }
       ],
       "outputs": [
@@ -3766,7 +3803,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            111
+            113
           ]
         }
       ],
@@ -3776,7 +3813,7 @@
       }
     },
     {
-      "id": 60,
+      "id": 61,
       "type": "CauceAcceptDecodedWindow",
       "pos": [
         7640,
@@ -3787,20 +3824,20 @@
         66
       ],
       "flags": {},
-      "order": 59,
+      "order": 60,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 111
+          "link": 113
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 112
+          "link": 114
         },
         {
           "localized_name": "audio",
@@ -3816,8 +3853,8 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            113,
-            119
+            115,
+            121
           ]
         },
         {
@@ -3839,7 +3876,7 @@
       }
     },
     {
-      "id": 61,
+      "id": 62,
       "type": "CreateVideo",
       "pos": [
         7950,
@@ -3850,14 +3887,14 @@
         102
       ],
       "flags": {},
-      "order": 60,
+      "order": 61,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 113
+          "link": 115
         },
         {
           "localized_name": "audio",
@@ -3891,7 +3928,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            114
+            116
           ]
         }
       ],
@@ -3905,7 +3942,7 @@
       ]
     },
     {
-      "id": 62,
+      "id": 63,
       "type": "SaveVideo",
       "pos": [
         8270,
@@ -3916,14 +3953,14 @@
         106
       ],
       "flags": {},
-      "order": 61,
+      "order": 62,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 114
+          "link": 116
         },
         {
           "localized_name": "filename_prefix",
@@ -3972,7 +4009,7 @@
       ]
     },
     {
-      "id": 63,
+      "id": 64,
       "type": "CauceAssembleNativeTwoClipLoop",
       "pos": [
         8690,
@@ -3983,44 +4020,44 @@
         230
       ],
       "flags": {},
-      "order": 62,
+      "order": 63,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "first_clip",
           "name": "first_clip",
           "type": "IMAGE",
-          "link": 115
+          "link": 117
         },
         {
           "localized_name": "second_clip",
           "name": "second_clip",
           "type": "IMAGE",
-          "link": 116
+          "link": 118
         },
         {
           "localized_name": "forward_repaired_working",
           "name": "forward_repaired_working",
           "type": "IMAGE",
-          "link": 117
+          "link": 119
         },
         {
           "localized_name": "forward_seam",
           "name": "forward_seam",
           "type": "CAUCE_SEAM",
-          "link": 118
+          "link": 120
         },
         {
           "localized_name": "wrap_repaired_working",
           "name": "wrap_repaired_working",
           "type": "IMAGE",
-          "link": 119
+          "link": 121
         },
         {
           "localized_name": "wrap_seam",
           "name": "wrap_seam",
           "type": "CAUCE_SEAM",
-          "link": 120
+          "link": 122
         },
         {
           "localized_name": "decoded_feather_frames",
@@ -4047,7 +4084,7 @@
           "name": "loop",
           "type": "IMAGE",
           "links": [
-            121
+            123
           ]
         },
         {
@@ -4067,7 +4104,7 @@
           "name": "forward_patch",
           "type": "IMAGE",
           "links": [
-            123
+            125
           ]
         },
         {
@@ -4075,7 +4112,7 @@
           "name": "wrap_patch",
           "type": "IMAGE",
           "links": [
-            125
+            127
           ]
         },
         {
@@ -4095,7 +4132,7 @@
       ]
     },
     {
-      "id": 64,
+      "id": 65,
       "type": "CreateVideo",
       "pos": [
         9150,
@@ -4104,142 +4141,9 @@
       "size": [
         270,
         102
-      ],
-      "flags": {},
-      "order": 63,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "images",
-          "name": "images",
-          "type": "IMAGE",
-          "link": 121
-        },
-        {
-          "localized_name": "audio",
-          "name": "audio",
-          "type": "AUDIO",
-          "link": null,
-          "shape": 7
-        },
-        {
-          "localized_name": "fps",
-          "name": "fps",
-          "type": "FLOAT",
-          "link": null,
-          "widget": {
-            "name": "fps"
-          }
-        },
-        {
-          "localized_name": "bit_depth",
-          "name": "bit_depth",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "bit_depth"
-          }
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "VIDEO",
-          "name": "VIDEO",
-          "type": "VIDEO",
-          "links": [
-            122
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CreateVideo",
-        "cnr_id": "comfy-core"
-      },
-      "widgets_values": [
-        24.0,
-        8
-      ]
-    },
-    {
-      "id": 65,
-      "type": "SaveVideo",
-      "pos": [
-        9460,
-        300
-      ],
-      "size": [
-        270,
-        106
       ],
       "flags": {},
       "order": 64,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "video",
-          "name": "video",
-          "type": "VIDEO",
-          "link": 122
-        },
-        {
-          "localized_name": "filename_prefix",
-          "name": "filename_prefix",
-          "type": "STRING",
-          "link": null,
-          "widget": {
-            "name": "filename_prefix"
-          }
-        },
-        {
-          "localized_name": "format",
-          "name": "format",
-          "type": "COMBO",
-          "link": null,
-          "widget": {
-            "name": "format"
-          }
-        },
-        {
-          "localized_name": "codec",
-          "name": "codec",
-          "type": "COMFY_DYNAMICCOMBO_V3",
-          "link": null,
-          "widget": {
-            "name": "codec"
-          }
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "video",
-          "name": "video",
-          "type": "VIDEO",
-          "links": null
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "SaveVideo",
-        "cnr_id": "comfy-core"
-      },
-      "widgets_values": [
-        "cauce/native_loop_v2/05_ab_ba_loop",
-        "mp4",
-        "auto"
-      ]
-    },
-    {
-      "id": 66,
-      "type": "CreateVideo",
-      "pos": [
-        9150,
-        570
-      ],
-      "size": [
-        270,
-        102
-      ],
-      "flags": {},
-      "order": 65,
       "mode": 0,
       "inputs": [
         {
@@ -4294,18 +4198,18 @@
       ]
     },
     {
-      "id": 67,
+      "id": 66,
       "type": "SaveVideo",
       "pos": [
         9460,
-        570
+        300
       ],
       "size": [
         270,
         106
       ],
       "flags": {},
-      "order": 66,
+      "order": 65,
       "mode": 0,
       "inputs": [
         {
@@ -4355,24 +4259,24 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop_v2/06_patch_b",
+        "cauce/native_loop_v2/05_ab_ba_loop",
         "mp4",
         "auto"
       ]
     },
     {
-      "id": 68,
+      "id": 67,
       "type": "CreateVideo",
       "pos": [
         9150,
-        810
+        570
       ],
       "size": [
         270,
         102
       ],
       "flags": {},
-      "order": 67,
+      "order": 66,
       "mode": 0,
       "inputs": [
         {
@@ -4427,7 +4331,140 @@
       ]
     },
     {
+      "id": 68,
+      "type": "SaveVideo",
+      "pos": [
+        9460,
+        570
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 67,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 126
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "filename_prefix"
+          }
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "format"
+          }
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "widget": {
+            "name": "codec"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "cauce/native_loop_v2/06_patch_b",
+        "mp4",
+        "auto"
+      ]
+    },
+    {
       "id": 69,
+      "type": "CreateVideo",
+      "pos": [
+        9150,
+        810
+      ],
+      "size": [
+        270,
+        102
+      ],
+      "flags": {},
+      "order": 68,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 127
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "fps"
+          }
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "bit_depth"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            128
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        24.0,
+        8
+      ]
+    },
+    {
+      "id": 70,
       "type": "SaveVideo",
       "pos": [
         9460,
@@ -4438,14 +4475,14 @@
         106
       ],
       "flags": {},
-      "order": 68,
+      "order": 69,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 126
+          "link": 128
         },
         {
           "localized_name": "filename_prefix",
@@ -4865,23 +4902,23 @@
     ],
     [
       47,
-      22,
-      0,
       35,
       0,
-      "IMAGE"
+      36,
+      6,
+      "INT"
     ],
     [
       48,
-      30,
-      0,
       35,
-      1,
-      "IMAGE"
+      0,
+      37,
+      6,
+      "INT"
     ],
     [
       49,
-      30,
+      22,
       0,
       36,
       0,
@@ -4889,7 +4926,7 @@
     ],
     [
       50,
-      22,
+      30,
       0,
       36,
       1,
@@ -4897,38 +4934,22 @@
     ],
     [
       51,
-      11,
+      30,
       0,
       37,
       0,
-      "CLIP"
+      "IMAGE"
     ],
     [
       52,
-      12,
+      22,
       0,
       37,
       1,
-      "VAE"
+      "IMAGE"
     ],
     [
       53,
-      35,
-      2,
-      37,
-      2,
-      "CAUCE_WINDOW"
-    ],
-    [
-      54,
-      7,
-      0,
-      37,
-      3,
-      "CAUCE_PROFILE"
-    ],
-    [
-      55,
       11,
       0,
       38,
@@ -4936,7 +4957,7 @@
       "CLIP"
     ],
     [
-      56,
+      54,
       12,
       0,
       38,
@@ -4944,7 +4965,7 @@
       "VAE"
     ],
     [
-      57,
+      55,
       36,
       2,
       38,
@@ -4952,7 +4973,7 @@
       "CAUCE_WINDOW"
     ],
     [
-      58,
+      56,
       7,
       0,
       38,
@@ -4960,127 +4981,127 @@
       "CAUCE_PROFILE"
     ],
     [
-      59,
-      35,
+      57,
+      11,
       0,
       39,
       0,
-      "IMAGE"
+      "CLIP"
+    ],
+    [
+      58,
+      12,
+      0,
+      39,
+      1,
+      "VAE"
+    ],
+    [
+      59,
+      37,
+      2,
+      39,
+      2,
+      "CAUCE_WINDOW"
     ],
     [
       60,
-      35,
+      7,
       0,
-      40,
-      0,
-      "IMAGE"
+      39,
+      3,
+      "CAUCE_PROFILE"
     ],
     [
       61,
-      39,
+      36,
       0,
-      37,
-      4,
+      40,
+      0,
       "IMAGE"
     ],
     [
       62,
-      40,
+      36,
       0,
-      37,
-      5,
+      41,
+      0,
       "IMAGE"
     ],
     [
       63,
-      36,
-      0,
-      41,
-      0,
-      "IMAGE"
-    ],
-    [
-      64,
-      36,
-      0,
-      42,
-      0,
-      "IMAGE"
-    ],
-    [
-      65,
-      41,
+      40,
       0,
       38,
       4,
       "IMAGE"
     ],
     [
-      66,
-      42,
+      64,
+      41,
       0,
       38,
       5,
       "IMAGE"
     ],
     [
-      67,
+      65,
       37,
-      1,
+      0,
+      42,
+      0,
+      "IMAGE"
+    ],
+    [
+      66,
+      37,
+      0,
       43,
       0,
-      "LATENT"
+      "IMAGE"
+    ],
+    [
+      67,
+      42,
+      0,
+      39,
+      4,
+      "IMAGE"
     ],
     [
       68,
-      20,
-      0,
       43,
-      1,
-      "LATENT"
+      0,
+      39,
+      5,
+      "IMAGE"
     ],
     [
       69,
-      28,
+      38,
+      1,
+      44,
       0,
-      43,
-      2,
       "LATENT"
     ],
     [
       70,
-      35,
+      20,
+      0,
+      44,
       1,
-      43,
-      3,
-      "CAUCE_SEAM"
+      "LATENT"
     ],
     [
       71,
-      38,
-      1,
-      44,
+      28,
       0,
+      44,
+      2,
       "LATENT"
     ],
     [
       72,
-      28,
-      0,
-      44,
-      1,
-      "LATENT"
-    ],
-    [
-      73,
-      20,
-      0,
-      44,
-      2,
-      "LATENT"
-    ],
-    [
-      74,
       36,
       1,
       44,
@@ -5088,47 +5109,39 @@
       "CAUCE_SEAM"
     ],
     [
-      75,
-      37,
-      0,
+      73,
+      39,
+      1,
       45,
       0,
-      "CONDITIONING"
+      "LATENT"
     ],
     [
-      76,
-      43,
+      74,
+      28,
       0,
       45,
       1,
       "LATENT"
     ],
     [
-      77,
-      35,
+      75,
+      20,
       0,
       45,
       2,
-      "IMAGE"
+      "LATENT"
     ],
     [
-      78,
-      35,
+      76,
+      37,
       1,
       45,
       3,
       "CAUCE_SEAM"
     ],
     [
-      79,
-      12,
-      0,
-      45,
-      4,
-      "VAE"
-    ],
-    [
-      80,
+      77,
       38,
       0,
       46,
@@ -5136,7 +5149,7 @@
       "CONDITIONING"
     ],
     [
-      81,
+      78,
       44,
       0,
       46,
@@ -5144,7 +5157,7 @@
       "LATENT"
     ],
     [
-      82,
+      79,
       36,
       0,
       46,
@@ -5152,7 +5165,7 @@
       "IMAGE"
     ],
     [
-      83,
+      80,
       36,
       1,
       46,
@@ -5160,7 +5173,7 @@
       "CAUCE_SEAM"
     ],
     [
-      84,
+      81,
       12,
       0,
       46,
@@ -5168,76 +5181,100 @@
       "VAE"
     ],
     [
+      82,
+      39,
+      0,
+      47,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      83,
+      45,
+      0,
+      47,
+      1,
+      "LATENT"
+    ],
+    [
+      84,
+      37,
+      0,
+      47,
+      2,
+      "IMAGE"
+    ],
+    [
       85,
+      37,
+      1,
+      47,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      86,
+      12,
+      0,
+      47,
+      4,
+      "VAE"
+    ],
+    [
+      87,
       10,
       0,
-      48,
+      49,
       0,
       "MODEL"
     ],
     [
-      86,
-      45,
+      88,
+      46,
       0,
-      48,
+      49,
       1,
       "CONDITIONING"
     ],
     [
-      87,
-      47,
+      89,
+      48,
       0,
-      49,
+      50,
       0,
       "NOISE"
     ],
     [
-      88,
-      48,
-      0,
+      90,
       49,
+      0,
+      50,
       1,
       "GUIDER"
     ],
     [
-      89,
+      91,
       13,
       0,
-      49,
+      50,
       2,
       "SAMPLER"
     ],
     [
-      90,
+      92,
       14,
       0,
-      49,
+      50,
       3,
       "SIGMAS"
     ],
     [
-      91,
-      43,
+      93,
+      44,
       0,
-      49,
+      50,
       4,
       "LATENT"
-    ],
-    [
-      92,
-      49,
-      0,
-      50,
-      0,
-      "LATENT"
-    ],
-    [
-      93,
-      35,
-      2,
-      50,
-      1,
-      "CAUCE_WINDOW"
     ],
     [
       94,
@@ -5249,11 +5286,11 @@
     ],
     [
       95,
-      12,
-      0,
+      36,
+      2,
       51,
       1,
-      "VAE"
+      "CAUCE_WINDOW"
     ],
     [
       96,
@@ -5261,15 +5298,15 @@
       0,
       52,
       0,
-      "IMAGE"
+      "LATENT"
     ],
     [
       97,
-      35,
-      2,
+      12,
+      0,
       52,
       1,
-      "CAUCE_WINDOW"
+      "VAE"
     ],
     [
       98,
@@ -5281,83 +5318,83 @@
     ],
     [
       99,
+      36,
+      2,
+      53,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      100,
       53,
       0,
       54,
       0,
+      "IMAGE"
+    ],
+    [
+      101,
+      54,
+      0,
+      55,
+      0,
       "VIDEO"
     ],
     [
-      100,
+      102,
       10,
       0,
-      56,
+      57,
       0,
       "MODEL"
     ],
     [
-      101,
-      46,
+      103,
+      47,
       0,
-      56,
+      57,
       1,
       "CONDITIONING"
     ],
     [
-      102,
-      55,
+      104,
+      56,
       0,
-      57,
+      58,
       0,
       "NOISE"
     ],
     [
-      103,
-      56,
-      0,
+      105,
       57,
+      0,
+      58,
       1,
       "GUIDER"
     ],
     [
-      104,
+      106,
       13,
       0,
-      57,
+      58,
       2,
       "SAMPLER"
     ],
     [
-      105,
+      107,
       14,
       0,
-      57,
+      58,
       3,
       "SIGMAS"
     ],
     [
-      106,
-      44,
+      108,
+      45,
       0,
-      57,
+      58,
       4,
       "LATENT"
-    ],
-    [
-      107,
-      57,
-      0,
-      58,
-      0,
-      "LATENT"
-    ],
-    [
-      108,
-      36,
-      2,
-      58,
-      1,
-      "CAUCE_WINDOW"
     ],
     [
       109,
@@ -5369,11 +5406,11 @@
     ],
     [
       110,
-      12,
-      0,
+      37,
+      2,
       59,
       1,
-      "VAE"
+      "CAUCE_WINDOW"
     ],
     [
       111,
@@ -5381,15 +5418,15 @@
       0,
       60,
       0,
-      "IMAGE"
+      "LATENT"
     ],
     [
       112,
-      36,
-      2,
+      12,
+      0,
       60,
       1,
-      "CAUCE_WINDOW"
+      "VAE"
     ],
     [
       113,
@@ -5401,110 +5438,126 @@
     ],
     [
       114,
+      37,
+      2,
       61,
-      0,
-      62,
-      0,
-      "VIDEO"
+      1,
+      "CAUCE_WINDOW"
     ],
     [
       115,
-      22,
+      61,
       0,
-      63,
+      62,
       0,
       "IMAGE"
     ],
     [
       116,
-      30,
+      62,
       0,
       63,
-      1,
-      "IMAGE"
+      0,
+      "VIDEO"
     ],
     [
       117,
-      52,
+      22,
       0,
-      63,
-      2,
+      64,
+      0,
       "IMAGE"
     ],
     [
       118,
-      35,
+      30,
+      0,
+      64,
       1,
-      63,
-      3,
-      "CAUCE_SEAM"
+      "IMAGE"
     ],
     [
       119,
-      60,
+      53,
       0,
-      63,
-      4,
+      64,
+      2,
       "IMAGE"
     ],
     [
       120,
       36,
       1,
-      63,
-      5,
+      64,
+      3,
       "CAUCE_SEAM"
     ],
     [
       121,
-      63,
+      61,
       0,
       64,
-      0,
+      4,
       "IMAGE"
     ],
     [
       122,
+      37,
+      1,
       64,
-      0,
-      65,
-      0,
-      "VIDEO"
+      5,
+      "CAUCE_SEAM"
     ],
     [
       123,
-      63,
-      3,
-      66,
+      64,
+      0,
+      65,
       0,
       "IMAGE"
     ],
     [
       124,
-      66,
+      65,
       0,
-      67,
+      66,
       0,
       "VIDEO"
     ],
     [
       125,
-      63,
-      4,
-      68,
+      64,
+      3,
+      67,
       0,
       "IMAGE"
     ],
     [
       126,
-      68,
+      67,
       0,
-      69,
+      68,
       0,
       "VIDEO"
     ],
     [
       127,
+      64,
+      4,
+      69,
+      0,
+      "IMAGE"
+    ],
+    [
+      128,
+      69,
+      0,
+      70,
+      0,
+      "VIDEO"
+    ],
+    [
+      129,
       2,
       0,
       4,
@@ -5512,7 +5565,7 @@
       "IMAGE"
     ],
     [
-      128,
+      130,
       3,
       0,
       5,
@@ -5520,7 +5573,7 @@
       "IMAGE"
     ],
     [
-      129,
+      131,
       7,
       0,
       8,

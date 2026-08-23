@@ -124,6 +124,7 @@ class VisualWorkflowTests(unittest.TestCase):
         self.assertEqual(types.count("CaucePrepareH3NativeLatentInpaint"), 2)
         self.assertEqual(types.count("CauceH3TemporalInpaintGuides"), 2)
         self.assertEqual(types.count("CauceAssembleNativeTwoClipLoop"), 1)
+        self.assertEqual(types.count("PrimitiveInt"), 1)
         self.assertEqual(types.count("CauceSaveAVLatent"), 2)
         profile = next(
             node for node in workflow["nodes"] if node["type"] == "CauceExecutionProfile"
@@ -134,10 +135,23 @@ class VisualWorkflowTests(unittest.TestCase):
         ]
         self.assertTrue(
             all(
-                node["widgets_values"] == [24.0, 24.0, "22", "124", 72]
+                node["widgets_values"] == [24.0, 24.0, "22", "124"]
                 for node in seams
             )
         )
+        self.assertTrue(
+            all(
+                next(
+                    item
+                    for item in node["inputs"]
+                    if item["name"] == "accepted_repair_frames"
+                )["link"]
+                is not None
+                for node in seams
+            )
+        )
+        accepted = next(node for node in workflow["nodes"] if node["type"] == "PrimitiveInt")
+        self.assertEqual(accepted["widgets_values"], [72])
         conditions = [node for node in workflow["nodes"] if node["type"] == "CauceH3FL2VA"]
         self.assertEqual(
             [node["widgets_values"][0] for node in conditions[:2]],

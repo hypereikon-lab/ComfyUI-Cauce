@@ -118,7 +118,11 @@ zero-masked and discarded; the fixed production audio never enters these nodes.
 The three native-latent nodes implement workflow 60. They preserve phase-matched
 tail/head rows from the two final H3 AV latents, expose only the central rows to
 the official masked sampler, and apply both decoded proposals to a closed
-two-clip loop without changing either source duration.
+two-clip loop without changing either source duration. The production preset
+uses 22 protected source frames and an explicit 22-frame guide clip on each
+side. H3 samples the 80-frame center, while the decoded splice accepts only its
+inner 72 frames (three seconds), leaving four frames of temporal overscan at
+each boundary.
 
 ## Artifacts
 

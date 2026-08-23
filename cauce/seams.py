@@ -266,6 +266,7 @@ def make_native_latent_seam_plan(
     *,
     context_frames_per_side: int = 39,
     working_frames: int = 124,
+    accepted_repair_frames: int | None = None,
 ) -> dict[str, Any]:
     """Plan a phase-safe H3 seam using clean source AV latents directly.
 
@@ -274,6 +275,9 @@ def make_native_latent_seam_plan(
     token-cycle phase zero, so no latent row is reinterpreted with a different
     causal VAE span. With the production defaults this is exactly
     ``39 protected + 46 generated + 39 protected = 124`` visible frames.
+    ``accepted_repair_frames`` may retain only a symmetric inner subset of the
+    sampled interval. This gives the sampler temporal overscan while keeping the
+    duration-preserving splice independently bounded.
     """
 
     left_count = int(left_frame_count)
@@ -321,7 +325,28 @@ def make_native_latent_seam_plan(
     generated_total = generated_end - generated_start
     if generated_total < 2 or generated_total % 2:
         raise ValueError("native seam generated interval must split evenly across the cut")
-    repair_per_side = generated_total // 2
+    if accepted_repair_frames is None:
+        repair_total = generated_total
+    else:
+        repair_total = int(accepted_repair_frames)
+        if repair_total < 2 or repair_total > generated_total:
+            raise ValueError(
+                "accepted_repair_frames must be between 2 and the generated interval "
+                f"({generated_total})"
+            )
+        if repair_total % 2:
+            raise ValueError("accepted_repair_frames must split evenly across the cut")
+    overscan_total = generated_total - repair_total
+    if overscan_total % 2:
+        raise ValueError("native seam overscan must be symmetric")
+    overscan_per_side = overscan_total // 2
+    repair_start = generated_start + overscan_per_side
+    repair_end = generated_end - overscan_per_side
+    repair_per_side = repair_total // 2
+    left_guide_start = 0
+    left_guide_end = context
+    right_guide_start = target_frames - context
+    right_guide_end = target_frames
 
     plan = {
         "schema": SEAM_SCHEMA,
@@ -335,21 +360,27 @@ def make_native_latent_seam_plan(
         "working_video_tokens": target_tokens,
         "guard_frames_per_side": 0,
         "cut_frame": half,
-        "repair_requested_frames_total": generated_total,
+        "repair_requested_frames_total": repair_total,
         "repair_frames_per_side": repair_per_side,
-        "repair_total_frames": generated_total,
-        "repair_start_frame": generated_start,
-        "repair_end_frame": generated_end,
+        "repair_total_frames": repair_total,
+        "repair_start_frame": repair_start,
+        "repair_end_frame": repair_end,
         "sampling_start_frame": generated_start,
         "sampling_end_frame": generated_end,
         "sampling_total_frames": generated_total,
+        "overscan_frames_per_side": overscan_per_side,
+        "guide_frames": context,
+        "left_guide_start_frame": left_guide_start,
+        "left_guide_end_frame": left_guide_end,
+        "right_guide_start_frame": right_guide_start,
+        "right_guide_end_frame": right_guide_end,
         "accepted_start_frame": 0,
         "accepted_end_frame": target_frames,
         "accepted_frames": target_frames,
         "working_duration_seconds": float(frames_to_seconds(target_frames)),
         "accepted_duration_seconds": float(frames_to_seconds(target_frames)),
-        "repair_requested_duration_seconds": float(frames_to_seconds(generated_total)),
-        "repair_duration_seconds": float(frames_to_seconds(generated_total)),
+        "repair_requested_duration_seconds": float(frames_to_seconds(repair_total)),
+        "repair_duration_seconds": float(frames_to_seconds(repair_total)),
         "sampling_duration_seconds": float(frames_to_seconds(generated_total)),
         "left_working_source_start_frame": left_count - half,
         "right_working_source_end_frame": half,

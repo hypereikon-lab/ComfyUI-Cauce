@@ -32,6 +32,24 @@ class TemporalInpaintTests(unittest.TestCase):
         self.assertEqual((plan["right_target_start_token"], plan["right_target_end_token"]), (25, 37))
         self.assertEqual(plan["left_latent_source_start_token"] % 5, 0)
 
+    def test_native_plan_can_sample_with_overscan_and_accept_exactly_three_seconds(self):
+        plan = make_native_latent_seam_plan(
+            124,
+            124,
+            context_frames_per_side=22,
+            accepted_repair_frames=72,
+        )
+        self.assertEqual(plan["context_tokens_per_side"], 7)
+        self.assertEqual((plan["sampling_start_frame"], plan["sampling_end_frame"]), (22, 102))
+        self.assertEqual(plan["sampling_total_frames"], 80)
+        self.assertEqual((plan["repair_start_frame"], plan["repair_end_frame"]), (26, 98))
+        self.assertEqual(plan["repair_total_frames"], 72)
+        self.assertEqual(plan["repair_frames_per_side"], 36)
+        self.assertEqual(plan["overscan_frames_per_side"], 4)
+        self.assertEqual((plan["left_guide_start_frame"], plan["left_guide_end_frame"]), (0, 22))
+        self.assertEqual((plan["right_guide_start_frame"], plan["right_guide_end_frame"]), (102, 124))
+        self.assertEqual(plan["left_latent_source_start_token"] % 5, 0)
+
     @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
     def test_native_working_domain_is_62_tail_plus_62_head(self):
         plan = make_native_latent_seam_plan(124, 124)
@@ -72,6 +90,35 @@ class TemporalInpaintTests(unittest.TestCase):
         numpy.testing.assert_array_equal(second_fixed[23:-23], second[23:-23])
         self.assertEqual(float(first_fixed[0, 0, 0, 0]), float(first[0, 0, 0, 0]))
         self.assertEqual(float(second_fixed[-1, 0, 0, 0]), float(second[-1, 0, 0, 0]))
+        self.assertEqual(report["loop_frames"], 248)
+
+    @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
+    def test_native_three_second_repairs_leave_non_overlapping_source_centers(self):
+        forward = make_native_latent_seam_plan(
+            124, 124, context_frames_per_side=22, accepted_repair_frames=72
+        )
+        wrap = make_native_latent_seam_plan(
+            124, 124, context_frames_per_side=22, accepted_repair_frames=72
+        )
+        first = numpy.arange(124, dtype=numpy.float32).reshape(124, 1, 1, 1)
+        second = (1000 + numpy.arange(124, dtype=numpy.float32)).reshape(124, 1, 1, 1)
+        proposal = numpy.full((124, 1, 1, 1), 5000.0, dtype=numpy.float32)
+        loop, first_fixed, second_fixed, forward_patch, wrap_patch, report = (
+            assemble_native_two_clip_loop(
+                first,
+                second,
+                proposal,
+                forward,
+                proposal,
+                wrap,
+                feather_frames=4,
+            )
+        )
+        self.assertEqual(loop.shape[0], 248)
+        self.assertEqual(forward_patch.shape[0], 72)
+        self.assertEqual(wrap_patch.shape[0], 72)
+        numpy.testing.assert_array_equal(first_fixed[36:-36], first[36:-36])
+        numpy.testing.assert_array_equal(second_fixed[36:-36], second[36:-36])
         self.assertEqual(report["loop_frames"], 248)
 
     def test_native_plan_rejects_phase_unsafe_source_lengths(self):

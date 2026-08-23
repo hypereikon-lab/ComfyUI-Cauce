@@ -276,11 +276,24 @@ class CauceBuildNativeLatentSeam:
                 "right_fps": ("FLOAT", {"default": 24.0}),
                 "context_frames_per_side": (
                     [str(value) for value in NATIVE_SEAM_CONTEXT_FRAMES],
-                    {"default": "39"},
+                    {"default": "22"},
                 ),
                 "working_frames": (
                     [str(value) for value in NATIVE_SEAM_WORKING_FRAMES],
                     {"default": "124"},
+                ),
+                "accepted_repair_frames": (
+                    "INT",
+                    {
+                        "default": 72,
+                        "min": 2,
+                        "max": 358,
+                        "step": 2,
+                        "tooltip": (
+                            "Decoded center frames retained in the final splice. "
+                            "Sampling may use a wider interval as temporal overscan."
+                        ),
+                    },
                 ),
             }
         }
@@ -302,6 +315,7 @@ class CauceBuildNativeLatentSeam:
         right_fps,
         context_frames_per_side,
         working_frames,
+        accepted_repair_frames,
     ):
         if abs(float(left_fps) - 24.0) > 1e-3 or abs(float(right_fps) - 24.0) > 1e-3:
             raise ValueError("native H3 temporal inpainting requires 24 fps sources")
@@ -310,6 +324,7 @@ class CauceBuildNativeLatentSeam:
             int(right_frames.shape[0]),
             context_frames_per_side=int(context_frames_per_side),
             working_frames=int(working_frames),
+            accepted_repair_frames=int(accepted_repair_frames),
         )
         working = build_native_latent_seam_window(left_frames, right_frames, plan)
         window = make_seam_window(plan)

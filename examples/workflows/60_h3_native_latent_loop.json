@@ -1,8 +1,8 @@
 {
   "id": "40027410-62de-55f0-b374-ac7daa262b2d",
   "revision": 0,
-  "last_node_id": 63,
-  "last_link_id": 111,
+  "last_node_id": 69,
+  "last_link_id": 129,
   "nodes": [
     {
       "id": 1,
@@ -22,7 +22,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "# CAUCE 60 · H3 native-latent A→B→A loop\n\nGenera dos FL2VA completos (A→B y B→A), conserva sus AV latents limpios y\nrepara ambas uniones sin recodificar MP4. Cada reparación usa 39 frames de\ncontexto latente protegido a cada lado y genera sólo 46 frames centrales dentro\nde una ventana H3 de 124 frames. La posición de los tokens está alineada con el\nciclo causal del VAE. El ensamblaje sustituye 23 frames por lado, aplica un\nfeather coseno de 4 frames y mantiene exactamente 248 frames (10,333 s).\n\nEl audio interno de H3 se congela y descarta. Los outputs incluyen ambos tramos,\nambas ventanas reparadas, ambos patches y el loop cerrado final."
+        "# CAUCE 60 · H3 native-latent A→B→A loop\n\nGenera dos FL2VA completos (A→B y B→A), conserva sus AV latents limpios y\nrepara ambas uniones sin recodificar MP4. Cada reparación protege y guía con 22\nframes reales a cada lado, muestrea 80 frames centrales y acepta sólo los 72\nframes internos (3 s), dejando 4 frames de overscan por borde. La posición de\nlos tokens está alineada con el ciclo causal del VAE. El ensamblaje sustituye 36\nframes por lado, aplica un feather coseno de 4 frames y mantiene exactamente 248\nframes (10,333 s).\n\nEl audio interno de H3 se congela y descarta. Los outputs incluyen ambos tramos,\nambas ventanas reparadas, ambos patches y el loop cerrado final."
       ],
       "color": "#24382a",
       "bgcolor": "#132019"
@@ -67,7 +67,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            109
+            127
           ]
         },
         {
@@ -127,7 +127,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            110
+            128
           ]
         },
         {
@@ -166,7 +166,7 @@
           "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
-          "link": 109
+          "link": 127
         },
         {
           "localized_name": "upscale_method",
@@ -246,7 +246,7 @@
           "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
-          "link": 110
+          "link": 128
         },
         {
           "localized_name": "upscale_method",
@@ -508,7 +508,7 @@
             10,
             54,
             58,
-            111
+            129
           ]
         },
         {
@@ -593,7 +593,7 @@
           "localized_name": "profile",
           "name": "profile",
           "type": "CAUCE_PROFILE",
-          "link": 111
+          "link": 129
         },
         {
           "localized_name": "minimum_free_reserve_gib",
@@ -735,8 +735,8 @@
             2,
             15,
             30,
-            67,
-            82
+            85,
+            100
           ]
         }
       ],
@@ -852,8 +852,10 @@
             40,
             52,
             56,
-            77,
-            92
+            79,
+            84,
+            95,
+            110
           ]
         }
       ],
@@ -898,8 +900,8 @@
           "links": [
             19,
             34,
-            71,
-            86
+            89,
+            104
           ]
         }
       ],
@@ -968,8 +970,8 @@
           "links": [
             20,
             35,
-            72,
-            87
+            90,
+            105
           ]
         }
       ],
@@ -1076,7 +1078,7 @@
       },
       "title": "FL2VA A → B",
       "widgets_values": [
-        "A single uninterrupted accelerating forward camera push through dense temperate rainforest and fern fronds, an infinite rapid zoom that preserves natural forest geometry and resolves exactly into the destination frame beneath the moss-covered branch. Continuous forward momentum, coherent optical flow, no cut, no dissolve, no pause, no camera reset, no new objects."
+        "infinite fast zoom transition into"
       ]
     },
     {
@@ -1172,7 +1174,7 @@
       },
       "title": "FL2VA B → A",
       "widgets_values": [
-        "A single uninterrupted accelerating forward camera push beneath the moss-covered branch and through dense temperate rainforest, an infinite rapid zoom that preserves natural forest geometry and resolves exactly into the destination fern hillside. Continuous forward momentum, coherent optical flow, no cut, no dissolve, no pause, no camera reset, no new objects."
+        "infinite fast zoom transition into"
       ]
     },
     {
@@ -1365,8 +1367,8 @@
           "links": [
             24,
             45,
-            60,
-            65
+            68,
+            73
           ]
         }
       ],
@@ -1462,7 +1464,7 @@
             28,
             47,
             50,
-            97
+            115
           ]
         },
         {
@@ -1611,7 +1613,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/01_ab_raw",
+        "cauce/native_loop_v2/01_ab_raw",
         "mp4",
         "auto"
       ]
@@ -1806,8 +1808,8 @@
           "links": [
             39,
             46,
-            61,
-            64
+            69,
+            72
           ]
         }
       ],
@@ -1903,7 +1905,7 @@
             43,
             48,
             49,
-            98
+            116
           ]
         },
         {
@@ -2052,7 +2054,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/02_ba_raw",
+        "cauce/native_loop_v2/02_ba_raw",
         "mp4",
         "auto"
       ]
@@ -2117,7 +2119,7 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        "cauce/native_loop/latents/ab",
+        "cauce/native_loop_v2/latents/ab",
         1
       ]
     },
@@ -2181,7 +2183,7 @@
         "aux_id": "hypereikon-lab/ComfyUI-Cauce"
       },
       "widgets_values": [
-        "cauce/native_loop/latents/ba",
+        "cauce/native_loop_v2/latents/ba",
         1
       ]
     },
@@ -2241,6 +2243,15 @@
           "widget": {
             "name": "working_frames"
           }
+        },
+        {
+          "localized_name": "accepted_repair_frames",
+          "name": "accepted_repair_frames",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "accepted_repair_frames"
+          }
         }
       ],
       "outputs": [
@@ -2248,15 +2259,20 @@
           "localized_name": "working_images",
           "name": "working_images",
           "type": "IMAGE",
-          "links": null
+          "links": [
+            59,
+            60,
+            77
+          ]
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
           "links": [
-            62,
-            100
+            70,
+            78,
+            118
           ]
         },
         {
@@ -2265,8 +2281,8 @@
           "type": "CAUCE_WINDOW",
           "links": [
             53,
-            75,
-            79
+            93,
+            97
           ]
         },
         {
@@ -2284,8 +2300,9 @@
       "widgets_values": [
         24.0,
         24.0,
-        "39",
-        "124"
+        "22",
+        "124",
+        72
       ]
     },
     {
@@ -2293,7 +2310,7 @@
       "type": "CauceBuildNativeLatentSeam",
       "pos": [
         4850,
-        700
+        760
       ],
       "size": [
         370,
@@ -2344,6 +2361,15 @@
           "widget": {
             "name": "working_frames"
           }
+        },
+        {
+          "localized_name": "accepted_repair_frames",
+          "name": "accepted_repair_frames",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "accepted_repair_frames"
+          }
         }
       ],
       "outputs": [
@@ -2351,15 +2377,20 @@
           "localized_name": "working_images",
           "name": "working_images",
           "type": "IMAGE",
-          "links": null
+          "links": [
+            63,
+            64,
+            82
+          ]
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
           "links": [
-            66,
-            102
+            74,
+            83,
+            120
           ]
         },
         {
@@ -2368,8 +2399,8 @@
           "type": "CAUCE_WINDOW",
           "links": [
             57,
-            90,
-            94
+            108,
+            112
           ]
         },
         {
@@ -2387,8 +2418,9 @@
       "widgets_values": [
         24.0,
         24.0,
-        "39",
-        "124"
+        "22",
+        "124",
+        72
       ]
     },
     {
@@ -2434,14 +2466,14 @@
           "localized_name": "first_frame",
           "name": "first_frame",
           "type": "IMAGE",
-          "link": null,
+          "link": 61,
           "shape": 7
         },
         {
           "localized_name": "last_frame",
           "name": "last_frame",
           "type": "IMAGE",
-          "link": null,
+          "link": 62,
           "shape": 7
         },
         {
@@ -2460,7 +2492,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            68
+            75
           ]
         },
         {
@@ -2468,7 +2500,7 @@
           "name": "latent",
           "type": "LATENT",
           "links": [
-            59
+            67
           ]
         },
         {
@@ -2484,7 +2516,7 @@
       },
       "title": "Condition seam B",
       "widgets_values": [
-        "Continue the same rapid forward camera trajectory through the forest. Preserve direction, velocity, acceleration, scale progression, lighting, and optical flow across the masked interval. One continuous shot; no cut, dissolve, pause, camera reset, new object, or scene change."
+        "Regenerate only the masked temporal interval. Preserve framing, visual content, and motion outside it. Connect position, velocity, and acceleration from the incoming guide clip to the outgoing guide clip without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Do not generate or condition on audio."
       ]
     },
     {
@@ -2492,7 +2524,7 @@
       "type": "CauceH3FL2VA",
       "pos": [
         5260,
-        700
+        760
       ],
       "size": [
         400,
@@ -2530,14 +2562,14 @@
           "localized_name": "first_frame",
           "name": "first_frame",
           "type": "IMAGE",
-          "link": null,
+          "link": 65,
           "shape": 7
         },
         {
           "localized_name": "last_frame",
           "name": "last_frame",
           "type": "IMAGE",
-          "link": null,
+          "link": 66,
           "shape": 7
         },
         {
@@ -2556,7 +2588,7 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            83
+            80
           ]
         },
         {
@@ -2564,7 +2596,7 @@
           "name": "latent",
           "type": "LATENT",
           "links": [
-            63
+            71
           ]
         },
         {
@@ -2580,11 +2612,235 @@
       },
       "title": "Condition seam A",
       "widgets_values": [
-        "Continue the same rapid forward camera trajectory through the forest. Preserve direction, velocity, acceleration, scale progression, lighting, and optical flow across the masked interval. One continuous shot; no cut, dissolve, pause, camera reset, new object, or scene change."
+        "Regenerate only the masked temporal interval. Preserve framing, visual content, and motion outside it. Connect position, velocity, and acceleration from the incoming guide clip to the outgoing guide clip without a cut. Do not introduce new subjects, objects, camera resets, or scene changes. Do not generate or condition on audio."
       ]
     },
     {
       "id": 39,
+      "type": "CauceSelectImageFrame",
+      "pos": [
+        5260,
+        320
+      ],
+      "size": [
+        260,
+        58
+      ],
+      "flags": {},
+      "order": 38,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 59
+        },
+        {
+          "localized_name": "frame_index",
+          "name": "frame_index",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "frame_index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            61
+          ]
+        },
+        {
+          "localized_name": "resolved_frame_index",
+          "name": "resolved_frame_index",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceSelectImageFrame",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Seam B first frame",
+      "widgets_values": [
+        0
+      ]
+    },
+    {
+      "id": 40,
+      "type": "CauceSelectImageFrame",
+      "pos": [
+        5260,
+        460
+      ],
+      "size": [
+        260,
+        58
+      ],
+      "flags": {},
+      "order": 39,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 60
+        },
+        {
+          "localized_name": "frame_index",
+          "name": "frame_index",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "frame_index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            62
+          ]
+        },
+        {
+          "localized_name": "resolved_frame_index",
+          "name": "resolved_frame_index",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceSelectImageFrame",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Seam B last frame",
+      "widgets_values": [
+        -1
+      ]
+    },
+    {
+      "id": 41,
+      "type": "CauceSelectImageFrame",
+      "pos": [
+        5260,
+        1080
+      ],
+      "size": [
+        260,
+        58
+      ],
+      "flags": {},
+      "order": 40,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 63
+        },
+        {
+          "localized_name": "frame_index",
+          "name": "frame_index",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "frame_index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            65
+          ]
+        },
+        {
+          "localized_name": "resolved_frame_index",
+          "name": "resolved_frame_index",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceSelectImageFrame",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Seam A first frame",
+      "widgets_values": [
+        0
+      ]
+    },
+    {
+      "id": 42,
+      "type": "CauceSelectImageFrame",
+      "pos": [
+        5260,
+        1220
+      ],
+      "size": [
+        260,
+        58
+      ],
+      "flags": {},
+      "order": 41,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 64
+        },
+        {
+          "localized_name": "frame_index",
+          "name": "frame_index",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "frame_index"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            66
+          ]
+        },
+        {
+          "localized_name": "resolved_frame_index",
+          "name": "resolved_frame_index",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceSelectImageFrame",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "Seam A last frame",
+      "widgets_values": [
+        -1
+      ]
+    },
+    {
+      "id": 43,
       "type": "CaucePrepareH3NativeLatentInpaint",
       "pos": [
         5680,
@@ -2595,32 +2851,32 @@
         126
       ],
       "flags": {},
-      "order": 38,
+      "order": 42,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "target_latent",
           "name": "target_latent",
           "type": "LATENT",
-          "link": 59
+          "link": 67
         },
         {
           "localized_name": "left_latent",
           "name": "left_latent",
           "type": "LATENT",
-          "link": 60
+          "link": 68
         },
         {
           "localized_name": "right_latent",
           "name": "right_latent",
           "type": "LATENT",
-          "link": 61
+          "link": 69
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
-          "link": 62
+          "link": 70
         }
       ],
       "outputs": [
@@ -2629,7 +2885,8 @@
           "name": "masked_latent",
           "type": "LATENT",
           "links": [
-            73
+            76,
+            91
           ]
         },
         {
@@ -2645,43 +2902,43 @@
       }
     },
     {
-      "id": 40,
+      "id": 44,
       "type": "CaucePrepareH3NativeLatentInpaint",
       "pos": [
         5680,
-        700
+        760
       ],
       "size": [
         370,
         126
       ],
       "flags": {},
-      "order": 39,
+      "order": 43,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "target_latent",
           "name": "target_latent",
           "type": "LATENT",
-          "link": 63
+          "link": 71
         },
         {
           "localized_name": "left_latent",
           "name": "left_latent",
           "type": "LATENT",
-          "link": 64
+          "link": 72
         },
         {
           "localized_name": "right_latent",
           "name": "right_latent",
           "type": "LATENT",
-          "link": 65
+          "link": 73
         },
         {
           "localized_name": "seam",
           "name": "seam",
           "type": "CAUCE_SEAM",
-          "link": 66
+          "link": 74
         }
       ],
       "outputs": [
@@ -2690,7 +2947,8 @@
           "name": "masked_latent",
           "type": "LATENT",
           "links": [
-            88
+            81,
+            106
           ]
         },
         {
@@ -2706,10 +2964,146 @@
       }
     },
     {
-      "id": 41,
-      "type": "RandomNoise",
+      "id": 45,
+      "type": "CauceH3TemporalInpaintGuides",
       "pos": [
         6100,
+        0
+      ],
+      "size": [
+        360,
+        190
+      ],
+      "flags": {},
+      "order": 44,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 75
+        },
+        {
+          "localized_name": "target_latent",
+          "name": "target_latent",
+          "type": "LATENT",
+          "link": 76
+        },
+        {
+          "localized_name": "working_images",
+          "name": "working_images",
+          "type": "IMAGE",
+          "link": 77
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "link": 78
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 79
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            86
+          ]
+        },
+        {
+          "localized_name": "guide_report",
+          "name": "guide_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3TemporalInpaintGuides",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "22f incoming + outgoing guides at B"
+    },
+    {
+      "id": 46,
+      "type": "CauceH3TemporalInpaintGuides",
+      "pos": [
+        6100,
+        760
+      ],
+      "size": [
+        360,
+        190
+      ],
+      "flags": {},
+      "order": 45,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 80
+        },
+        {
+          "localized_name": "target_latent",
+          "name": "target_latent",
+          "type": "LATENT",
+          "link": 81
+        },
+        {
+          "localized_name": "working_images",
+          "name": "working_images",
+          "type": "IMAGE",
+          "link": 82
+        },
+        {
+          "localized_name": "seam",
+          "name": "seam",
+          "type": "CAUCE_SEAM",
+          "link": 83
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 84
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            101
+          ]
+        },
+        {
+          "localized_name": "guide_report",
+          "name": "guide_report",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CauceH3TemporalInpaintGuides",
+        "aux_id": "hypereikon-lab/ComfyUI-Cauce"
+      },
+      "title": "22f incoming + outgoing guides at A"
+    },
+    {
+      "id": 47,
+      "type": "RandomNoise",
+      "pos": [
+        6520,
         0
       ],
       "size": [
@@ -2717,7 +3111,7 @@
         82
       ],
       "flags": {},
-      "order": 40,
+      "order": 46,
       "mode": 0,
       "inputs": [
         {
@@ -2736,7 +3130,7 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            69
+            87
           ]
         }
       ],
@@ -2750,10 +3144,10 @@
       ]
     },
     {
-      "id": 42,
+      "id": 48,
       "type": "BasicGuider",
       "pos": [
-        6100,
+        6520,
         130
       ],
       "size": [
@@ -2761,20 +3155,20 @@
         46
       ],
       "flags": {},
-      "order": 41,
+      "order": 47,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
           "name": "model",
           "type": "MODEL",
-          "link": 67
+          "link": 85
         },
         {
           "localized_name": "conditioning",
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 68
+          "link": 86
         }
       ],
       "outputs": [
@@ -2783,7 +3177,7 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            70
+            88
           ]
         }
       ],
@@ -2793,10 +3187,10 @@
       }
     },
     {
-      "id": 43,
+      "id": 49,
       "type": "SamplerCustomAdvanced",
       "pos": [
-        6420,
+        6840,
         60
       ],
       "size": [
@@ -2804,38 +3198,38 @@
         126
       ],
       "flags": {},
-      "order": 42,
+      "order": 48,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "noise",
           "name": "noise",
           "type": "NOISE",
-          "link": 69
+          "link": 87
         },
         {
           "localized_name": "guider",
           "name": "guider",
           "type": "GUIDER",
-          "link": 70
+          "link": 88
         },
         {
           "localized_name": "sampler",
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 71
+          "link": 89
         },
         {
           "localized_name": "sigmas",
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 72
+          "link": 90
         },
         {
           "localized_name": "latent_image",
           "name": "latent_image",
           "type": "LATENT",
-          "link": 73
+          "link": 91
         }
       ],
       "outputs": [
@@ -2844,7 +3238,7 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            74
+            92
           ]
         },
         {
@@ -2860,10 +3254,10 @@
       }
     },
     {
-      "id": 44,
+      "id": 50,
       "type": "CauceResolveParentLatent",
       "pos": [
-        6710,
+        7130,
         60
       ],
       "size": [
@@ -2871,20 +3265,20 @@
         46
       ],
       "flags": {},
-      "order": 43,
+      "order": 49,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "latent",
           "name": "latent",
           "type": "LATENT",
-          "link": 74
+          "link": 92
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 75
+          "link": 93
         }
       ],
       "outputs": [
@@ -2893,7 +3287,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            76
+            94
           ]
         }
       ],
@@ -2903,10 +3297,10 @@
       }
     },
     {
-      "id": 45,
+      "id": 51,
       "type": "VAEDecode",
       "pos": [
-        7000,
+        7420,
         0
       ],
       "size": [
@@ -2914,20 +3308,20 @@
         46
       ],
       "flags": {},
-      "order": 44,
+      "order": 50,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "samples",
           "name": "samples",
           "type": "LATENT",
-          "link": 76
+          "link": 94
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 77
+          "link": 95
         }
       ],
       "outputs": [
@@ -2936,7 +3330,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            78
+            96
           ]
         }
       ],
@@ -2946,10 +3340,10 @@
       }
     },
     {
-      "id": 46,
+      "id": 52,
       "type": "CauceAcceptDecodedWindow",
       "pos": [
-        7220,
+        7640,
         40
       ],
       "size": [
@@ -2957,20 +3351,20 @@
         66
       ],
       "flags": {},
-      "order": 45,
+      "order": 51,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 78
+          "link": 96
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 79
+          "link": 97
         },
         {
           "localized_name": "audio",
@@ -2986,8 +3380,8 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            80,
-            99
+            98,
+            117
           ]
         },
         {
@@ -3009,10 +3403,10 @@
       }
     },
     {
-      "id": 47,
+      "id": 53,
       "type": "CreateVideo",
       "pos": [
-        7530,
+        7950,
         40
       ],
       "size": [
@@ -3020,14 +3414,14 @@
         102
       ],
       "flags": {},
-      "order": 46,
+      "order": 52,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 80
+          "link": 98
         },
         {
           "localized_name": "audio",
@@ -3061,7 +3455,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            81
+            99
           ]
         }
       ],
@@ -3075,10 +3469,10 @@
       ]
     },
     {
-      "id": 48,
+      "id": 54,
       "type": "SaveVideo",
       "pos": [
-        7850,
+        8270,
         40
       ],
       "size": [
@@ -3086,14 +3480,14 @@
         106
       ],
       "flags": {},
-      "order": 47,
+      "order": 53,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 81
+          "link": 99
         },
         {
           "localized_name": "filename_prefix",
@@ -3136,24 +3530,24 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/03_seam_b_working",
+        "cauce/native_loop_v2/03_seam_b_working",
         "mp4",
         "auto"
       ]
     },
     {
-      "id": 49,
+      "id": 55,
       "type": "RandomNoise",
       "pos": [
-        6100,
-        700
+        6520,
+        760
       ],
       "size": [
         270,
         82
       ],
       "flags": {},
-      "order": 48,
+      "order": 54,
       "mode": 0,
       "inputs": [
         {
@@ -3172,7 +3566,7 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            84
+            102
           ]
         }
       ],
@@ -3186,31 +3580,31 @@
       ]
     },
     {
-      "id": 50,
+      "id": 56,
       "type": "BasicGuider",
       "pos": [
-        6100,
-        830
+        6520,
+        890
       ],
       "size": [
         180,
         46
       ],
       "flags": {},
-      "order": 49,
+      "order": 55,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
           "name": "model",
           "type": "MODEL",
-          "link": 82
+          "link": 100
         },
         {
           "localized_name": "conditioning",
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 83
+          "link": 101
         }
       ],
       "outputs": [
@@ -3219,7 +3613,7 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            85
+            103
           ]
         }
       ],
@@ -3229,49 +3623,49 @@
       }
     },
     {
-      "id": 51,
+      "id": 57,
       "type": "SamplerCustomAdvanced",
       "pos": [
-        6420,
-        760
+        6840,
+        820
       ],
       "size": [
         230,
         126
       ],
       "flags": {},
-      "order": 50,
+      "order": 56,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "noise",
           "name": "noise",
           "type": "NOISE",
-          "link": 84
+          "link": 102
         },
         {
           "localized_name": "guider",
           "name": "guider",
           "type": "GUIDER",
-          "link": 85
+          "link": 103
         },
         {
           "localized_name": "sampler",
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 86
+          "link": 104
         },
         {
           "localized_name": "sigmas",
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 87
+          "link": 105
         },
         {
           "localized_name": "latent_image",
           "name": "latent_image",
           "type": "LATENT",
-          "link": 88
+          "link": 106
         }
       ],
       "outputs": [
@@ -3280,7 +3674,7 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            89
+            107
           ]
         },
         {
@@ -3296,31 +3690,31 @@
       }
     },
     {
-      "id": 52,
+      "id": 58,
       "type": "CauceResolveParentLatent",
       "pos": [
-        6710,
-        760
+        7130,
+        820
       ],
       "size": [
         244,
         46
       ],
       "flags": {},
-      "order": 51,
+      "order": 57,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "latent",
           "name": "latent",
           "type": "LATENT",
-          "link": 89
+          "link": 107
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 90
+          "link": 108
         }
       ],
       "outputs": [
@@ -3329,7 +3723,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            91
+            109
           ]
         }
       ],
@@ -3339,31 +3733,31 @@
       }
     },
     {
-      "id": 53,
+      "id": 59,
       "type": "VAEDecode",
       "pos": [
-        7000,
-        700
+        7420,
+        760
       ],
       "size": [
         160,
         46
       ],
       "flags": {},
-      "order": 52,
+      "order": 58,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "samples",
           "name": "samples",
           "type": "LATENT",
-          "link": 91
+          "link": 109
         },
         {
           "localized_name": "vae",
           "name": "vae",
           "type": "VAE",
-          "link": 92
+          "link": 110
         }
       ],
       "outputs": [
@@ -3372,7 +3766,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            93
+            111
           ]
         }
       ],
@@ -3382,31 +3776,31 @@
       }
     },
     {
-      "id": 54,
+      "id": 60,
       "type": "CauceAcceptDecodedWindow",
       "pos": [
-        7220,
-        740
+        7640,
+        800
       ],
       "size": [
         270,
         66
       ],
       "flags": {},
-      "order": 53,
+      "order": 59,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 93
+          "link": 111
         },
         {
           "localized_name": "window",
           "name": "window",
           "type": "CAUCE_WINDOW",
-          "link": 94
+          "link": 112
         },
         {
           "localized_name": "audio",
@@ -3422,8 +3816,8 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            95,
-            101
+            113,
+            119
           ]
         },
         {
@@ -3445,25 +3839,25 @@
       }
     },
     {
-      "id": 55,
+      "id": 61,
       "type": "CreateVideo",
       "pos": [
-        7530,
-        740
+        7950,
+        800
       ],
       "size": [
         270,
         102
       ],
       "flags": {},
-      "order": 54,
+      "order": 60,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 95
+          "link": 113
         },
         {
           "localized_name": "audio",
@@ -3497,7 +3891,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            96
+            114
           ]
         }
       ],
@@ -3511,25 +3905,25 @@
       ]
     },
     {
-      "id": 56,
+      "id": 62,
       "type": "SaveVideo",
       "pos": [
-        7850,
-        740
+        8270,
+        800
       ],
       "size": [
         270,
         106
       ],
       "flags": {},
-      "order": 55,
+      "order": 61,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 96
+          "link": 114
         },
         {
           "localized_name": "filename_prefix",
@@ -3572,61 +3966,61 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/04_seam_a_working",
+        "cauce/native_loop_v2/04_seam_a_working",
         "mp4",
         "auto"
       ]
     },
     {
-      "id": 57,
+      "id": 63,
       "type": "CauceAssembleNativeTwoClipLoop",
       "pos": [
-        8270,
-        300
+        8690,
+        350
       ],
       "size": [
         410,
         230
       ],
       "flags": {},
-      "order": 56,
+      "order": 62,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "first_clip",
           "name": "first_clip",
           "type": "IMAGE",
-          "link": 97
+          "link": 115
         },
         {
           "localized_name": "second_clip",
           "name": "second_clip",
           "type": "IMAGE",
-          "link": 98
+          "link": 116
         },
         {
           "localized_name": "forward_repaired_working",
           "name": "forward_repaired_working",
           "type": "IMAGE",
-          "link": 99
+          "link": 117
         },
         {
           "localized_name": "forward_seam",
           "name": "forward_seam",
           "type": "CAUCE_SEAM",
-          "link": 100
+          "link": 118
         },
         {
           "localized_name": "wrap_repaired_working",
           "name": "wrap_repaired_working",
           "type": "IMAGE",
-          "link": 101
+          "link": 119
         },
         {
           "localized_name": "wrap_seam",
           "name": "wrap_seam",
           "type": "CAUCE_SEAM",
-          "link": 102
+          "link": 120
         },
         {
           "localized_name": "decoded_feather_frames",
@@ -3653,7 +4047,7 @@
           "name": "loop",
           "type": "IMAGE",
           "links": [
-            103
+            121
           ]
         },
         {
@@ -3673,7 +4067,7 @@
           "name": "forward_patch",
           "type": "IMAGE",
           "links": [
-            105
+            123
           ]
         },
         {
@@ -3681,7 +4075,7 @@
           "name": "wrap_patch",
           "type": "IMAGE",
           "links": [
-            107
+            125
           ]
         },
         {
@@ -3701,25 +4095,25 @@
       ]
     },
     {
-      "id": 58,
+      "id": 64,
       "type": "CreateVideo",
       "pos": [
-        8730,
-        250
+        9150,
+        300
       ],
       "size": [
         270,
         102
       ],
       "flags": {},
-      "order": 57,
+      "order": 63,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 103
+          "link": 121
         },
         {
           "localized_name": "audio",
@@ -3753,7 +4147,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            104
+            122
           ]
         }
       ],
@@ -3767,25 +4161,25 @@
       ]
     },
     {
-      "id": 59,
+      "id": 65,
       "type": "SaveVideo",
       "pos": [
-        9040,
-        250
+        9460,
+        300
       ],
       "size": [
         270,
         106
       ],
       "flags": {},
-      "order": 58,
+      "order": 64,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 104
+          "link": 122
         },
         {
           "localized_name": "filename_prefix",
@@ -3828,31 +4222,31 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/05_ab_ba_loop",
+        "cauce/native_loop_v2/05_ab_ba_loop",
         "mp4",
         "auto"
       ]
     },
     {
-      "id": 60,
+      "id": 66,
       "type": "CreateVideo",
       "pos": [
-        8730,
-        520
+        9150,
+        570
       ],
       "size": [
         270,
         102
       ],
       "flags": {},
-      "order": 59,
+      "order": 65,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 105
+          "link": 123
         },
         {
           "localized_name": "audio",
@@ -3886,7 +4280,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            106
+            124
           ]
         }
       ],
@@ -3900,25 +4294,25 @@
       ]
     },
     {
-      "id": 61,
+      "id": 67,
       "type": "SaveVideo",
       "pos": [
-        9040,
-        520
+        9460,
+        570
       ],
       "size": [
         270,
         106
       ],
       "flags": {},
-      "order": 60,
+      "order": 66,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 106
+          "link": 124
         },
         {
           "localized_name": "filename_prefix",
@@ -3961,31 +4355,31 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/06_patch_b",
+        "cauce/native_loop_v2/06_patch_b",
         "mp4",
         "auto"
       ]
     },
     {
-      "id": 62,
+      "id": 68,
       "type": "CreateVideo",
       "pos": [
-        8730,
-        760
+        9150,
+        810
       ],
       "size": [
         270,
         102
       ],
       "flags": {},
-      "order": 61,
+      "order": 67,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "link": 107
+          "link": 125
         },
         {
           "localized_name": "audio",
@@ -4019,7 +4413,7 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            108
+            126
           ]
         }
       ],
@@ -4033,25 +4427,25 @@
       ]
     },
     {
-      "id": 63,
+      "id": 69,
       "type": "SaveVideo",
       "pos": [
-        9040,
-        760
+        9460,
+        810
       ],
       "size": [
         270,
         106
       ],
       "flags": {},
-      "order": 62,
+      "order": 68,
       "mode": 0,
       "inputs": [
         {
           "localized_name": "video",
           "name": "video",
           "type": "VIDEO",
-          "link": 108
+          "link": 126
         },
         {
           "localized_name": "filename_prefix",
@@ -4094,7 +4488,7 @@
         "cnr_id": "comfy-core"
       },
       "widgets_values": [
-        "cauce/native_loop/07_patch_a",
+        "cauce/native_loop_v2/07_patch_a",
         "mp4",
         "auto"
       ]
@@ -4567,406 +4961,550 @@
     ],
     [
       59,
-      37,
-      1,
+      35,
+      0,
       39,
       0,
-      "LATENT"
+      "IMAGE"
     ],
     [
       60,
-      20,
+      35,
       0,
-      39,
-      1,
-      "LATENT"
+      40,
+      0,
+      "IMAGE"
     ],
     [
       61,
-      28,
-      0,
       39,
-      2,
-      "LATENT"
+      0,
+      37,
+      4,
+      "IMAGE"
     ],
     [
       62,
-      35,
-      1,
-      39,
-      3,
-      "CAUCE_SEAM"
+      40,
+      0,
+      37,
+      5,
+      "IMAGE"
     ],
     [
       63,
-      38,
-      1,
-      40,
+      36,
       0,
-      "LATENT"
+      41,
+      0,
+      "IMAGE"
     ],
     [
       64,
-      28,
+      36,
       0,
-      40,
+      42,
+      0,
+      "IMAGE"
+    ],
+    [
+      65,
+      41,
+      0,
+      38,
+      4,
+      "IMAGE"
+    ],
+    [
+      66,
+      42,
+      0,
+      38,
+      5,
+      "IMAGE"
+    ],
+    [
+      67,
+      37,
+      1,
+      43,
+      0,
+      "LATENT"
+    ],
+    [
+      68,
+      20,
+      0,
+      43,
       1,
       "LATENT"
     ],
     [
-      65,
-      20,
+      69,
+      28,
       0,
-      40,
+      43,
       2,
       "LATENT"
     ],
     [
-      66,
-      36,
+      70,
+      35,
       1,
-      40,
+      43,
       3,
       "CAUCE_SEAM"
     ],
     [
-      67,
-      10,
-      0,
-      42,
-      0,
-      "MODEL"
-    ],
-    [
-      68,
-      37,
-      0,
-      42,
-      1,
-      "CONDITIONING"
-    ],
-    [
-      69,
-      41,
-      0,
-      43,
-      0,
-      "NOISE"
-    ],
-    [
-      70,
-      42,
-      0,
-      43,
-      1,
-      "GUIDER"
-    ],
-    [
       71,
-      13,
+      38,
+      1,
+      44,
       0,
-      43,
-      2,
-      "SAMPLER"
+      "LATENT"
     ],
     [
       72,
-      14,
+      28,
       0,
-      43,
-      3,
-      "SIGMAS"
+      44,
+      1,
+      "LATENT"
     ],
     [
       73,
-      39,
+      20,
       0,
-      43,
-      4,
+      44,
+      2,
       "LATENT"
     ],
     [
       74,
-      43,
-      0,
+      36,
+      1,
       44,
-      0,
-      "LATENT"
+      3,
+      "CAUCE_SEAM"
     ],
     [
       75,
-      35,
-      2,
-      44,
-      1,
-      "CAUCE_WINDOW"
-    ],
-    [
-      76,
-      44,
+      37,
       0,
       45,
       0,
+      "CONDITIONING"
+    ],
+    [
+      76,
+      43,
+      0,
+      45,
+      1,
       "LATENT"
     ],
     [
       77,
-      12,
+      35,
       0,
       45,
-      1,
-      "VAE"
+      2,
+      "IMAGE"
     ],
     [
       78,
+      35,
+      1,
       45,
-      0,
-      46,
-      0,
-      "IMAGE"
+      3,
+      "CAUCE_SEAM"
     ],
     [
       79,
-      35,
-      2,
-      46,
-      1,
-      "CAUCE_WINDOW"
+      12,
+      0,
+      45,
+      4,
+      "VAE"
     ],
     [
       80,
+      38,
+      0,
       46,
       0,
-      47,
-      0,
-      "IMAGE"
+      "CONDITIONING"
     ],
     [
       81,
-      47,
+      44,
       0,
-      48,
-      0,
-      "VIDEO"
+      46,
+      1,
+      "LATENT"
     ],
     [
       82,
+      36,
+      0,
+      46,
+      2,
+      "IMAGE"
+    ],
+    [
+      83,
+      36,
+      1,
+      46,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      84,
+      12,
+      0,
+      46,
+      4,
+      "VAE"
+    ],
+    [
+      85,
       10,
       0,
-      50,
+      48,
       0,
       "MODEL"
     ],
     [
-      83,
-      38,
+      86,
+      45,
       0,
-      50,
+      48,
       1,
       "CONDITIONING"
     ],
     [
-      84,
-      49,
+      87,
+      47,
       0,
-      51,
+      49,
       0,
       "NOISE"
     ],
     [
-      85,
-      50,
+      88,
+      48,
       0,
-      51,
+      49,
       1,
       "GUIDER"
     ],
     [
-      86,
+      89,
       13,
       0,
-      51,
+      49,
       2,
       "SAMPLER"
     ],
     [
-      87,
+      90,
       14,
       0,
-      51,
+      49,
       3,
       "SIGMAS"
     ],
     [
-      88,
-      40,
-      0,
-      51,
-      4,
-      "LATENT"
-    ],
-    [
-      89,
-      51,
-      0,
-      52,
-      0,
-      "LATENT"
-    ],
-    [
-      90,
-      36,
-      2,
-      52,
-      1,
-      "CAUCE_WINDOW"
-    ],
-    [
       91,
-      52,
+      43,
       0,
-      53,
-      0,
+      49,
+      4,
       "LATENT"
     ],
     [
       92,
-      12,
+      49,
       0,
-      53,
-      1,
-      "VAE"
+      50,
+      0,
+      "LATENT"
     ],
     [
       93,
-      53,
-      0,
-      54,
-      0,
-      "IMAGE"
-    ],
-    [
-      94,
-      36,
+      35,
       2,
-      54,
+      50,
       1,
       "CAUCE_WINDOW"
     ],
     [
+      94,
+      50,
+      0,
+      51,
+      0,
+      "LATENT"
+    ],
+    [
       95,
-      54,
+      12,
       0,
-      55,
-      0,
-      "IMAGE"
+      51,
+      1,
+      "VAE"
     ],
     [
       96,
-      55,
+      51,
       0,
-      56,
-      0,
-      "VIDEO"
-    ],
-    [
-      97,
-      22,
-      0,
-      57,
+      52,
       0,
       "IMAGE"
     ],
     [
-      98,
-      30,
-      0,
-      57,
+      97,
+      35,
+      2,
+      52,
       1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      98,
+      52,
+      0,
+      53,
+      0,
       "IMAGE"
     ],
     [
       99,
-      46,
+      53,
       0,
-      57,
-      2,
-      "IMAGE"
+      54,
+      0,
+      "VIDEO"
     ],
     [
       100,
-      35,
-      1,
-      57,
-      3,
-      "CAUCE_SEAM"
+      10,
+      0,
+      56,
+      0,
+      "MODEL"
     ],
     [
       101,
-      54,
+      46,
       0,
-      57,
-      4,
-      "IMAGE"
+      56,
+      1,
+      "CONDITIONING"
     ],
     [
       102,
-      36,
-      1,
+      55,
+      0,
       57,
-      5,
-      "CAUCE_SEAM"
+      0,
+      "NOISE"
     ],
     [
       103,
+      56,
+      0,
       57,
-      0,
-      58,
-      0,
-      "IMAGE"
+      1,
+      "GUIDER"
     ],
     [
       104,
-      58,
+      13,
       0,
-      59,
-      0,
-      "VIDEO"
+      57,
+      2,
+      "SAMPLER"
     ],
     [
       105,
+      14,
+      0,
       57,
       3,
-      60,
-      0,
-      "IMAGE"
+      "SIGMAS"
     ],
     [
       106,
-      60,
+      44,
       0,
-      61,
-      0,
-      "VIDEO"
+      57,
+      4,
+      "LATENT"
     ],
     [
       107,
       57,
-      4,
-      62,
+      0,
+      58,
+      0,
+      "LATENT"
+    ],
+    [
+      108,
+      36,
+      2,
+      58,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      109,
+      58,
+      0,
+      59,
+      0,
+      "LATENT"
+    ],
+    [
+      110,
+      12,
+      0,
+      59,
+      1,
+      "VAE"
+    ],
+    [
+      111,
+      59,
+      0,
+      60,
       0,
       "IMAGE"
     ],
     [
-      108,
-      62,
+      112,
+      36,
+      2,
+      60,
+      1,
+      "CAUCE_WINDOW"
+    ],
+    [
+      113,
+      60,
       0,
-      63,
+      61,
+      0,
+      "IMAGE"
+    ],
+    [
+      114,
+      61,
+      0,
+      62,
       0,
       "VIDEO"
     ],
     [
-      109,
+      115,
+      22,
+      0,
+      63,
+      0,
+      "IMAGE"
+    ],
+    [
+      116,
+      30,
+      0,
+      63,
+      1,
+      "IMAGE"
+    ],
+    [
+      117,
+      52,
+      0,
+      63,
+      2,
+      "IMAGE"
+    ],
+    [
+      118,
+      35,
+      1,
+      63,
+      3,
+      "CAUCE_SEAM"
+    ],
+    [
+      119,
+      60,
+      0,
+      63,
+      4,
+      "IMAGE"
+    ],
+    [
+      120,
+      36,
+      1,
+      63,
+      5,
+      "CAUCE_SEAM"
+    ],
+    [
+      121,
+      63,
+      0,
+      64,
+      0,
+      "IMAGE"
+    ],
+    [
+      122,
+      64,
+      0,
+      65,
+      0,
+      "VIDEO"
+    ],
+    [
+      123,
+      63,
+      3,
+      66,
+      0,
+      "IMAGE"
+    ],
+    [
+      124,
+      66,
+      0,
+      67,
+      0,
+      "VIDEO"
+    ],
+    [
+      125,
+      63,
+      4,
+      68,
+      0,
+      "IMAGE"
+    ],
+    [
+      126,
+      68,
+      0,
+      69,
+      0,
+      "VIDEO"
+    ],
+    [
+      127,
       2,
       0,
       4,
@@ -4974,7 +5512,7 @@
       "IMAGE"
     ],
     [
-      110,
+      128,
       3,
       0,
       5,
@@ -4982,7 +5520,7 @@
       "IMAGE"
     ],
     [
-      111,
+      129,
       7,
       0,
       8,
@@ -5033,8 +5571,8 @@
       "bounding": [
         4800,
         -40,
-        3400,
-        1580
+        3820,
+        1640
       ],
       "color": "#315f46",
       "flags": {}
@@ -5043,10 +5581,10 @@
       "id": 5,
       "title": "DURATION-PRESERVING CLOSED LOOP",
       "bounding": [
-        8200,
+        8620,
         -40,
-        1200,
-        1120
+        1260,
+        1180
       ],
       "color": "#315f46",
       "flags": {}

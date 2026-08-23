@@ -122,6 +122,7 @@ class VisualWorkflowTests(unittest.TestCase):
         types = [node["type"] for node in workflow["nodes"]]
         self.assertEqual(types.count("CauceBuildNativeLatentSeam"), 2)
         self.assertEqual(types.count("CaucePrepareH3NativeLatentInpaint"), 2)
+        self.assertEqual(types.count("CauceH3TemporalInpaintGuides"), 2)
         self.assertEqual(types.count("CauceAssembleNativeTwoClipLoop"), 1)
         self.assertEqual(types.count("CauceSaveAVLatent"), 2)
         profile = next(
@@ -131,7 +132,22 @@ class VisualWorkflowTests(unittest.TestCase):
         seams = [
             node for node in workflow["nodes"] if node["type"] == "CauceBuildNativeLatentSeam"
         ]
-        self.assertTrue(all(node["widgets_values"] == [24.0, 24.0, "39", "124"] for node in seams))
+        self.assertTrue(
+            all(
+                node["widgets_values"] == [24.0, 24.0, "22", "124", 72]
+                for node in seams
+            )
+        )
+        conditions = [node for node in workflow["nodes"] if node["type"] == "CauceH3FL2VA"]
+        self.assertEqual(
+            [node["widgets_values"][0] for node in conditions[:2]],
+            ["infinite fast zoom transition into"] * 2,
+        )
+        seam_prompts = [node["widgets_values"][0] for node in conditions[2:]]
+        self.assertEqual(len(seam_prompts), 2)
+        self.assertTrue(
+            all(prompt.startswith("Regenerate only the masked temporal interval.") for prompt in seam_prompts)
+        )
         assembly = next(
             node for node in workflow["nodes"] if node["type"] == "CauceAssembleNativeTwoClipLoop"
         )

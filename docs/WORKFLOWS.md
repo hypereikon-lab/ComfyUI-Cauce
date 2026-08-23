@@ -265,20 +265,23 @@ No concatena latents independientes ni vuelve a codificar los MP4. Para el
 preset de 124 frames, la geometría visible y latent es:
 
 ```text
-video visible: 39 protegidos + 46 generados + 39 protegidos = 124
-video latent:  12 protegidos + 13 generados + 12 protegidos = 37 tokens
-rangos target: [0,12) preserve · [12,25) generate · [25,37) preserve
+video visible: 22 protegidos + 80 muestreados + 22 protegidos = 124
+video latent:   7 protegidos + 23 generados + 7 protegidos = 37 tokens
+rangos target: [0,7) preserve · [7,30) generate · [30,37) preserve
 ```
 
-El token 25 vuelve a fase cero en el ciclo temporal `(1,4,4,4,4)` del VAE H3.
-Por eso el head del segundo parent puede ocupar `[25,37)` sin reinterpretar la
+El token 30 vuelve a fase cero en el ciclo temporal `(1,4,4,4,4)` del VAE H3.
+Por eso el head del segundo parent puede ocupar `[30,37)` sin reinterpretar la
 duración visible de sus filas. El tail del primer parent también comienza en
-token 25 para un source de 124 frames. CAUCE rechaza automáticamente longitudes
+token 30 para un source de 124 frames. CAUCE rechaza automáticamente longitudes
 o combinaciones que rompan esta igualdad de fase.
 
 Cada sample de seam se decodifica como una ventana de inspección de 124 frames,
-pero el montaje sólo acepta sus 46 frames centrales. Éstos reemplazan 23 frames
-de cada clip. Un feather coseno de cuatro frames opera después del decode; no
+pero el montaje sólo acepta `[26,98)`: los 72 frames internos (tres segundos).
+Los cuatro frames de overscan a cada lado se muestrean, pero no se montan. Dos
+guide clips de 22 frames, `[0,22)` y `[102,124)`, exponen explícitamente el gesto
+entrante y saliente al conditioning. El patch aceptado reemplaza 36 frames de
+cada clip. Un feather coseno de cuatro frames opera después del decode; no
 cambia el mask de denoise ni permite que H3 reescriba el contexto protegido.
 
 El montaje final conserva exactamente:

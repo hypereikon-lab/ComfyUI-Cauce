@@ -11,6 +11,10 @@
   infrastructure responsibilities.
 - [Operations guide](OPERATIONS_GUIDE.md): practical composition patterns for
   continuation, temporal inpainting, motion maps, persistence, and research.
+- [Bidirectional temporal inpainting](TEMPORAL_INPAINTING.md): formal operation,
+  H3 row-mask mechanism, prompting, sampling, splice, and quality gates.
+- [Workflow contracts](WORKFLOW_CONTRACTS.md): W0/W1/W2/W3 matched graphs and
+  their shared starting configuration.
 
 ## Mathematics and evidence
 

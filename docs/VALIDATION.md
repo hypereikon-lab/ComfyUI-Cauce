@@ -22,7 +22,9 @@ Verify:
 - current CAUCE commit is installed;
 - representative `/object_info` requests return the expected schemas;
 - official H3 model nodes are available;
-- per-token H3 denoise-mask hooks pass the CAUCE capability probe;
+- native H3 denoise-mask hooks from ComfyUI PR `#15375` pass the CAUCE
+  capability probe, including clean-latent reinjection and model forward mask
+  arguments;
 - queue is idle before test submission.
 
 ## Gate 3 — temporal geometry
@@ -35,6 +37,10 @@ Unit-test:
 - sampling mask binary values;
 - exact duration-preserving splice ranges;
 - unchanged frames outside the patch.
+
+Run the matched W0/W1/W2 comparison. W1 isolates native masked sampling; W2
+adds only the two official guide clips. Do not accept W2 without proving an
+improvement over W1.
 
 ## Gate 4 — continuation
 

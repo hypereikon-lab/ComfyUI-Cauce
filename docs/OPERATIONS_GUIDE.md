@@ -57,9 +57,11 @@ seconds elsewhere in the graph.
 
 ### 3.2 Prepare conditioning
 
-Use official batch-range/image slicing nodes to extract both guide clips from
-`working_images`, then apply two official `MiniMaxH3AddGuide` nodes at the frame
-indices declared by the seam plan.
+First run a masked-only control without guide clips. Then use official
+batch-range/image slicing nodes to extract both guide clips from
+`working_images` and apply two official `MiniMaxH3AddGuide` nodes at the frame
+indices declared by the seam plan. This separates the effect of the preserved
+main latent from the effect of duplicate guide conditioning.
 
 CAUCE does not wrap the official guide node.
 
@@ -86,6 +88,10 @@ The final splice:
 - preserves frames outside the interval exactly;
 - applies a decoded cosine/smoothstep/linear opacity feather;
 - preserves the combined source duration.
+
+The complete mathematical and experimental contract is documented in
+[TEMPORAL_INPAINTING.md](TEMPORAL_INPAINTING.md). Construct W0/W1/W2 as matched
+comparisons from [WORKFLOW_CONTRACTS.md](WORKFLOW_CONTRACTS.md).
 
 ## 4. Motion maps
 

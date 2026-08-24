@@ -75,6 +75,8 @@ ComfyUI runtime supplies those dependencies.
 - [Architecture](docs/ARCHITECTURE.md)
 - [Node catalog](docs/NODE_CATALOG.md)
 - [Operations guide](docs/OPERATIONS_GUIDE.md)
+- [Bidirectional temporal inpainting](docs/TEMPORAL_INPAINTING.md)
+- [Workflow contracts](docs/WORKFLOW_CONTRACTS.md)
 - [Motion-map mathematics](docs/MOTION_MAPS.md)
 - [Validation](docs/VALIDATION.md)
 - [Remote ComfyUI runtime](docs/REMOTE_COMFY_RUNTIME.md)

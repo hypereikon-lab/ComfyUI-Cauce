@@ -102,6 +102,10 @@ The 19 stable nodes divide into:
 Official model loaders, FL2VA/Ref2VA conditioning, guide application, samplers,
 VAE encode/decode, and video saving remain official ComfyUI nodes.
 
+Native H3 per-row denoise masks are an official ComfyUI runtime capability.
+CAUCE owns only the temporal/spatial support geometry and the construction of a
+valid nested AV mask; it does not patch the H3 model.
+
 ## Research surface
 
 Five nodes are registered under `CAUCE/Research`. Their code paths are kept

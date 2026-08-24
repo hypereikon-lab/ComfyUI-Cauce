@@ -36,7 +36,14 @@ def pixel_frames_from_video_latent(video: Any) -> int:
 
 
 def h3_temporal_mask_capabilities() -> dict[str, Any]:
-    """Inspect official ComfyUI support for model-aware per-token H3 masks."""
+    """Inspect official ComfyUI support for model-aware per-row H3 masks.
+
+    The probe intentionally checks the public execution seam between
+    ``MiniMaxH3`` and ``MiniMaxH3Model``.  Helper functions used *inside* the
+    model forward pass are implementation details and have already changed
+    since native mask support landed; requiring one of those helpers would
+    incorrectly reject a compatible current runtime.
+    """
 
     problems: list[str] = []
     try:
@@ -46,16 +53,21 @@ def h3_temporal_mask_capabilities() -> dict[str, Any]:
         minimax_h3 = None
         problems.append(f"MiniMaxH3 runtime unavailable ({type(exc).__name__}: {exc})")
 
-    required_mask_hooks = (
-        "_token_grid_masks",
-        "_denoise_mask_conds",
-        "scale_latent_inpaint",
-    )
-    missing_mask_hooks = [
-        name
-        for name in required_mask_hooks
-        if minimax_h3 is None or name not in minimax_h3.__dict__
-    ]
+    model_base_checks = {
+        "token_grid_masks": callable(getattr(minimax_h3, "_token_grid_masks", None)),
+        "denoise_mask_conds": callable(getattr(minimax_h3, "_denoise_mask_conds", None)),
+        "scale_latent_inpaint": callable(getattr(minimax_h3, "scale_latent_inpaint", None)),
+    }
+    scale_latent = getattr(minimax_h3, "scale_latent_inpaint", None)
+    try:
+        scale_parameters = inspect.signature(scale_latent).parameters
+        model_base_checks["scale_latent_receives_x_and_mask"] = {
+            "x",
+            "denoise_mask",
+        }.issubset(scale_parameters)
+    except (TypeError, ValueError):
+        model_base_checks["scale_latent_receives_x_and_mask"] = False
+    missing_mask_hooks = [name for name, ready in model_base_checks.items() if not ready]
     if missing_mask_hooks:
         problems.append("missing H3 denoise-mask hooks: " + ", ".join(missing_mask_hooks))
 
@@ -66,7 +78,6 @@ def h3_temporal_mask_capabilities() -> dict[str, Any]:
         inner = getattr(model, "_forward", None)
         engine_checks = {
             "mask_row_values": callable(getattr(engine, "mask_row_values", None)),
-            "mod_row": callable(getattr(engine, "_mod_row", None)),
             "forward_masks": callable(forward)
             and {"denoise_mask", "audio_denoise_mask"}.issubset(
                 inspect.signature(forward).parameters
@@ -79,7 +90,6 @@ def h3_temporal_mask_capabilities() -> dict[str, Any]:
     except (ImportError, AttributeError, TypeError, ValueError) as exc:
         engine_checks = {
             "mask_row_values": False,
-            "mod_row": False,
             "forward_masks": False,
             "inner_masks": False,
         }
@@ -90,9 +100,11 @@ def h3_temporal_mask_capabilities() -> dict[str, Any]:
         problems.append("incomplete H3 per-row mask engine: " + ", ".join(missing_engine_hooks))
 
     return {
-        "schema": "cauce.h3-temporal-mask-capabilities/1",
+        "schema": "cauce.h3-temporal-mask-capabilities/2",
         "ready": not problems,
         "per_token_denoise_mask": not missing_mask_hooks and not missing_engine_hooks,
+        "per_row_denoise_mask": not missing_mask_hooks and not missing_engine_hooks,
+        "model_base": model_base_checks,
         "missing_mask_hooks": missing_mask_hooks,
         "mask_engine": engine_checks,
         "missing_engine_hooks": missing_engine_hooks,

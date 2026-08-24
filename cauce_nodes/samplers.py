@@ -31,11 +31,11 @@ class CauceSigmaMotionSampler:
                 ),
                 "strength": (
                     "FLOAT",
-                    {"default": 0.25, "min": -1.0, "max": 1.0, "step": 0.01},
+                    {"default": 0.1, "min": -1.0, "max": 1.0, "step": 0.01},
                 ),
                 "envelope": (list(SIGMA_ENVELOPES), {"default": "accumulate"}),
                 "easing": (list(SIGMA_EASINGS), {"default": "smoothstep"}),
-                "padding_mode": (list(PADDING_MODES), {"default": "reflection"}),
+                "padding_mode": (list(PADDING_MODES), {"default": "border"}),
             }
         }
 
@@ -45,7 +45,8 @@ class CauceSigmaMotionSampler:
     CATEGORY = SAMPLER_CATEGORY
     DESCRIPTION = (
         "Apply sigma-conditioned H3 visual-latent pullbacks inside deterministic "
-        "RES or Euler sampling; packed audio is unchanged."
+        "RES or Euler sampling; packed audio is unchanged. Begin near strength "
+        "0.1 and validate field obedience against a seed-matched baseline."
     )
 
     def build(

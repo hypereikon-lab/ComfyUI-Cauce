@@ -65,11 +65,13 @@ tearing or endpoint drift.
 
 ## Compatibility and fail-closed behaviour
 
-The current implementation accepts only deterministic `res_multistep` and
-`res_multistep_cfg_pp`. Ancestral and arbitrary multi-evaluation solvers are
-rejected because one sigma step may contain a different number of internal
-model evaluations. Runtime also verifies that the observed model-call count
-equals `len(sigmas)-1`.
+The current implementation accepts deterministic `res_multistep`,
+`res_multistep_cfg_pp`, and first-order `euler`. Euler is the minimal diagnostic
+path because it retains no denoised history; comparing it to RES distinguishes
+multistep covariance failures from H3 manifold sensitivity. Ancestral and
+arbitrary multi-evaluation solvers are rejected because one sigma step may
+contain a different number of internal model evaluations. Runtime also verifies
+that the observed model-call count equals `len(sigmas)-1`.
 
 The node is a normal `SAMPLER → SAMPLER` wrapper:
 
@@ -85,3 +87,21 @@ SamplerCustomAdvanced
 Workflow 74 is the initial matched ablation. A valid decode proves wiring, not
 motion fidelity. Promotion additionally requires optical-flow agreement,
 endpoint stability and blind visual comparison against its baseline.
+
+Workflow 75 is the causal motion probe. It supplies only a first image (`A →`),
+uses a neutral shared prompt and compares official Euler against horizontal,
+zoom and rotation fields with every stochastic and conditioning input held
+fixed. Each map starts at identity in visible video time and grows
+monotonically. The sigma envelope is `accumulate`, so the imposed coordinate
+frame is retained instead of being undone before the final solver step.
+
+The first live Euler control on 2026-08-24 produced byte-identical MP4s for the
+official sampler and the CAUCE wrapper at strength zero. The original stress
+preset (`32%` horizontal map × `0.25` strength, approximately `8%` retained
+translation) produced severe mosaic and chroma-band corruption. A matched
+horizontal sweep with border padding found `8% × 0.10` (approximately `0.8%`)
+visually coherent, while `16% × 0.10` and `24% × 0.10` showed increasing latent
+tearing. The clean branch diverged from the baseline over time, but integer
+frame registration did not recover a directional horizontal displacement.
+Therefore this validates the runtime path and a conservative operating region,
+not motion-field obedience. The shipped example uses the conservative regime.

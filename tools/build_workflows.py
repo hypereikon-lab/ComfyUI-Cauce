@@ -1324,10 +1324,9 @@ def build_h3_sigma_transport_ablation():
 
 Four seed/prompt/endpoint-matched samples isolate where a small affine pullback
 enters one intact res_multistep call: baseline, early, middle, and late sigma
-windows. CAUCE unpacks H3's AV state internally, transports only the 37 visual
-tokens before each selected model evaluation, copies audio unchanged, and
-preserves the solver's multistep history. No motion-reference video enters any
-branch. High strength is intentionally excluded from this first live gate.""", size=(980, 320))
+windows. CAUCE transports H3's visual state and retained RES history in the same
+coordinate frame while copying audio unchanged. No motion-reference video
+enters any branch. The live-validated regression strength is 0.10.""", size=(980, 320))
     first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
     last = wf.add("LoadImage", (0, 290), ["cauce_forest_b.jpg", "image"])
     first_scale = wf.add("ImageScale", (320, 0), ["lanczos", 768, 512, "center"])
@@ -1358,9 +1357,9 @@ branch. High strength is intentionally excluded from this first live gate.""", s
 
     branches = [
         ("baseline", None, 0.0, 0.0),
-        ("early", (0.0, 0.45), 0.25, 420.0),
-        ("middle", (0.25, 0.75), 0.25, 840.0),
-        ("late", (0.55, 0.95), 0.25, 1260.0),
+        ("early", (0.0, 0.45), 0.10, 420.0),
+        ("middle", (0.25, 0.75), 0.10, 840.0),
+        ("late", (0.55, 0.95), 0.10, 1260.0),
     ]
     for label, sigma_window, strength, y in branches:
         guider = wf.add("BasicGuider", (2820, y))
@@ -1403,6 +1402,118 @@ branch. High strength is intentionally excluded from this first live gate.""", s
 
     wf.group("ENDPOINTS + H3 + MAP", (-40, -150, 2750, 1100))
     wf.group("MATCHED SIGMA ABLATIONS", (2740, -150, 2600, 1800))
+    return wf.data()
+
+
+def build_h3_sigma_transport_causal_demo():
+    wf = Workflow("75_h3_sigma_transport_causal_demo", scale=0.14, offset=(70, 150))
+    note(wf, (-40, -600), """# CAUCE 75 · causal H3 latent-motion demonstration
+
+Four first-frame/seed/prompt/sampler-matched generations test whether a spatial
+field, rather than ordinary H3 variation, determines visible motion. Only frame
+A is connected: there is no last-frame constraint and no motion-reference
+video. Baseline uses official Euler unchanged. The other branches insert one
+monotonic affine field directly into H3's visual latent through the same
+first-order Euler equations.
+
+The map is identity at video frame 0 and grows toward a horizontal translation,
+zoom, or rotation. The conservative sigma envelope introduces 10% of the map
+during the early/global denoising interval and retains that coordinate frame.
+Promotion requires directionally matching optical flow versus the baseline;
+mere pixel difference is not evidence of field obedience.""", size=(1040, 390))
+    first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"], title="Only anchor · frame A")
+    first_scale = wf.add("ImageScale", (320, 0), ["lanczos", 768, 512, "center"])
+    window = wf.add(
+        "CauceGenerationWindow",
+        (680, 0),
+        ["sigma_transport_causal_124f", 0.0, 5.166666667, "0", "0", "nearest", "full_render", 124],
+    )
+    profile = wf.add("CauceExecutionProfile", (680, 430), ["h3-5090-fl2va-768x512"])
+    stack = add_model_stack(wf, 1080, 0, "FL2VA")
+    wf.node(stack["sampler"])["widgets_values"] = ["euler"]
+    condition = wf.add(
+        "CauceH3FL2VA",
+        (2080, 0),
+        [
+            "a continuous coherent shot of the same forest environment, "
+            "preserving visual structure and spatial consistency, no cuts"
+        ],
+        title="A → · no last frame",
+    )
+    horizontal = wf.add(
+        "CauceAffineMotionMap",
+        (2080, 390),
+        [124, 32, 48, 24.0, 0.0, 8.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 50.0, 50.0, "smoothstep"],
+        title="Requested field · horizontal 0 → 8%",
+    )
+    zoom = wf.add(
+        "CauceAffineMotionMap",
+        (2470, 390),
+        [124, 32, 48, 24.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.08, 0.0, 0.0, 50.0, 50.0, "smoothstep"],
+        title="Requested field · scale 1.0 → 1.08",
+    )
+    rotation = wf.add(
+        "CauceAffineMotionMap",
+        (2860, 390),
+        [124, 32, 48, 24.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 8.0, 50.0, 50.0, "smoothstep"],
+        title="Requested field · rotation 0 → 8°",
+    )
+    noise = wf.add("RandomNoise", (3260, 0), [2026082405, "fixed"])
+    wf.connect(first, "IMAGE", first_scale, "image")
+    wf.connect(stack["clip"], "CLIP", condition, "clip")
+    wf.connect(stack["video_vae"], "VAE", condition, "vae")
+    wf.connect(window, "window", condition, "window")
+    wf.connect(profile, "profile", condition, "profile")
+    wf.connect(first_scale, "IMAGE", condition, "first_frame")
+
+    branches = [
+        ("baseline", None, 0.0),
+        ("horizontal", horizontal, 430.0),
+        ("zoom", zoom, 860.0),
+        ("rotation", rotation, 1290.0),
+    ]
+    for label, motion, y in branches:
+        guider = wf.add("BasicGuider", (3590, y))
+        sample = wf.add("SamplerCustomAdvanced", (4380, y), title=f"{label} · matched sample")
+        parent = wf.add("CauceResolveParentLatent", (4680, y))
+        decode = wf.add("VAEDecode", (4970, y))
+        accept = wf.add("CauceAcceptDecodedWindow", (5180, y))
+        video = wf.add("CreateVideo", (5490, y), [24.0, 8])
+        save = wf.add(
+            "SaveVideo",
+            (5800, y),
+            [f"cauce/motion_maps/75_causal_{label}", "mp4", "auto"],
+        )
+        wf.connect(stack["model"], "MODEL", guider, "model")
+        wf.connect(condition, "positive", guider, "conditioning")
+        wf.connect(noise, "NOISE", sample, "noise")
+        wf.connect(guider, "GUIDER", sample, "guider")
+        if motion is None:
+            wf.connect(stack["sampler"], "SAMPLER", sample, "sampler")
+        else:
+            wrapped = wf.add(
+                "CauceSigmaMotionSampler",
+                (3970, y + 150),
+                [0.0, 0.45, 0.1, "accumulate", "smoothstep", "border"],
+                title=f"{label} · early accumulated transport",
+            )
+            wf.connect(stack["sampler"], "SAMPLER", wrapped, "base_sampler")
+            wf.connect(motion, "motion_map", wrapped, "motion_map")
+            wf.connect(wrapped, "sampler", sample, "sampler")
+        wf.connect(stack["scheduler"], "SIGMAS", sample, "sigmas")
+        wf.connect(condition, "latent", sample, "latent_image")
+        wf.connect(sample, "output", parent, "latent")
+        wf.connect(window, "window", parent, "window")
+        wf.connect(parent, "LATENT", decode, "samples")
+        wf.connect(stack["video_vae"], "VAE", decode, "vae")
+        wf.connect(decode, "IMAGE", accept, "images")
+        wf.connect(window, "window", accept, "window")
+        wf.connect(accept, "images", video, "images")
+        wf.connect(video, "VIDEO", save, "video")
+
+    wf.group("FIRST FRAME + H3 CONDITIONING", (-40, -160, 2050, 1050))
+    wf.group("ARBITRARY SPATIOTEMPORAL FIELDS", (2020, 300, 1190, 650))
+    wf.group("MATCHED CAUSAL COMPARISON", (3220, -160, 2920, 1900))
     return wf.data()
 
 
@@ -1507,6 +1618,7 @@ def main():
         "72_h3_sequential_latent_pass.json": build_h3_sequential_latent_pass(),
         "73_depth_advection_preview.json": build_depth_advection_preview(),
         "74_h3_sigma_transport_ablation.json": build_h3_sigma_transport_ablation(),
+        "75_h3_sigma_transport_causal_demo.json": build_h3_sigma_transport_causal_demo(),
     }
     for filename, data in visual.items():
         write_json(WORKFLOWS / filename, data)

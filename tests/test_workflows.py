@@ -26,6 +26,7 @@ class VisualWorkflowTests(unittest.TestCase):
             "72_h3_sequential_latent_pass.json",
             "73_depth_advection_preview.json",
             "74_h3_sigma_transport_ablation.json",
+            "75_h3_sigma_transport_causal_demo.json",
             "90_storage_maintenance.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
@@ -265,6 +266,47 @@ class VisualWorkflowTests(unittest.TestCase):
                 "cauce/motion_maps/74_sigma_early",
                 "cauce/motion_maps/74_sigma_middle",
                 "cauce/motion_maps/74_sigma_late",
+            ],
+        )
+
+        causal = json.loads(
+            (WORKFLOW_DIR / "75_h3_sigma_transport_causal_demo.json").read_text()
+        )
+        causal_types = [node["type"] for node in causal["nodes"]]
+        self.assertEqual(causal_types.count("LoadImage"), 1)
+        self.assertEqual(causal_types.count("CauceAffineMotionMap"), 3)
+        self.assertEqual(causal_types.count("CauceSigmaMotionSampler"), 3)
+        self.assertEqual(causal_types.count("SamplerCustomAdvanced"), 4)
+        self.assertEqual(causal_types.count("RandomNoise"), 1)
+        condition = next(
+            node for node in causal["nodes"] if node["type"] == "CauceH3FL2VA"
+        )
+        condition_inputs = {item["name"]: item["link"] for item in condition["inputs"]}
+        self.assertIsNotNone(condition_inputs["first_frame"])
+        self.assertIsNone(condition_inputs["last_frame"])
+        causal_wrappers = [
+            node for node in causal["nodes"] if node["type"] == "CauceSigmaMotionSampler"
+        ]
+        self.assertEqual(
+            [node["widgets_values"] for node in causal_wrappers],
+            [[0.0, 0.45, 0.1, "accumulate", "smoothstep", "border"]] * 3,
+        )
+        causal_sampler = next(
+            node for node in causal["nodes"] if node["type"] == "KSamplerSelect"
+        )
+        self.assertEqual(causal_sampler["widgets_values"], ["euler"])
+        causal_saves = [
+            node["widgets_values"][0]
+            for node in causal["nodes"]
+            if node["type"] == "SaveVideo"
+        ]
+        self.assertEqual(
+            causal_saves,
+            [
+                "cauce/motion_maps/75_causal_baseline",
+                "cauce/motion_maps/75_causal_horizontal",
+                "cauce/motion_maps/75_causal_zoom",
+                "cauce/motion_maps/75_causal_rotation",
             ],
         )
 

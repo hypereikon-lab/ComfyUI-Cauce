@@ -163,6 +163,32 @@ perturbación aplicada temprano tiene mayor alcance global. Es evidencia de
 ejecución limpia y efecto no nulo; todavía no es una medición de fidelidad al
 campo, que requiere optical flow y drift de endpoints.
 
+## Sonda causal Euler `A →`
+
+El 2026-08-24 se actualizó únicamente `ComfyUI-Cauce` al commit `65a1ae6` y se
+reinició sólo el proceso de ComfyUI. El nodo actualizado cargó correctamente
+sobre el mismo core, CUDA, PyTorch y modelos de la torre.
+
+El control matched comparó Euler oficial con Euler envuelto por CAUCE a
+`strength = 0`. Ambos outputs midieron `1.032.928` bytes y compartieron el
+SHA-256 `ddfe9a631010e2119864117df01c68a5c05782ddab65cbe616505b85ea518e5f`:
+la integración es bit a bit nula cuando el operador está apagado.
+
+El primer preset causal era deliberadamente fuerte: traslación `0 → 32%`,
+`strength = 0,25`, envelope acumulativo temprano y padding reflection. Su
+desplazamiento retenido aproximado de `8%` produjo mosaicos y bandas cromáticas,
+por lo que queda rechazado. Zoom y rotación decodificaron sin esa ruptura, pero
+una ejecución limpia no demuestra obediencia geométrica.
+
+Un segundo barrido horizontal matched usó Euler, padding border, strength
+`0,10` y mapas `8%`, `16%` y `24%`, equivalentes aproximadamente a `0,8%`,
+`1,6%` y `2,4%` retenidos. `0,8%` permaneció visualmente coherente; `1,6%` y
+`2,4%` mostraron tearing creciente. La diferencia contra baseline creció con el
+tiempo en la rama limpia, pero una búsqueda de registro horizontal a 192 px no
+encontró desplazamiento direccional entero (`best dx = 0`). El estado correcto
+es: runtime validado, región conservadora identificada, control de movimiento
+todavía no demostrado.
+
 ## Reglas de promoción
 
 - `verified`: ejecuta, produce artifacts completos y pasa inspección relevante.

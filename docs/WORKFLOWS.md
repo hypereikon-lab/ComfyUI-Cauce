@@ -49,6 +49,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 72 | `72_h3_sequential_latent_pass.json` | 2 samples | Generación base + warp del latent H3 + segunda pasada a denoise 0,35; decode live-validado. |
 | 73 | `73_depth_advection_preview.json` | 0 samples | Reproyección 2.5D + advección compuestas con validity de disoclusiones. |
 | 74 | `74_h3_sigma_transport_ablation.json` | 4 samples | Baseline matched + transporte visual temprano, medio y tardío dentro de res_multistep. |
+| 75 | `75_h3_sigma_transport_causal_demo.json` | 4 samples | Sonda causal `A →`: Euler baseline frente a traslación, zoom y rotación conservadoras; ejecución live válida, obediencia direccional aún no demostrada. |
 | 90 | `90_storage_maintenance.json` | CPU | Inventario físico y limpieza en dos fases de `input/` u `output/`. |
 
 Los recorridos 70–73 forman una matriz experimental, no cuatro presets de

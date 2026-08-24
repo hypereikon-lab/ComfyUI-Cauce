@@ -137,6 +137,32 @@ máscara y el sampler están cableados correctamente, pero no demuestra todavía
 que H3 reproduzca con precisión el campo pedido. La promoción requiere medir
 optical-flow agreement y drift de endpoints contra el baseline matched.
 
+## Transporte latente condicionado por sigma
+
+El workflow 74 se ejecutó el 2026-08-23 sobre el core `924743af`, H3 FL2VA FP8,
+Qwen3-VL NVFP4, 768×512, 124 frames, 20 steps `res_multistep`, seed
+`2026082404` y un mapa affine `sine_loop` compartido. No entró ningún video de
+movimiento. La primera implementación modificaba `x` antes del model call pero
+dejaba `old_denoised` en la base espacial anterior. El job terminó en 94,8 s,
+pero produjo bandas cromáticas horizontales; queda rechazado y documentado como
+fallo de covarianza del historial de segundo orden.
+
+CAUCE 0.9.1 transporta el estado actual y la predicción RES retenida con el
+mismo incremento antes de cada evaluación. Un control con `strength=0` produjo
+cuadros decodificados bit a bit idénticos al baseline en `t={0.1,1,2,3,4,5}`;
+los contenedores MP4 difirieron sólo por metadata. Con `strength=0.10`, las
+ventanas early `[0,0.45]`, middle `[0.25,0.75]` y late `[0.55,0.95]` completaron
+sin bandas ni ruptura cromática visible. Los tiempos fueron 81,8 s baseline,
+82,6 s early, 82,7 s middle y 82,7 s late.
+
+Contra el baseline, la diferencia absoluta media por canal a 192×128 fue más
+fuerte en early: aproximadamente 7,2 al inicio, 11,4 en el centro y 6,5 al
+final. Middle llegó a 9,3 en el centro y late a 7,7. Esto confirma que la ventana
+de sigma modifica la trayectoria aun con una fuerza pequeña, y que la misma
+perturbación aplicada temprano tiene mayor alcance global. Es evidencia de
+ejecución limpia y efecto no nulo; todavía no es una medición de fidelidad al
+campo, que requiere optical flow y drift de endpoints.
+
 ## Reglas de promoción
 
 - `verified`: ejecuta, produce artifacts completos y pasa inspección relevante.

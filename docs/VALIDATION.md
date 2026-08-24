@@ -174,7 +174,8 @@ are committed as receipts and documented measurements.
   `[0.55,0.95]` with identical endpoints, prompt, seed, map, sampler and sigmas.
 - Verify incremental strengths sum to the declared cumulative strength for
   `accumulate` and return to zero for `pulse`.
-- Begin with endpoint-safe maps and total strength no higher than `0.25`.
+- Begin with endpoint-safe maps at the live-validated `0.10`; raise strength
+  only in a matched ablation after inspecting chromatic and temporal stability.
 - Measure endpoint drift, optical-flow agreement, chromatic stability,
   high-frequency loss and runtime overhead against the matched baseline.
 - Reject the operation if solver evaluation count differs from sigma-step count;

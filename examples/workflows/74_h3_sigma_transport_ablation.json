@@ -22,7 +22,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "# CAUCE 74 · sigma-conditioned H3 latent transport\n\nFour seed/prompt/endpoint-matched samples isolate where a small affine pullback\nenters one intact res_multistep call: baseline, early, middle, and late sigma\nwindows. CAUCE unpacks H3's AV state internally, transports only the 37 visual\ntokens before each selected model evaluation, copies audio unchanged, and\npreserves the solver's multistep history. No motion-reference video enters any\nbranch. High strength is intentionally excluded from this first live gate."
+        "# CAUCE 74 · sigma-conditioned H3 latent transport\n\nFour seed/prompt/endpoint-matched samples isolate where a small affine pullback\nenters one intact res_multistep call: baseline, early, middle, and late sigma\nwindows. CAUCE unpacks H3's AV state internally and transports both the current\nvisual state and retained RES history in the same coordinate frame; audio is\nrepacked unchanged. No motion-reference video enters any branch. The live-\nvalidated starting strength is 0.10."
       ],
       "color": "#24382a",
       "bgcolor": "#132019"
@@ -2149,7 +2149,7 @@
       "widgets_values": [
         0.0,
         0.45,
-        0.25,
+        0.1,
         "accumulate",
         "smoothstep",
         "reflection"
@@ -2653,7 +2653,7 @@
       "widgets_values": [
         0.25,
         0.75,
-        0.25,
+        0.1,
         "accumulate",
         "smoothstep",
         "reflection"
@@ -3157,7 +3157,7 @@
       "widgets_values": [
         0.55,
         0.95,
-        0.25,
+        0.1,
         "accumulate",
         "smoothstep",
         "reflection"

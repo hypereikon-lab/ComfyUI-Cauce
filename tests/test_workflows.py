@@ -252,9 +252,9 @@ class VisualWorkflowTests(unittest.TestCase):
         self.assertEqual(
             [node["widgets_values"] for node in wrappers],
             [
-                [0.0, 0.45, 0.25, "accumulate", "smoothstep", "reflection"],
-                [0.25, 0.75, 0.25, "accumulate", "smoothstep", "reflection"],
-                [0.55, 0.95, 0.25, "accumulate", "smoothstep", "reflection"],
+                [0.0, 0.45, 0.1, "accumulate", "smoothstep", "reflection"],
+                [0.25, 0.75, 0.1, "accumulate", "smoothstep", "reflection"],
+                [0.55, 0.95, 0.1, "accumulate", "smoothstep", "reflection"],
             ],
         )
         saves = [node["widgets_values"][0] for node in sigma["nodes"] if node["type"] == "SaveVideo"]

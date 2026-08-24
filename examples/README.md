@@ -7,7 +7,7 @@ Los ejemplos están organizados por función:
 - `api/`: prompts de API materializables por el runner.
 - `project.example.json`: parent FL2VA + continuación reiniciable.
 
-Orden recomendado: `00 → 10 → 20/30 → 40 → 50/60`.
+Orden recomendado: `00 → 10 → 20/30 → 40 → 50/60 → 70/73 → 71/72`.
 
 Estado real: `00`, `10` y `20` están verificados; `30` requiere un AddGuide
 oficial más nuevo; `40` pasó el primer gate visual de continuidad híbrida y
@@ -16,6 +16,10 @@ es el recorrido nativo nuevo: conserva los AV latents finales de A→B y B→A,
 repara las uniones B y A con contexto bidireccional por token y ensambla un loop
 de duración idéntica. Su topología y geometría están verificadas localmente y
 su calidad visual queda pendiente del primer job live.
+`70` y `73` son previsualizaciones de mapas sin sample generativo; `71` aplica
+un campo al ruido visual H3 y `72` compara una segunda pasada nativa sobre el
+latent. Estos cuatro recorridos son una matriz de investigación y requieren
+gates comparativos antes de convertirse en defaults.
 Consultar [`docs/LAB_RESULTS.md`](../docs/LAB_RESULTS.md) antes de ejecutar jobs
 costosos.
 

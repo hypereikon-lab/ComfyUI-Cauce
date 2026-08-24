@@ -21,6 +21,10 @@ class VisualWorkflowTests(unittest.TestCase):
             "40_h3_two_window_continuation.json",
             "50_h3_temporal_inpainting.json",
             "60_h3_native_latent_loop.json",
+            "70_motion_map_composition.json",
+            "71_h3_warped_noise.json",
+            "72_h3_sequential_latent_pass.json",
+            "73_depth_advection_preview.json",
             "90_storage_maintenance.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
@@ -177,6 +181,47 @@ class VisualWorkflowTests(unittest.TestCase):
         }
         self.assertEqual({path.name for path in assets.iterdir()}, expected)
         self.assertLess(sum(path.stat().st_size for path in assets.iterdir()), 5 * 1024**2)
+
+    def test_motion_map_examples_distinguish_composition_and_sequential_passes(self):
+        workflow = json.loads(
+            (WORKFLOW_DIR / "70_motion_map_composition.json").read_text()
+        )
+        types = [node["type"] for node in workflow["nodes"]]
+        self.assertEqual(types.count("CauceComposeMotionMaps"), 1)
+        self.assertEqual(types.count("CauceWarpImage"), 3)
+        self.assertEqual(types.count("SaveVideo"), 2)
+
+        warped_noise = json.loads(
+            (WORKFLOW_DIR / "71_h3_warped_noise.json").read_text()
+        )
+        noise_types = [node["type"] for node in warped_noise["nodes"]]
+        self.assertIn("CauceWarpedH3Noise", noise_types)
+        self.assertNotIn("RandomNoise", noise_types)
+        self.assertEqual(noise_types.count("SamplerCustomAdvanced"), 1)
+
+        sequential = json.loads(
+            (WORKFLOW_DIR / "72_h3_sequential_latent_pass.json").read_text()
+        )
+        sequential_types = [node["type"] for node in sequential["nodes"]]
+        self.assertIn("CauceWarpH3Latent", sequential_types)
+        self.assertEqual(sequential_types.count("SamplerCustomAdvanced"), 2)
+        second_scheduler = [
+            node for node in sequential["nodes"] if node["type"] == "BasicScheduler"
+        ][-1]
+        self.assertEqual(second_scheduler["widgets_values"], ["simple", 12, 0.35])
+
+        depth = json.loads(
+            (WORKFLOW_DIR / "73_depth_advection_preview.json").read_text()
+        )
+        depth_types = {node["type"] for node in depth["nodes"]}
+        self.assertTrue(
+            {
+                "CauceDepthCameraMotionMap",
+                "CauceVectorField",
+                "CauceIntegrateAdvection",
+                "CauceComposeMotionMaps",
+            }.issubset(depth_types)
+        )
 
 
 class APIWorkflowTests(unittest.TestCase):

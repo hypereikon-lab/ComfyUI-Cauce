@@ -76,6 +76,38 @@
         "MiniMax H3 FL2VA",
         "official H3 per-token denoise masks"
       ]
+    },
+    {
+      "id": "motion-map-composition",
+      "path": "workflows/70_motion_map_composition.json",
+      "tier": "research",
+      "status": "locally-validated-pending-live",
+      "samples": 0,
+      "requires": ["ComfyUI-Cauce"]
+    },
+    {
+      "id": "h3-warped-noise",
+      "path": "workflows/71_h3_warped_noise.json",
+      "tier": "research",
+      "status": "candidate-pending-live-validation",
+      "samples": 1,
+      "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
+    },
+    {
+      "id": "h3-sequential-latent-pass",
+      "path": "workflows/72_h3_sequential_latent_pass.json",
+      "tier": "research",
+      "status": "candidate-pending-live-validation",
+      "samples": 2,
+      "requires": ["ComfyUI-Cauce", "MiniMax H3 FL2VA"]
+    },
+    {
+      "id": "depth-advection-preview",
+      "path": "workflows/73_depth_advection_preview.json",
+      "tier": "research",
+      "status": "locally-validated-pending-live",
+      "samples": 0,
+      "requires": ["ComfyUI-Cauce", "scalar depth plate recommended"]
     }
   ]
 }

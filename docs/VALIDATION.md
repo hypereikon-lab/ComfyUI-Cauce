@@ -1,15 +1,16 @@
 # Laboratory validation matrix
 
 Local unit tests establish contracts, clocks, generated workflow integrity, and
-runner materialization; they cannot establish model quality. The seven visual
-graphs load without unknown nodes in the live lab frontend, and both API
+runner materialization; they cannot establish model quality. The seven earlier
+visual graphs load without unknown nodes in the live lab frontend; four new
+motion-map graphs remain pending there, and both API
 templates match the live `/object_info` signatures. Validate the following on
 the RTX 5090 before promoting advanced workflows to production defaults.
 
 ## Gate 1 — load and compatibility
 
 - CAUCE imports with no startup exception.
-- All 41 nodes appear under `CAUCE/*`.
+- All 57 nodes appear under `CAUCE/*`.
 - Preflight identifies the existing models without modifying files.
 - FL2VA and Ref2VA wrappers locate current official Comfy H3 classes.
 - No CUDA, PyTorch, ComfyUI, Manager, or model update is triggered.
@@ -132,3 +133,20 @@ are committed as receipts and documented measurements.
 - Compare 22- and 39-frame guide clips only after the 72-frame interval passes.
 - Verify graph execution synthetically, then promote only after the exact real
   gesture pairs that rejected v1 pass blind visual inspection.
+
+## Gate 10 — spatial maps and sequential H3 passes
+
+- Check affine and perspective identity maps against an unchanged source.
+- Compare `compose(A,B)` sampled once against `warp(warp(source,A),B)`; record
+  the detail loss rather than treating them as identical image operations.
+- Confirm a `sine_loop` affine and RK4 advection map close numerically.
+- Inspect validity before every depth-camera run and regenerate only declared
+  disocclusions in the `holes` variant.
+- Confirm H3 latent warping changes only the visual stream and leaves the audio
+  stream copied with a zero generation mask.
+- Compare normal seeded noise against warped visual noise with the same seed.
+- Test second-pass denoise 0.15, 0.35, and 0.55 against the unmodified parent.
+- Measure endpoint drift, intended/observed optical-flow agreement, temporal
+  acceleration, local folding, and high-frequency loss.
+- Save parent latent, map hash, seed, sigma schedule, padding, and mask policy.
+- Promote no operation merely because the sampler completes.

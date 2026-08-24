@@ -206,6 +206,113 @@ SPECS = {
         [L("images", "IMAGE"), W("frame_index", "INT")],
         [("image", "IMAGE"), ("resolved_frame_index", "INT")], [260, 58],
     ),
+    "CauceAffineMotionMap": (
+        [
+            W("frames", "INT"), W("map_height", "INT"), W("map_width", "INT"),
+            W("fps", "FLOAT"), W("translate_x_start", "FLOAT"),
+            W("translate_x_end", "FLOAT"), W("translate_y_start", "FLOAT"),
+            W("translate_y_end", "FLOAT"), W("scale_start", "FLOAT"),
+            W("scale_end", "FLOAT"), W("rotation_start", "FLOAT"),
+            W("rotation_end", "FLOAT"), W("pivot_x_percent", "FLOAT"),
+            W("pivot_y_percent", "FLOAT"), W("easing", "COMBO"),
+        ],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [330, 330],
+    ),
+    "CauceAnalyticMotionMap": (
+        [
+            W("frames", "INT"), W("map_height", "INT"), W("map_width", "INT"),
+            W("fps", "FLOAT"), W("mode", "COMBO"), W("amount_start", "FLOAT"),
+            W("amount_end", "FLOAT"), W("frequency", "FLOAT"),
+            W("phase_cycles", "FLOAT"), W("sides", "INT"), W("easing", "COMBO"),
+        ],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [330, 250],
+    ),
+    "CaucePerspectiveMotionMap": (
+        [
+            W("frames", "INT"), W("map_height", "INT"), W("map_width", "INT"),
+            W("fps", "FLOAT"), W("top_left_x_end", "FLOAT"),
+            W("top_left_y_end", "FLOAT"), W("top_right_x_end", "FLOAT"),
+            W("top_right_y_end", "FLOAT"), W("bottom_right_x_end", "FLOAT"),
+            W("bottom_right_y_end", "FLOAT"), W("bottom_left_x_end", "FLOAT"),
+            W("bottom_left_y_end", "FLOAT"), W("easing", "COMBO"),
+        ],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [350, 292],
+    ),
+    "CauceDisplacementMotionMap": (
+        [
+            L("displacement_rg", "IMAGE"), W("frames", "INT"), W("map_height", "INT"),
+            W("map_width", "INT"), W("fps", "FLOAT"), W("magnitude_percent", "FLOAT"),
+            W("encoding", "COMBO"),
+        ],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [330, 170],
+    ),
+    "CauceModulateMotionMap": (
+        [
+            L("motion_map", "CAUCE_MAP"), W("strength_start", "FLOAT"),
+            W("strength_end", "FLOAT"), W("easing", "COMBO"),
+            L("spatial_mask", "MASK", True),
+        ],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [310, 142],
+    ),
+    "CauceVectorField": (
+        [
+            W("frames", "INT"), W("map_height", "INT"), W("map_width", "INT"),
+            W("fps", "FLOAT"), W("duration_seconds", "FLOAT"), W("kind", "COMBO"),
+            W("speed_x_percent", "FLOAT"), W("speed_y_percent", "FLOAT"),
+            W("strength", "FLOAT"), W("spatial_scale", "FLOAT"),
+            W("temporal_cycles", "FLOAT"), W("temporal_mode", "COMBO"),
+        ],
+        [("vector_field", "CAUCE_VECTOR_FIELD"), ("report_json", "STRING")],
+        [330, 270],
+    ),
+    "CauceIntegrateAdvection": (
+        [L("vector_field", "CAUCE_VECTOR_FIELD"), W("integrator", "COMBO")],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [300, 82],
+    ),
+    "CauceDepthCameraMotionMap": (
+        [
+            L("depth", "IMAGE"), W("frames", "INT"), W("map_height", "INT"),
+            W("map_width", "INT"), W("fps", "FLOAT"), W("fov_degrees", "FLOAT"),
+            W("near", "FLOAT"), W("far", "FLOAT"), W("depth_mode", "COMBO"),
+            W("translate_x_end", "FLOAT"), W("translate_y_end", "FLOAT"),
+            W("translate_z_end", "FLOAT"), W("yaw_end", "FLOAT"),
+            W("pitch_end", "FLOAT"), W("roll_end", "FLOAT"), W("easing", "COMBO"),
+        ],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [360, 350],
+    ),
+    "CauceComposeMotionMaps": (
+        [L("first", "CAUCE_MAP"), L("second", "CAUCE_MAP")],
+        [("motion_map", "CAUCE_MAP"), ("validity", "MASK"), ("report_json", "STRING")],
+        [300, 82],
+    ),
+    "CauceWarpImage": (
+        [L("image", "IMAGE"), L("motion_map", "CAUCE_MAP"), W("padding_mode", "COMBO")],
+        [("image", "IMAGE"), ("validity", "MASK"), ("report_json", "STRING")],
+        [300, 102],
+    ),
+    "CauceWarpH3Latent": (
+        [
+            L("latent", "LATENT"), L("motion_map", "CAUCE_MAP"),
+            W("padding_mode", "COMBO"), W("mask_mode", "COMBO"),
+        ],
+        [("latent", "LATENT"), ("validity", "MASK"), ("report_json", "STRING")],
+        [310, 122],
+    ),
+    "CauceWarpedH3Noise": (
+        [
+            W("seed", "INT"), L("motion_map", "CAUCE_MAP"),
+            W("padding_mode", "COMBO"), W("temporal_correlation", "FLOAT"),
+        ],
+        [("noise", "NOISE"), ("report_json", "STRING")],
+        [310, 102],
+    ),
     "PrimitiveInt": (
         [W("value", "INT")],
         [("INT", "INT")],
@@ -991,6 +1098,209 @@ ambas ventanas reparadas, ambos patches y el loop cerrado final.""", size=(880, 
     return wf.data()
 
 
+def build_motion_map_composition():
+    wf = Workflow("70_motion_map_composition", scale=0.35, offset=(120, 180))
+    note(wf, (-40, -470), """# CAUCE 70 · coordinate-map composition
+
+The same affine and nonlinear pullbacks are evaluated in two ways. The upper
+path composes both maps and samples the plate once. The lower path performs two
+sequential image warps, deliberately reproducing a feedback-like second pass.
+Both results contain 124 frames and use no H3 sample.""", size=(820, 260))
+    source = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
+    scale = wf.add("ImageScale", (320, 0), ["lanczos", 768, 512, "center"])
+    affine = wf.add(
+        "CauceAffineMotionMap",
+        (700, -80),
+        [124, 64, 96, 24.0, 0.0, 4.0, 0.0, -2.0, 1.0, 1.12, 0.0, 2.0, 50.0, 50.0, "sine_loop"],
+    )
+    analytic = wf.add(
+        "CauceAnalyticMotionMap",
+        (700, 340),
+        [124, 64, 96, 24.0, "swirl", 0.0, 22.0, 2.0, 1.0, 6, "sine_loop"],
+    )
+    compose = wf.add("CauceComposeMotionMaps", (1110, -10))
+    one_warp = wf.add("CauceWarpImage", (1450, -10), ["reflection"], title="One resample")
+    one_video = wf.add("CreateVideo", (1800, -10), [24.0, 8])
+    one_save = wf.add("SaveVideo", (2120, -10), ["cauce/motion_maps/70_composed_once", "mp4", "auto"])
+    first_warp = wf.add("CauceWarpImage", (1110, 420), ["reflection"], title="Sequential pass 1")
+    second_warp = wf.add("CauceWarpImage", (1450, 420), ["reflection"], title="Sequential pass 2")
+    sequential_video = wf.add("CreateVideo", (1800, 420), [24.0, 8])
+    sequential_save = wf.add("SaveVideo", (2120, 420), ["cauce/motion_maps/70_sequential_two_pass", "mp4", "auto"])
+    wf.connect(source, "IMAGE", scale, "image")
+    wf.connect(affine, "motion_map", compose, "first")
+    wf.connect(analytic, "motion_map", compose, "second")
+    wf.connect(scale, "IMAGE", one_warp, "image")
+    wf.connect(compose, "motion_map", one_warp, "motion_map")
+    wf.connect(one_warp, "image", one_video, "images")
+    wf.connect(one_video, "VIDEO", one_save, "video")
+    wf.connect(scale, "IMAGE", first_warp, "image")
+    wf.connect(affine, "motion_map", first_warp, "motion_map")
+    wf.connect(first_warp, "image", second_warp, "image")
+    wf.connect(analytic, "motion_map", second_warp, "motion_map")
+    wf.connect(second_warp, "image", sequential_video, "images")
+    wf.connect(sequential_video, "VIDEO", sequential_save, "video")
+    wf.group("OPAQUE SOURCE", (-40, -140, 650, 300))
+    wf.group("MAP ALGEBRA", (650, -140, 760, 900))
+    wf.group("ONE SAMPLE VS SEQUENTIAL PASSES", (1400, -140, 1060, 900))
+    return wf.data()
+
+
+def build_h3_warped_noise():
+    wf = Workflow("71_h3_warped_noise", scale=0.22, offset=(100, 160))
+    note(wf, (-40, -520), """# CAUCE 71 · motion-correlated H3 noise
+
+A closed vector field is integrated into a pullback map and used to correlate
+only H3's visual starting noise. Endpoint images and the normal H3 conditioning
+remain authoritative. The audio noise stream is unchanged and its decoded
+result is not used by CAUCE production.""", size=(850, 260))
+    first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
+    last = wf.add("LoadImage", (0, 290), ["cauce_forest_b.jpg", "image"])
+    first_scale = wf.add("ImageScale", (320, 0), ["lanczos", 768, 512, "center"])
+    last_scale = wf.add("ImageScale", (320, 290), ["lanczos", 768, 512, "center"])
+    window = wf.add("CauceGenerationWindow", (680, 0), ["warped_noise_124f", 0.0, 5.166666667, "0", "0", "nearest", "full_render", 124])
+    profile = wf.add("CauceExecutionProfile", (680, 430), ["h3-5090-fl2va-768x512"])
+    stack = add_model_stack(wf, 1080, 0, "FL2VA")
+    condition = wf.add("CauceH3FL2VA", (2080, 0), ["continuous coherent motion between the endpoint images"], title="Endpoint conditioning")
+    wf.connect(stack["clip"], "CLIP", condition, "clip")
+    wf.connect(stack["video_vae"], "VAE", condition, "vae")
+    wf.connect(window, "window", condition, "window")
+    wf.connect(profile, "profile", condition, "profile")
+    wf.connect(first_scale, "IMAGE", condition, "first_frame")
+    wf.connect(last_scale, "IMAGE", condition, "last_frame")
+    field = wf.add("CauceVectorField", (2080, 360), [37, 32, 48, 24.0, 5.125, "curl_sine", 0.0, 0.0, 5.0, 1.5, 1.0, "sine_loop"])
+    integrate = wf.add("CauceIntegrateAdvection", (2470, 400), ["rk4"])
+    modulate = wf.add("CauceModulateMotionMap", (2810, 400), [0.0, 0.7, "sine_loop"])
+    noise = wf.add("CauceWarpedH3Noise", (3170, 360), [2026082401, "reflection", 0.85])
+    guider = wf.add("BasicGuider", (3170, 0))
+    sample = wf.add("SamplerCustomAdvanced", (3510, 100))
+    parent = wf.add("CauceResolveParentLatent", (3820, 100))
+    decode = wf.add("VAEDecode", (4110, 70))
+    accept = wf.add("CauceAcceptDecodedWindow", (4340, 90))
+    video = wf.add("CreateVideo", (4660, 90), [24.0, 8])
+    save = wf.add("SaveVideo", (4970, 90), ["cauce/motion_maps/71_h3_warped_noise", "mp4", "auto"])
+    wf.connect(field, "vector_field", integrate, "vector_field")
+    wf.connect(integrate, "motion_map", modulate, "motion_map")
+    wf.connect(modulate, "motion_map", noise, "motion_map")
+    wf.connect(stack["model"], "MODEL", guider, "model")
+    wf.connect(condition, "positive", guider, "conditioning")
+    wf.connect(noise, "noise", sample, "noise")
+    wf.connect(guider, "GUIDER", sample, "guider")
+    wf.connect(stack["sampler"], "SAMPLER", sample, "sampler")
+    wf.connect(stack["scheduler"], "SIGMAS", sample, "sigmas")
+    wf.connect(condition, "latent", sample, "latent_image")
+    wf.connect(sample, "output", parent, "latent")
+    wf.connect(window, "window", parent, "window")
+    wf.connect(parent, "LATENT", decode, "samples")
+    wf.connect(stack["video_vae"], "VAE", decode, "vae")
+    wf.connect(decode, "IMAGE", accept, "images")
+    wf.connect(window, "window", accept, "window")
+    wf.connect(accept, "images", video, "images")
+    wf.connect(video, "VIDEO", save, "video")
+    wf.connect(first, "IMAGE", first_scale, "image")
+    wf.connect(last, "IMAGE", last_scale, "image")
+    wf.group("ENDPOINTS + H3", (-40, -120, 2040, 980))
+    wf.group("MOTION FIELD → NOISE", (2030, 300, 1450, 520))
+    wf.group("ONE H3 SAMPLE", (3100, -120, 2220, 650))
+    return wf.data()
+
+
+def build_h3_sequential_latent_pass():
+    wf = Workflow("72_h3_sequential_latent_pass", scale=0.18, offset=(80, 170))
+    note(wf, (-40, -520), """# CAUCE 72 · sequential H3 latent pass
+
+Pass 1 is a normal full-denoise FL2VA generation. Its phase-safe H3 AV latent
+is then spatially warped without decode/re-encode. Pass 2 uses the same endpoint
+conditioning, a fresh seed, and denoise 0.35. This is an experiment topology,
+not a production default: compare it against a single composed-map sample.""", size=(900, 280))
+    first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
+    last = wf.add("LoadImage", (0, 290), ["cauce_forest_b.jpg", "image"])
+    first_scale = wf.add("ImageScale", (320, 0), ["lanczos", 768, 512, "center"])
+    last_scale = wf.add("ImageScale", (320, 290), ["lanczos", 768, 512, "center"])
+    window = wf.add("CauceGenerationWindow", (680, 0), ["latent_pass_124f", 0.0, 5.166666667, "0", "0", "nearest", "full_render", 124])
+    profile = wf.add("CauceExecutionProfile", (680, 430), ["h3-5090-fl2va-768x512"])
+    stack = add_model_stack(wf, 1080, 0, "FL2VA")
+    condition = wf.add("CauceH3FL2VA", (2070, 0), ["continuous coherent motion between the endpoint images"])
+    wf.connect(stack["clip"], "CLIP", condition, "clip")
+    wf.connect(stack["video_vae"], "VAE", condition, "vae")
+    wf.connect(window, "window", condition, "window")
+    wf.connect(profile, "profile", condition, "profile")
+    wf.connect(first_scale, "IMAGE", condition, "first_frame")
+    wf.connect(last_scale, "IMAGE", condition, "last_frame")
+    initial = add_sample_decode(wf, 2510, 0, stack, (condition, "positive"), (condition, "latent"), (window, "window"), seed=2026082402, prefix="cauce/motion_maps/72_pass_1")
+    motion = wf.add("CauceAffineMotionMap", (4570, 500), [124, 32, 48, 24.0, 0.0, 2.0, 0.0, 0.0, 1.0, 1.04, 0.0, 0.0, 50.0, 50.0, "sine_loop"])
+    warp = wf.add("CauceWarpH3Latent", (4980, 500), ["reflection", "all"])
+    noise = wf.add("RandomNoise", (5340, 520), [2026082403, "fixed"])
+    guider = wf.add("BasicGuider", (5340, 180))
+    scheduler = wf.add("BasicScheduler", (5340, 330), ["simple", 12, 0.35])
+    sample = wf.add("SamplerCustomAdvanced", (5710, 330), title="Pass 2 · denoise 0.35")
+    parent = wf.add("CauceResolveParentLatent", (6030, 330))
+    decode = wf.add("VAEDecode", (6330, 300))
+    accept = wf.add("CauceAcceptDecodedWindow", (6560, 330))
+    video = wf.add("CreateVideo", (6880, 330), [24.0, 8])
+    save = wf.add("SaveVideo", (7190, 330), ["cauce/motion_maps/72_pass_2", "mp4", "auto"])
+    wf.connect(initial["parent"], "LATENT", warp, "latent")
+    wf.connect(motion, "motion_map", warp, "motion_map")
+    wf.connect(stack["model"], "MODEL", guider, "model")
+    wf.connect(condition, "positive", guider, "conditioning")
+    wf.connect(stack["model"], "MODEL", scheduler, "model")
+    wf.connect(noise, "NOISE", sample, "noise")
+    wf.connect(guider, "GUIDER", sample, "guider")
+    wf.connect(stack["sampler"], "SAMPLER", sample, "sampler")
+    wf.connect(scheduler, "SIGMAS", sample, "sigmas")
+    wf.connect(warp, "latent", sample, "latent_image")
+    wf.connect(sample, "output", parent, "latent")
+    wf.connect(window, "window", parent, "window")
+    wf.connect(parent, "LATENT", decode, "samples")
+    wf.connect(stack["video_vae"], "VAE", decode, "vae")
+    wf.connect(decode, "IMAGE", accept, "images")
+    wf.connect(window, "window", accept, "window")
+    wf.connect(accept, "images", video, "images")
+    wf.connect(video, "VIDEO", save, "video")
+    wf.connect(first, "IMAGE", first_scale, "image")
+    wf.connect(last, "IMAGE", last_scale, "image")
+    wf.group("ENDPOINTS + H3", (-40, -120, 2040, 980))
+    wf.group("PASS 1 · FULL GENERATION", (2030, -120, 2480, 1080))
+    wf.group("PASS 2 · NATIVE LATENT WARP + 0.35 DENOISE", (4510, 100, 3010, 850))
+    return wf.data()
+
+
+def build_depth_advection_preview():
+    wf = Workflow("73_depth_advection_preview", scale=0.3, offset=(100, 170))
+    note(wf, (-40, -480), """# CAUCE 73 · depth reprojection + advection
+
+The second image is treated only as scalar depth data; replace it with a real
+depth plate for production. Forward 2.5D camera splatting yields a pullback plus
+disocclusion validity. A curl field is integrated and composed before one image
+sample. The validity output is the exact region a later H3 pass may regenerate.""", size=(900, 280))
+    source = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"], title="Opaque source plate")
+    depth = wf.add("LoadImage", (0, 300), ["cauce_forest_b.jpg", "image"], title="Replace with scalar depth")
+    source_scale = wf.add("ImageScale", (330, 0), ["lanczos", 768, 512, "center"])
+    depth_scale = wf.add("ImageScale", (330, 300), ["lanczos", 768, 512, "center"])
+    camera = wf.add("CauceDepthCameraMotionMap", (720, -40), [124, 64, 96, 24.0, 50.0, 1.0, 10.0, "near_white", 3.0, 0.0, 16.0, 2.0, 0.0, 0.0, "smoothstep"])
+    field = wf.add("CauceVectorField", (720, 430), [37, 64, 96, 24.0, 5.125, "curl_sine", 0.0, 0.0, 1.2, 1.0, 0.5, "forward"])
+    integrate = wf.add("CauceIntegrateAdvection", (1120, 500), ["rk2"])
+    modulate = wf.add("CauceModulateMotionMap", (1450, 500), [0.0, 0.35, "smoothstep"])
+    compose = wf.add("CauceComposeMotionMaps", (1790, 120))
+    warp = wf.add("CauceWarpImage", (2130, 120), ["border"])
+    video = wf.add("CreateVideo", (2480, 120), [24.0, 8])
+    save = wf.add("SaveVideo", (2790, 120), ["cauce/motion_maps/73_depth_advection", "mp4", "auto"])
+    wf.connect(source, "IMAGE", source_scale, "image")
+    wf.connect(depth, "IMAGE", depth_scale, "image")
+    wf.connect(depth_scale, "IMAGE", camera, "depth")
+    wf.connect(field, "vector_field", integrate, "vector_field")
+    wf.connect(integrate, "motion_map", modulate, "motion_map")
+    wf.connect(camera, "motion_map", compose, "first")
+    wf.connect(modulate, "motion_map", compose, "second")
+    wf.connect(source_scale, "IMAGE", warp, "image")
+    wf.connect(compose, "motion_map", warp, "motion_map")
+    wf.connect(warp, "image", video, "images")
+    wf.connect(video, "VIDEO", save, "video")
+    wf.group("SOURCE + DEPTH DATA", (-40, -120, 680, 850))
+    wf.group("DEPTH + FIELD MAP ALGEBRA", (670, -120, 1420, 950))
+    wf.group("ONE IMAGE SAMPLE", (2080, -120, 1030, 600))
+    return wf.data()
+
+
 def api_fl2va():
     return {
         "1": {"class_type": "CauceGenerationWindow", "inputs": {
@@ -1087,6 +1397,10 @@ def main():
         "40_h3_two_window_continuation.json": build_continuation(),
         "50_h3_temporal_inpainting.json": build_temporal_inpaint(),
         "60_h3_native_latent_loop.json": build_native_latent_loop(),
+        "70_motion_map_composition.json": build_motion_map_composition(),
+        "71_h3_warped_noise.json": build_h3_warped_noise(),
+        "72_h3_sequential_latent_pass.json": build_h3_sequential_latent_pass(),
+        "73_depth_advection_preview.json": build_depth_advection_preview(),
     }
     for filename, data in visual.items():
         write_json(WORKFLOWS / filename, data)

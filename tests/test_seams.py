@@ -88,8 +88,12 @@ class TemporalInpaintTests(unittest.TestCase):
         numpy.testing.assert_array_equal(loop[124:], second_fixed)
         numpy.testing.assert_array_equal(first_fixed[23:-23], first[23:-23])
         numpy.testing.assert_array_equal(second_fixed[23:-23], second[23:-23])
-        self.assertEqual(float(first_fixed[0, 0, 0, 0]), float(first[0, 0, 0, 0]))
-        self.assertEqual(float(second_fixed[-1, 0, 0, 0]), float(second[-1, 0, 0, 0]))
+        # The exported loop boundary must contain the two central halves of the
+        # repaired wrap patch. Preserving the original endpoints here would
+        # recreate the hard second->first cut that this operation repairs.
+        repair = int(wrap["repair_frames_per_side"])
+        numpy.testing.assert_array_equal(first_fixed[0], wrap_patch[repair])
+        numpy.testing.assert_array_equal(second_fixed[-1], wrap_patch[repair - 1])
         self.assertEqual(report["loop_frames"], 248)
 
     @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")

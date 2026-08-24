@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-cauce"
-version = "0.7.0"
-description = "Media, exact time, and localized temporal video inpainting in ComfyUI"
+version = "0.8.0"
+description = "Media, exact time, motion maps, and temporal video inpainting in ComfyUI"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

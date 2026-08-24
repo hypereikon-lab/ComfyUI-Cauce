@@ -48,6 +48,8 @@ same point when a different model, sampler, precision, or GPU is selected.
 | `cauce.receipt/1` | Reproducibility and parentage |
 | `cauce.storage-plan/1` | Hashed, root-scoped physical file deletion plan |
 | `cauce.storage-receipt/1` | Exact deleted/skipped paths and reclaimed bytes |
+| `cauce.motion-map/1` | Target-to-source coordinate grid, validity, time, and provenance |
+| `cauce.vector-field/1` | Arbitrary normalized velocity field before integration |
 
 Contract values are plain dictionaries so Comfy can carry them as custom
 sockets and workflows can persist their constructor widgets. Time values are
@@ -150,6 +152,15 @@ boundaries. Accepted decoded spans are assembled afterward.
 
 Generated H3 audio is not accepted into production. The fixed master soundtrack
 uses `Authoritative Audio` and bypasses AudioVAE entirely.
+
+## Spatial motion algebra
+
+Spatial control remains orthogonal to timeline semantics. Every affine,
+projective, analytic, advected, depth-derived, or imported displacement becomes
+the same target-to-source `CAUCE_MAP`. Maps can be modulated and composed before
+one image/latent sample, or applied sequentially when accumulated feedback is
+the experiment itself. See [Motion maps](MOTION_MAPS.md) for the tensor contract,
+equations, H3 token projection, and validation matrix.
 
 ## Localized temporal inpainting
 

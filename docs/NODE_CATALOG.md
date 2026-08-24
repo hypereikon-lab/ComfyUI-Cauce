@@ -34,6 +34,36 @@ Plate layers support position, scale, rotation, opacity, an optional mask,
 feathering, and normal/screen/multiply/add blending. Export writes a normal
 Comfy PNG plus `.prompt.txt` and `.json` sidecars.
 
+## Motion maps
+
+- `CAUCE Affine Motion Map`
+- `CAUCE Perspective Motion Map`
+- `CAUCE Analytic Motion Map`
+- `CAUCE Displacement Motion Map`
+- `CAUCE Vector Field`
+- `CAUCE Integrate Advection`
+- `CAUCE Depth Camera Motion Map`
+- `CAUCE Modulate Motion Map`
+- `CAUCE Compose Motion Maps`
+- `CAUCE Warp Image`
+
+All generators emit the same `CAUCE_MAP`: a target-to-source grid plus validity,
+exact temporal geometry, parameters, provenance, and tensor hash. Arbitrary RG
+fields allow optical flow and external simulations to enter without adding a
+new semantic contract. Composition samples media once; multiple `Warp Image`
+nodes are deliberate sequential feedback passes.
+
+## H3 motion
+
+- `CAUCE Warp H3 Latent`
+- `CAUCE Warped H3 Noise`
+
+Latent warping samples only the visual H3 stream at the actual centers of its
+causal VAE support intervals. H3's structural audio stream is copied and frozen.
+Warped noise preserves the normal seeded noise path, correlates the visual
+stream spatially, and leaves audio noise unchanged. See
+[`MOTION_MAPS.md`](MOTION_MAPS.md).
+
 ## H3
 
 - `CAUCE · H3 FL2VA`

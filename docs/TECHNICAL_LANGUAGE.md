@@ -29,6 +29,17 @@ and experiment reports use descriptive technical names rather than metaphors.
   names identify the model path, not the temporal operation performed by CAUCE.
 - **Continuation:** generate future frames from a previous state. This is not
   equivalent to temporal inpainting, which has known context on both sides.
+- **Motion map / pullback:** target-to-source normalized coordinate grid used
+  to sample an image or H3 visual latent.
+- **Vector field:** velocity data integrated through time into a motion map.
+- **Map composition:** evaluate several coordinate transforms as one pullback
+  and sample media once.
+- **Sequential pass:** sample or denoise an intermediate result before applying
+  another operation; not equivalent to composed-map evaluation.
+- **Disocclusion validity:** confidence that a depth reprojection has a visible
+  source sample at a target coordinate; it is not a semantic mask.
+- **Warped H3 noise:** seeded H3 visual noise spatially correlated by a motion
+  map before denoising. It does not modify model weights.
 
 Terms such as “Confluence”, “bridge”, “polish”, and “redo” are not node,
 workflow, or algorithm names. When an informal description is useful, the

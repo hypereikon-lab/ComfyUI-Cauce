@@ -8,6 +8,7 @@ from . import (
     maintenance,
     masks,
     media,
+    motion,
     plates,
     profiles,
     seams,
@@ -18,6 +19,7 @@ from . import (
 MODULES = (
     timeline,
     media,
+    motion,
     plates,
     h3,
     masks,

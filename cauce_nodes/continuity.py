@@ -1,12 +1,16 @@
-"""H3 latent continuation and decode-domain nodes."""
+"""ComfyUI bindings for phase-aware H3 continuation."""
 
 from __future__ import annotations
 
 from ..cauce.continuity import (
-    accept_decoded_window,
+    VALID_CONTEXT_FRAMES,
+    accept_decoded_range,
     prepare_continuation,
     resolve_parent_latent,
 )
+
+
+CATEGORY = "CAUCE/Continuity"
 
 
 class CaucePrepareContinuation:
@@ -14,94 +18,83 @@ class CaucePrepareContinuation:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "positive": ("CONDITIONING",),
                 "target_latent": ("LATENT",),
                 "previous_latent": ("LATENT",),
                 "context_frames": (
-                    [str(value) for value in range(5, 346, 17)],
+                    [str(value) for value in VALID_CONTEXT_FRAMES],
                     {"default": "39"},
-                ),
-                "conditioning_mode": (
-                    ["mask_only", "mask_plus_guide"],
-                    {"default": "mask_only"},
                 ),
             }
         }
 
-    RETURN_TYPES = ("CONDITIONING", "LATENT", "INT")
-    RETURN_NAMES = ("positive", "latent", "trim_frames")
+    RETURN_TYPES = ("LATENT", "INT")
+    RETURN_NAMES = ("latent", "context_frames")
     FUNCTION = "prepare"
-    CATEGORY = "CAUCE/Continuity"
+    CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Copy and preserve a phase-aligned visual parent tail at the target head. "
-        "H3's internal audio stream stays frozen and is not a production output."
+        "Copy a phase-aligned visual tail into the next H3 latent, preserve that "
+        "context with a binary mask, and freeze structural audio."
     )
 
-    def prepare(
-        self,
-        positive,
-        target_latent,
-        previous_latent,
-        context_frames,
-        conditioning_mode,
-    ):
+    def prepare(self, target_latent, previous_latent, context_frames):
         return prepare_continuation(
-            positive,
             target_latent,
             previous_latent,
             context_frames=int(context_frames),
-            conditioning_mode=conditioning_mode,
         )
 
 
 class CauceResolveParentLatent:
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {"latent": ("LATENT",), "window": ("CAUCE_WINDOW",)}}
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "accepted_end_frame": (
+                    "INT",
+                    {"default": 124, "min": 5, "max": 362, "step": 17},
+                ),
+            }
+        }
 
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "resolve"
-    CATEGORY = "CAUCE/Continuity"
-    DESCRIPTION = (
-        "Crop only the unaccepted tail while retaining H3's causal origin. "
-        "Use this phase-safe parent for persistence and the next continuation."
-    )
+    CATEGORY = CATEGORY
+    DESCRIPTION = "Crop a sampled H3 latent at a phase-safe visible-frame endpoint."
 
-    def resolve(self, latent, window):
-        return (resolve_parent_latent(latent, window),)
+    def resolve(self, latent, accepted_end_frame):
+        return (resolve_parent_latent(latent, accepted_end_frame),)
 
 
-class CauceAcceptDecodedWindow:
+class CauceAcceptDecodedRange:
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 "images": ("IMAGE",),
-                "window": ("CAUCE_WINDOW",),
-            },
-            "optional": {"audio": ("AUDIO",)},
+                "start_frame": ("INT", {"default": 0, "min": 0, "max": 100000}),
+                "frame_count": ("INT", {"default": 124, "min": 1, "max": 100000}),
+            }
         }
 
-    RETURN_TYPES = ("IMAGE", "AUDIO", "INT")
-    RETURN_NAMES = ("images", "audio", "accepted_frames")
+    RETURN_TYPES = ("IMAGE", "INT")
+    RETURN_NAMES = ("images", "accepted_frames")
     FUNCTION = "accept"
-    CATEGORY = "CAUCE/Continuity"
-    DESCRIPTION = (
-        "Accept the window's exact visible-frame range and align audio to the same boundaries."
-    )
+    CATEGORY = CATEGORY
+    DESCRIPTION = "Extract an exact visible-frame range from a decoded batch."
 
-    def accept(self, images, window, audio=None):
-        return accept_decoded_window(images, window, audio)
+    def accept(self, images, start_frame, frame_count):
+        return accept_decoded_range(images, start_frame, frame_count)
 
 
 NODE_CLASS_MAPPINGS = {
     "CaucePrepareContinuation": CaucePrepareContinuation,
     "CauceResolveParentLatent": CauceResolveParentLatent,
-    "CauceAcceptDecodedWindow": CauceAcceptDecodedWindow,
+    "CauceAcceptDecodedRange": CauceAcceptDecodedRange,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CaucePrepareContinuation": "CAUCE · Prepare H3 Continuation",
     "CauceResolveParentLatent": "CAUCE · Resolve Parent Latent",
-    "CauceAcceptDecodedWindow": "CAUCE · Accept Decoded Window",
+    "CauceAcceptDecodedRange": "CAUCE · Accept Decoded Range",
 }

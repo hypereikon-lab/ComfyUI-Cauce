@@ -5,6 +5,10 @@ import unittest
 
 
 class RegistrationTests(unittest.TestCase):
+    @unittest.skipUnless(
+        importlib.util.find_spec("numpy"),
+        "NumPy is supplied by ComfyUI, not CAUCE",
+    )
     def test_root_registers_every_node_without_importing_comfy(self):
         root = Path(__file__).resolve().parents[1]
         name = "comfyui_cauce_test_plugin"
@@ -16,13 +20,28 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 58)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 24)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
             )
             self.assertTrue(
                 all(name.startswith("Cauce") for name in module.NODE_CLASS_MAPPINGS)
+            )
+            research = {
+                name
+                for name, node in module.NODE_CLASS_MAPPINGS.items()
+                if node.CATEGORY == "CAUCE/Research"
+            }
+            self.assertEqual(
+                research,
+                {
+                    "CauceBuildNativeLatentSeam",
+                    "CaucePrepareH3NativeLatentInpaint",
+                    "CauceWarpH3Latent",
+                    "CauceWarpedH3Noise",
+                    "CauceSigmaMotionSampler",
+                },
             )
         finally:
             for key in list(sys.modules):

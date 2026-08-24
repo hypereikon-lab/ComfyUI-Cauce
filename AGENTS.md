@@ -1,187 +1,256 @@
-# CAUCE agent runbook
+# CAUCE engineering and laboratory runbook
 
-This file applies to the complete repository. It is written for Codex and other
-coding agents that implement, deploy, or validate CAUCE. Read it before taking
-action. User instructions remain authoritative.
+This file applies to the complete repository. Read it before changing code,
+deploying the node pack, or operating the laboratory ComfyUI instance. User
+instructions remain authoritative.
 
-## 1. Mission and non-goals
+## 1. Mission
 
-CAUCE is a native ComfyUI custom-node pack for composing visual work against a
-fixed master clock and compiling that structure into MiniMax H3 workflows.
+CAUCE is a native ComfyUI operation pack. It owns reusable visual mathematics,
+thin ComfyUI bindings, explicit H3 latent adapters, and bounded persistence.
 
-The package controls:
+The stable surface contains:
 
-- opaque images, videos, masks, prompts, and audiovisual latents;
-- exact rational time, generation windows, and accepted ranges;
-- H3 FL2VA, Ref2VA, guides, continuation, and temporal inpainting;
-- coordinate maps, warped noise, latent experiments, receipts, and provenance;
-- bounded storage inspection and cleanup inside ComfyUI `input/` and `output/`.
+- phase-aware H3 continuation;
+- exact decoded-range acceptance;
+- localized temporal inpainting and duration-preserving splice mathematics;
+- generic coordinate-map and vector-field operations;
+- H3 audiovisual-latent save/load.
 
-The package does not introduce:
+Five nodes live under `CAUCE/Research`. They are executable hypotheses, not
+production presets:
 
-- a second dashboard, timeline UI, or web application;
-- a semantic ontology of subjects, actions, shots, or properties;
-- generative audio, audio replacement, training, LoRAs, acceleration, or
-  streaming;
-- automatic installation or upgrade of CUDA, PyTorch, GPU drivers, ComfyUI,
-  models, or unrelated custom nodes.
+- native-latent bidirectional seam preparation;
+- direct H3 latent warp;
+- motion-correlated H3 noise;
+- sigma-conditioned latent transport.
 
-The production soundtrack is fixed. It may define time and be muxed at the end,
-but it is not a generative target and normally does not enter H3 conditioning.
+CAUCE does not own:
+
+- a second UI or dashboard;
+- production scheduling or editorial state;
+- remote administration, authentication, or browser automation;
+- model installation or runtime upgrades;
+- semantic descriptions of images;
+- generative sound, training, LoRAs, acceleration, or streaming.
+
+The production soundtrack is fixed and remains outside H3 conditioning. H3's
+packed structural-audio stream is still required by the model and must be
+copied, frozen, or persisted correctly.
 
 ## 2. Sources of truth
 
-Do not reconstruct repository state from conversational memory alone. Use this
-order:
+Use this order:
 
-1. `git status --short`, `git branch --show-current`, and `git log -n 10`;
-2. this `AGENTS.md`;
-3. `README.md` for scope and current package status;
-4. `docs/TECHNICAL_LANGUAGE.md` for canonical terms and report fields;
-5. `docs/LAB_RESULTS.md` for measured live results and rejected attempts;
-6. `docs/WORKFLOWS.md` for workflow contracts;
-7. `docs/H3_WIRING.md`, `docs/MOTION_MAPS.md`, and
-   `docs/SIGMA_TRANSPORT.md` for implementation mathematics;
+1. `git status --short`, current branch, and recent commits;
+2. this file;
+3. `README.md`;
+4. `docs/INDEX.md`;
+5. `docs/ARCHITECTURE.md` and `docs/SYSTEM_BOUNDARIES.md`;
+6. `docs/NODE_CATALOG.md` and `docs/CAPABILITY_MAP.md`;
+7. the relevant mathematics or validation document;
 8. code and tests;
-9. the actual live ComfyUI runtime when a live claim is required.
+9. the live ComfyUI runtime for live claims.
 
-The repository and live installation may differ. A pushed Git commit is not
-proof that the lab loaded it. A ComfyUI job marked `success` is not proof that
-the visual operation worked.
+Do not reconstruct state from conversational memory alone. If the user points
+to a Codex JSONL, search it narrowly for exact tool calls, commit hashes,
+workflow signatures, Manager routes, and outputs. Never print authentication
+cookies, Cloudflare credentials, or unrelated conversation content.
 
-When older agent context is missing and the user points to a Codex JSONL:
+Prefer an official node plus graph composition over a CAUCE wrapper that only
+renames an upstream operation or supplies defaults. Add a custom node only when
+it owns mathematics, model translation, a safety boundary, or a reproducibility
+guarantee.
 
-- search it narrowly with `rg --text` or `jq` for workflow names, commit hashes,
-  Manager endpoints, or tool calls;
-- prefer the recorded tool call over a prose recollection;
-- never print Cloudflare tunnel tokens, cookies, authorization headers, or
-  unrelated conversation contents;
-- do not read or summarize a multi-gigabyte session wholesale when a targeted
-  query answers the question.
+## 3. Repository practice
 
-## 3. Repository workflow
+Discover the root with `git rev-parse --show-toplevel`. Preserve dirty-worktree
+changes. Do not use destructive checkout, reset, broad cleanup, or force-push.
 
-Discover the repository root dynamically with `git rev-parse --show-toplevel`.
-Do not hard-code a developer home path in product code or documentation.
+The node registry is assembled only from:
 
-The active development branch has historically been
-`feat/cauce-greenfield`. The lab installation is updated through the GitHub
-repository's default branch. Before a deployment, make both remote refs point
-to the intended commit unless the user explicitly changes this policy:
-
-```bash
-git push origin feat/cauce-greenfield
-git push origin HEAD:main
-git ls-remote --heads origin main feat/cauce-greenfield
+```text
+cauce_nodes/continuity.py
+cauce_nodes/seams.py
+cauce_nodes/motion.py
+cauce_nodes/persistence.py
+cauce_nodes/research.py
 ```
 
-Never discard a dirty worktree. Existing modifications may belong to the user
-or to an earlier unfinished agent turn. Inspect and preserve them. Do not use
-`git reset --hard`, destructive checkout, force-push, or broad cleanup.
+Stable nodes must not import project state or remote-runtime concerns. Research
+nodes must use `CATEGORY = "CAUCE/Research"` and state their experimental status
+in `DESCRIPTION`.
 
-Use a normal forward commit for deployment. If a deployed change must be
-undone and terminal access to the lab is unavailable, publish a new `git
-revert` commit and run the same targeted Manager update. Do not assume Manager
-can check out an arbitrary historical SHA.
+CAUCE intentionally ships no ComfyUI workflow JSON. New graphs are designed
+after their operation contracts are understood. If reproducible graphs are
+added later, treat browser-format JSON and API prompt JSON as different
+artifacts and test them against live `/object_info` schemas.
 
-### Generated workflows
-
-Visual JSON files under `examples/workflows/` are generated by
-`tools/build_workflows.py`.
-
-When changing a generated workflow:
-
-1. edit `tools/build_workflows.py` and its `SPECS` or builder;
-2. update `tests/test_workflows.py`;
-3. run `python3 tools/build_workflows.py`;
-4. inspect the generated JSON with `jq`;
-5. run workflow tests and `git diff --check`;
-6. load the generated JSON in the real frontend before claiming graph validity.
-
-Do not hand-edit a generated JSON as the only change. The next build would erase
-it.
-
-ComfyUI serializes widget values positionally, including some hidden widgets
-whose inputs are linked. A visually connected socket does not guarantee that a
-hidden widget can be omitted from `widgets_values`. Validate the actual node
-schema from `/object_info/<NodeClass>` and compare against a frontend-saved
-workflow when widget order is uncertain.
-
-### Local verification
-
-The baseline local checks are:
+Local verification:
 
 ```bash
-python3 tools/build_workflows.py
-python3 -m unittest tests.test_workflows
+python3 -m compileall -q cauce cauce_nodes
 python3 -m unittest discover -s tests -v
-python3 -m compileall -q cauce cauce_nodes tools/build_workflows.py
 git diff --check
 ```
 
-Some developer Python installations do not include PyTorch. Do not install or
-upgrade global PyTorch merely to make local tensor tests run. Run all pure
-Python tests that are available, report the missing dependency precisely, and
-perform proportionate live tensor/runtime validation on the lab. Absence of a
-local dependency is not permission to mutate the remote runtime.
+Developer Python may lack NumPy or PyTorch. Do not install or upgrade global
+GPU packages to satisfy local tests. Pure-Python tests must pass; tensor tests
+may be run with a suitable isolated runtime or inside ComfyUI.
 
-## 4. Laboratory topology and authority boundary
+## 4. Architecture invariants
 
-The production-development instance is normally reachable at:
+Dependency direction:
+
+```text
+ComfyUI graph
+  -> cauce_nodes bindings
+      -> cauce operations
+          -> NumPy/PyTorch and official ComfyUI runtime hooks
+```
+
+Do not reverse this direction. Core operations must not know about browser tabs,
+Cloudflare, Manager, queue routes, or a production project.
+
+Node sockets should use local, explicit data:
+
+- frames and frame counts;
+- images, masks, latents, motion maps, and vector fields;
+- sampler parameters;
+- small serialized operation plans and reports.
+
+Avoid global orchestration objects. If two nodes must share state, define the
+smallest contract that represents the mathematical operation.
+
+The package version lives in both `pyproject.toml` and `cauce.__version__`; keep
+them equal.
+
+## 5. H3 invariants
+
+- Production video is 24 fps.
+- Legal H3 visible-frame counts follow `17k + 5`.
+- `124` visible frames represent about `5.1667` seconds and 37 visual latent
+  tokens.
+- The packed H3 state contains visual and structural-audio streams.
+- Visual operations must not silently drop, regenerate, or spatially transform
+  the structural-audio stream.
+- Independent H3 latents do not automatically share causal phase.
+- Use `cauce/timebase.py` for H3 frame/token arithmetic.
+
+### Continuation
+
+Continuation copies a phase-aligned visual tail into a target latent, sets that
+context to preserved in the visual denoise mask, and freezes structural audio.
+Official conditioning nodes remain outside CAUCE.
+
+The parent latent must end at a visible-frame boundary on the H3 grid. Decoded
+acceptance uses explicit `start_frame` and `frame_count` values.
+
+### Temporal inpainting
+
+The characterized operation is:
+
+```text
+two decoded 24 fps clips
+-> tail/head working batch
+-> encoded source video latent
+-> binary H3 per-token denoise support
+-> official guide nodes wired outside CAUCE
+-> sample masked interval
+-> decode
+-> decoded opacity feather
+-> duration-preserving splice
+```
+
+For the measured 124-frame configuration:
+
+```text
+repair interval: [26, 98) = 72 frames
+incoming guide:  [4, 26)  = 22 frames
+outgoing guide:  [98, 120) = 22 frames
+```
+
+A soft decoded opacity feather is not a soft denoise mask. The H3 sampling mask
+is binary per latent token. Do not conflate the two.
+
+### Motion maps
+
+Motion maps are inverse pullbacks. At output coordinate `x`, the map stores the
+source coordinate to sample. Composition therefore follows function
+composition, and images should normally be sampled once after maps are
+composed.
+
+Use normalized PyTorch `align_corners=False` coordinates. Preserve validity and
+disocclusion fields throughout composition and resizing.
+
+## 6. Research discipline
+
+Research nodes stay experimental until they pass matched controls and an
+operation-specific quality gate.
+
+Required sequence:
+
+1. official baseline;
+2. CAUCE path with identity or zero strength;
+3. prove identity or explain the residual;
+4. activate one small intervention;
+5. inspect decode integrity;
+6. measure the requested effect;
+7. increase magnitude only after the previous gate passes.
+
+Current safe starting points:
+
+```text
+warped-noise temporal correlation: 0.05
+motion-map envelope:               0.15
+sigma transport strength:          0.10
+sigma padding:                      border
+```
+
+A clean decode proves tensor compatibility, not motion obedience. Pixel
+difference proves influence, not direction. Use optical flow, registration,
+endpoint drift, or another measurement tied to the requested field.
+
+## 7. Laboratory topology
+
+The usual laboratory origin is:
 
 ```text
 https://comfy.hypereikon.online/
 ```
 
-The current physical envelope is approximately:
+Physical envelope:
 
 ```text
 Windows portable ComfyUI
 RTX 5090, 32 GB VRAM
-64 GB system RAM
-approximately 120 GB free storage at initial handoff
-ComfyUI origin: http://localhost:8188
-Cloudflare Tunnel: public hostname -> localhost:8188
-Cloudflare Access: identity gate in front of the hostname
+64 GB RAM
+Cloudflare Tunnel -> http://localhost:8188
+Cloudflare Access in front of the hostname
 ```
 
-This is application access, not remote desktop, SSH, PowerShell, CMD, or general
-filesystem access. The tunnel exposes the ComfyUI HTTP origin only. Manager can
-perform the operations its HTTP API implements; it does not create an arbitrary
-operating-system shell.
+The tunnel exposes the ComfyUI HTTP origin. It is not remote desktop, SSH,
+PowerShell, CMD, or an arbitrary filesystem shell.
 
-The `cloudflared` tunnel runs as a Windows service. The hostname is usable only
-while all of these remain true:
-
-1. the tower is powered and connected;
-2. the Cloudflare tunnel service is running;
-3. the ComfyUI process is listening on `localhost:8188`.
-
-A tunnel that remains online does not automatically launch ComfyUI after every
-machine event unless the lab configured that separately.
+The hostname works only while the tower, network, tunnel service, and ComfyUI
+process are all healthy. Manager can perform only the HTTP operations it
+implements.
 
 Use the user's authenticated in-app browser session for live operations. Do not
-extract or reuse Cloudflare cookies in shell commands. Do not put credentials,
-tunnel tokens, session cookies, or Access headers into this repository, tool
-output, workflows, or documentation.
+extract cookies or place credentials in shell commands, code, graph JSON, or
+documentation.
 
-## 5. Safe live-update protocol
+## 8. Targeted deployment
 
-The normal CAUCE update does not require a second ComfyUI instance, an updater
-custom node, a terminal, or changes in Cloudflare.
+Before deployment:
 
-### Preconditions
+- user authorization covers the update;
+- intended changes are committed and pushed;
+- the Comfy queue is idle;
+- the authenticated browser tab is on the laboratory origin;
+- no unrelated core/runtime update is required.
 
-- The user has authorized a code deployment or the current task already
-  includes implementation and live validation.
-- The intended commit is pushed to `main`.
-- The Comfy queue is idle. Do not restart underneath a running GPU job.
-- The authenticated tab is on the CAUCE ComfyUI origin.
-- No unrelated core or custom-node update is needed.
-
-### Targeted Manager sequence
-
-Run same-origin authenticated requests from the ComfyUI tab:
+Targeted Manager sequence:
 
 ```text
 POST /manager/queue/reset
@@ -191,7 +260,7 @@ GET  /manager/queue/status
 GET  /customnode/installed
 ```
 
-The update payload is:
+Payload:
 
 ```json
 {
@@ -202,547 +271,114 @@ The update payload is:
 }
 ```
 
-The exact browser-side form is:
-
-```js
-const payload = {
-  id: "ComfyUI-Cauce",
-  ui_id: "ComfyUI-Cauce",
-  version: "unknown",
-  files: ["https://github.com/hypereikon-lab/ComfyUI-Cauce"],
-};
-
-await fetch("/manager/queue/reset", { method: "POST" });
-await fetch("/manager/queue/update", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload),
-});
-await fetch("/manager/queue/start", { method: "POST" });
-```
-
-Poll `/manager/queue/status` until `is_processing` is false. Then read:
-
-```js
-const installed = await fetch("/customnode/installed", {
-  cache: "no-store",
-}).then((response) => response.json());
-
-installed["ComfyUI-Cauce"].ver;
-```
-
-The reported full SHA must equal the intended published commit. A queue that
-returns HTTP 200 but still reports the old SHA is not a completed deployment.
-
-### Restart only ComfyUI
-
-Python changes require the ComfyUI process to restart:
+Poll until Manager is idle and verify the reported CAUCE commit. Python changes
+require:
 
 ```text
 POST /manager/reboot
 ```
 
-An immediate Cloudflare `502` response is expected: the origin disappears while
-the request is completing. This is not evidence that the tower, tunnel, CUDA,
-or Cloudflare configuration failed.
-
-Wait approximately 8–15 seconds, reload the existing tab, and verify both the
-commit and a representative node:
+An immediate Cloudflare 502 is expected while ComfyUI restarts. Wait, reload,
+then verify:
 
 ```text
 GET /customnode/installed
-GET /object_info/CauceSigmaMotionSampler
+GET /object_info/CauceBuildSeamWindow
+GET /queue
 ```
 
-Verification must confirm:
+Do not update CUDA, PyTorch, drivers, models, ComfyUI core, or unrelated custom
+nodes as part of a CAUCE deployment. Do not reboot the physical tower.
 
-- expected CAUCE commit;
-- `enabled: true`;
-- HTTP 200 for the node schema;
-- `python_module: custom_nodes.ComfyUI-Cauce`;
-- expected input defaults or description when those changed;
-- an idle, healthy queue.
+## 9. Browser and workflow-tab hygiene
 
-### Actions to avoid
+Distinguish:
 
-Do not use Manager's visible `Update All` for a CAUCE-only change. It can update
-ComfyUI core or unrelated custom nodes and expands the failure surface.
+1. browser page tab;
+2. Comfy workflow tab inside the frontend;
+3. automation handle controlling one browser page.
 
-Do not create an updater repository or updater node when the targeted Manager
-queue API already solves the problem.
-
-Do not update CUDA, PyTorch, GPU drivers, models, or ComfyUI core as a normal
-CAUCE deployment step. If an official H3 capability is missing, detect and
-report it first. A core update requires explicit scope and its own validation.
-
-Do not reboot the Windows tower. Manager's `/manager/reboot` restarts ComfyUI,
-not the physical machine.
-
-## 6. Recovery and disconnection diagnosis
-
-Use evidence to distinguish failure classes:
-
-| Observation | Likely meaning | Next action |
-|---|---|---|
-| Brief 502 immediately after `/manager/reboot` | Expected Comfy process restart | Wait and reload |
-| Cloudflare page persists, then Comfy returns | Tunnel stayed healthy | Continue verification |
-| Hostname resolves but origin stays 502 | Tunnel may be up while Comfy is down | Wait once; then ask lab operator to start Comfy |
-| Hostname is completely unreachable for an extended period | Tower, network, or tunnel service may be down | Operator intervention may be required |
-| Comfy loads, node is absent from `/object_info` | Import or dependency failure | Inspect Manager/Comfy logs; do not mutate CUDA blindly |
-| `/customnode/installed` shows old SHA | Git update did not reach installed clone | Check both remote branches and rerun targeted update |
-| Queue is active for an unexpected long time | GPU job or stalled workflow | Inspect queue/status before restarting |
-
-The browser's Manager log or bottom panel is not proof of a general remote
-terminal. Do not promise shell access that the tunnel does not provide.
-
-When an operation can be retried safely, retry the narrow operation. When a
-physical or origin-level condition persists, state exactly which layer is
-unreachable and request the smallest lab action required.
-
-## 7. Browser operation practices
-
-### Distinguish the three tab layers
-
-Do not use the generic word “tab” without identifying its layer:
-
-1. **Browser page tab:** an in-app browser tab whose URL is the Comfy origin.
-2. **Comfy workflow tab:** a graph tab inside the single-page Comfy frontend,
-   such as `Unsaved Workflow (3)`.
-3. **Agent tab handle:** the automation object claimed for one browser page tab.
-
-One browser page can contain many Comfy workflow tabs. Creating a blank Comfy
-workflow does not create a clean browser session and does not remove old graph
-state. A Comfy restart or browser reload may restore workflow tabs from frontend
-storage; do not assume the interface returned clean.
-
-### Workflow-tab ownership ledger
-
-At the beginning of live work, snapshot the visible Comfy workflow-tab labels
-and record a small in-turn ledger:
+One browser page can contain many workflow tabs. Before live work, record:
 
 ```text
-workflow label | owner | purpose | identifying signature | output prefix | state
+label | owner | purpose | identifying signature | output prefix | state
 ```
 
-Ownership rules:
+Every pre-existing or unidentified workflow is user-owned. Close only workflows
+created by the current agent or whose provenance is exact.
 
-- every workflow present before the agent creates one is user-owned or unknown;
-- an unknown workflow is treated as user-owned;
-- an agent owns only a workflow it created during the current trace or whose
-  provenance is otherwise exact;
-- ordinal names such as `Unsaved Workflow (4)` are weak identifiers and may
-  change after close/reload;
-- use a unique Markdown note, workflow title, seed, and output prefix as the
-  durable signature of an experimental graph.
+Use at most one active experiment and one comparison graph. Pasting JSON can
+open another workflow tab instead of replacing the current canvas; reconcile
+the ledger immediately.
 
-Never close, clear, overwrite, or approve an unsaved-changes prompt for a
-user-owned or unknown graph.
+Before Run verify:
 
-### Strict lifecycle
-
-Use at most:
-
-- one active agent experiment workflow;
-- one optional agent reference/comparison workflow when simultaneous visual
-  comparison is genuinely necessary.
-
-Do not accumulate a new workflow tab for every parameter change. Prefer to:
-
-1. finish and inspect the current experiment;
-2. preserve its reproducible source in `tools/build_workflows.py`, a committed
-   workflow JSON, or the run report;
-3. enumerate outputs through `/history`;
-4. close that agent-owned workflow;
-5. only then create the next workflow.
-
-Use an agent-created blank workflow for a test:
-
-1. snapshot existing workflow tabs;
-2. click `Create a new blank workflow` once;
-3. record the new workflow as agent-owned;
-4. paste or load the generated JSON;
-5. detect whether Comfy opened the JSON in a second new workflow tab;
-6. if so, immediately close the now-unused agent-owned blank staging tab;
-7. verify the loaded graph's signature;
-8. run and inspect it;
-9. close the loaded agent-owned workflow when its reproducible state and
-   outputs have been recorded.
-
-Pasting a complete workflow JSON may create another unsaved workflow tab rather
-than replacing the blank canvas. This behavior was the cause of previous
-`Unsaved Workflow (2)…(5)` accumulation. Treat every paste as a possible tab
-creation event and reconcile the ledger immediately.
-
-### Pre-Run active-graph check
-
-Immediately before clicking Run, verify the active workflow, not merely the
-visible canvas:
-
-- active workflow-tab label and signature;
-- expected unique Markdown note or workflow title;
-- expected input filenames;
-- sampler, scheduler, steps, seed, and active/muted branches;
-- expected output prefixes;
+- active workflow label and unique signature;
+- source filenames;
+- model, sampler, scheduler, steps, seed, and denoise;
+- output prefix;
 - zero validation errors;
-- queue idle.
-
-If any signature belongs to a previous experiment, stop. Do not “try the run”
-to discover which graph is active.
-
-Errors, parameter panels, selected nodes, and workflow overviews belong to the
-currently active Comfy workflow. A stale error banner from another graph can
-mislead diagnosis if the active tab was not verified.
-
-### Closing and cleanup
-
-A backend job is a queued snapshot. Switching or closing its graph tab does not
-cancel the job. Nevertheless, keep its workflow active until queuing is
-confirmed so that a second graph is not accidentally submitted.
+- idle queue.
 
 After completion:
 
-1. read `/history` and record exact outputs;
-2. save or commit any graph state that must remain reproducible;
-3. close only the agent-owned workflow tabs in the ledger;
-4. confirm the user-owned tab set is unchanged;
-5. leave no blank staging tabs;
-6. leave no previous experimental graph active for the next agent.
+- enumerate exact outputs through `/history`;
+- preserve reproducible graph state when required;
+- close only agent-owned temporary tabs;
+- leave no blank staging graph or stale experiment active.
 
-If a future instance finds several stale unsaved workflows and cannot prove
-ownership, it must not close them. Report their labels and ask the user. Context
-recovery from a session JSONL may establish ownership, but ordinal similarity
-alone does not.
+The Assets sidebar is an index, not filesystem authority. Confirm outputs with
+`/history` and authenticated `/view` requests.
 
-Give every test output a unique technical prefix. Outputs and backend history
-survive workflow-tab closure; the tab is not the artifact archive.
-
-For a long GPU job:
-
-- confirm zero validation errors before Run;
-- confirm the queue is idle;
-- run one experiment matrix at a time;
-- poll every 20–40 seconds rather than clicking repeatedly;
-- communicate progress at least once per minute;
-- do not interpret Comfy's aggregate percentage too literally when branches are
-  cached or scheduled in nonvisual order;
-- read `/history` after completion to enumerate exact output nodes and paths.
-
-The Assets sidebar is an index, not the filesystem authority. After reload it
-may temporarily show no generated files even though `/view` returns the output.
-Verify a physical artifact with `/history` and an authenticated request to:
-
-```text
-/view?filename=<name>&subfolder=<folder>&type=output
-```
-
-Use `HEAD` or a byte/hash comparison when appropriate. Do not claim an output
-was deleted or lost solely because a thumbnail is absent.
-
-## 8. Storage and media lifecycle
-
-Model files dominate storage. CAUCE code and workflow JSON are small.
-
-Before adding models:
-
-- inventory existing names and variants;
-- prefer the minimum model set needed by the active workflow;
-- avoid duplicate FP8/INT8/quantized variants without a measured reason;
-- keep enough reserve for inputs, VAE intermediates, outputs, and temporary
-  files;
-- do not assume Manager can safely delete arbitrary model files.
-
-CAUCE maintenance nodes intentionally address only `input/` or `output/`.
-Follow their two-phase contract:
-
-1. inventory with `armed = false`;
-2. inspect the exact plan and confirmation code;
-3. arm only the reviewed plan;
-4. preserve the generated cleanup receipt.
-
-They must never address models, custom nodes, workflows, arbitrary absolute
-paths, symlinks, or parent traversal.
-
-For browser-visible assets, distinguish:
-
-- uploaded or physical files;
-- files indexed by the frontend;
-- outputs listed in `/history`;
-- files reachable through `/view`.
-
-These sets can differ.
-
-## 9. H3 invariants
-
-Keep these facts explicit in code, workflows, and reports:
-
-- Production video is 24 fps.
-- Legal H3 visible-frame counts follow `17k + 5`.
-- `124` visible frames equal approximately `5.1667` seconds and map to `37`
-  H3 visual latent tokens.
-- The measured production envelope is usually 124–362 visible frames.
-- The packed H3 state contains visual and structural audio streams.
-- Visual-only CAUCE operations must copy, freeze, or leave structural audio
-  unchanged; the decoded H3 audio is not production audio.
-- Independent H3 latents cannot be naively concatenated and assumed to share a
-  causal phase.
-- Coordinate maps are inverse pullbacks: target coordinates sample source
-  coordinates in PyTorch normalized `align_corners=False` space.
-
-Use the functions in `cauce/timebase.py` rather than recreating frame/token/time
-arithmetic in nodes.
-
-## 10. Conditioning contracts
-
-### FL2VA
-
-FL2VA may receive:
-
-- first and last images;
-- only a first image for an open `A →` generation;
-- an arbitrary prompt.
-
-Do not manufacture semantic descriptions of an image unless the user requests
-them. The image remains the conditioning image; CAUCE does not replace it with
-an inferred entity record.
-
-### Ref2VA
-
-Ref2VA receives an ordered set of image or video references. Their purpose is
-expressed by ordering and prompt, not by a hard-coded identity/style/motion
-ontology. A video reference may be filmed material, an affine grid, a depth
-render, a simulation, optical flow visualization, or any other opaque motion
-carrier.
-
-### Temporal inpainting
-
-The verified production contract is:
-
-```text
-two existing 24 fps clips
--> tail/head source context
--> one 124-frame working window
--> VAE encode the existing video
--> binary H3 per-token denoise mask
--> 22-frame guide before the interval
--> 22-frame guide after the interval
--> sample only the masked interval
--> VAE decode
--> four-frame decoded cosine opacity feather
--> duration-preserving patch splice
-```
-
-The verified 3-second interval is `[26,98)`, or 72 visible frames. The guide
-clips are `[4,26)` and `[98,120)`. The production master audio does not enter
-this operation.
-
-A soft decoded opacity feather is not a soft denoise mask. The official H3
-sampling mask is binary per token. Do not describe post-decode blending as
-fractional sampling strength.
-
-## 11. Native motion experiments
-
-Native latent or noise operations are experimental until directional fidelity
-is measured. A clean decode proves the tensor path, not control obedience.
-
-### Warped H3 noise
-
-The live safe starting point is approximately:
-
-```text
-temporal correlation: 0.05
-motion-map envelope: 0.15
-```
-
-The earlier stress combination around `0.85 / 0.70` left H3's learned noise
-manifold and was rejected. High correlation enters with square-root amplitude;
-do not treat it as an ordinary linear mix.
-
-### Sequential latent warp and repair
-
-A live coherent path used approximately:
-
-```text
-pan: 2%
-scale: up to 1.04
-repair pass: 12 steps
-denoise: 0.35
-```
-
-This validates geometry, AV packing, masks, and repair sampling. It does not by
-itself prove that visible optical flow follows the requested map.
-
-### Sigma-conditioned transport
-
-Supported deterministic solvers are:
-
-```text
-res_multistep
-res_multistep_cfg_pp
-euler
-```
-
-Euler is the minimal diagnostic because it retains no multistep denoised
-history. RES must transport the retained history in the same coordinate frame
-as the current state.
-
-Required validation sequence:
-
-1. official sampler baseline;
-2. CAUCE wrapper with `strength = 0`;
-3. prove identity, preferably by exact output hashes;
-4. activate one small field;
-5. inspect decode integrity;
-6. measure directional flow or registration against the matched baseline;
-7. only then increase strength or compose fields.
-
-Live Euler facts from 2026-08-24:
-
-- the zero-strength CAUCE output was bit-identical to official Euler;
-- a retained horizontal displacement near `8%` produced severe mosaic and
-  chroma-band corruption;
-- approximately `0.8%` retained displacement decoded coherently;
-- approximately `1.6%` and `2.4%` produced increasing tearing;
-- the clean `0.8%` branch diverged from baseline but did not yet demonstrate an
-  integer directional horizontal displacement.
-
-Therefore:
-
-- begin near `strength = 0.10` and `padding_mode = border`;
-- treat stronger settings as stress/material experiments;
-- never describe current sigma transport as reliable camera control;
-- preserve matched baselines and report negative results.
-
-## 12. Experiment design and evidence
+## 10. Live experiment protocol
 
 Change one independent variable at a time. A matched comparison holds fixed:
 
-- source media and order;
+- source media and ordering;
 - prompt;
 - seed and noise source;
 - model and quantization;
 - resolution and frame count;
 - sampler, scheduler, steps, and denoise;
-- decode and save path structure.
+- decode and save path.
 
-Use separate technical output names. Record exact parameter values. A report
-must include the fields defined in `docs/TECHNICAL_LANGUAGE.md`.
+Use these states:
 
-Use these promotion states exactly:
+- `graph validated`;
+- `executes`;
+- `executes but rejected`;
+- `verified`;
+- `blocked`.
 
-- `graph validated`: frontend resolves nodes and sockets; no sample yet;
-- `executes`: job completed and artifacts exist;
-- `executes but rejected`: runtime worked, perceptual or structural gate failed;
-- `verified`: the operation passed the relevant structural, measured, and visual
-  gates;
-- `blocked`: an explicit capability is missing.
+Never call an inference successful only because the queue completed. For
+temporal edits inspect the target interval, both patch edges, unchanged regions,
+frame count, fps, and duration.
 
-Never promote based on job completion alone. For continuity and temporal
-inpainting inspect:
+For long jobs, poll every 20–40 seconds, communicate at least once per minute,
+and do not submit a second job because an aggregate percentage appears stalled.
 
-- the target interval;
-- both joins or patch edges;
-- unchanged regions outside the mask;
-- total frames, fps, and duration;
-- source/guide ordering;
-- the actual gesture, not only image similarity.
+## 11. Recovery
 
-For motion fields, pixel difference from baseline proves only nonzero influence.
-Directional fidelity needs optical flow, registration, endpoint drift, or an
-equivalent measurement tied to the requested field.
+| Observation | Interpretation | Action |
+| --- | --- | --- |
+| brief 502 after Manager reboot | ComfyUI process is restarting | wait and reload |
+| origin remains 502 | tunnel may be alive while ComfyUI is down | wait once, then request operator start |
+| hostname remains unreachable | tower, network, or tunnel may be down | request smallest physical check |
+| node absent from `/object_info` | import or dependency failure | inspect logs; do not mutate GPU stack blindly |
+| Manager reports old commit | update did not reach installed clone | verify remote ref and rerun targeted update |
+| queue unexpectedly busy | active or stalled GPU job | inspect queue/history before restart |
 
-## 13. Technical language
+Retry only the narrow safe operation. Report the precise failed layer.
 
-Prefer exact operation names:
+## 12. Finish checklist
 
-- temporal inpainting;
-- continuation;
-- first/last-frame conditioning;
-- ordered reference conditioning;
-- decoded opacity feather;
-- affine pullback;
-- vector-field advection;
-- warped noise;
-- sequential latent warp and repair;
-- sigma-conditioned latent transport.
-
-Do not name nodes or algorithms with vague metaphors such as “Confluence”,
-“bridge”, “polish”, or “redo”. Informal language may appear in discussion, but
-code, workflow titles, filenames, docs, and run reports should remain technical.
-
-## 14. Research and licensing
-
-H3 and its ecosystem change quickly. When a task depends on current upstream
-behavior:
-
-- inspect current official ComfyUI/H3 source and primary papers;
-- distinguish upstream capability from a community wrapper;
-- distinguish a paper's method from what CAUCE actually implements;
-- record commit dates and hashes for unstable behavior;
-- prefer mathematical reimplementation over copying third-party code;
-- do not copy GPL implementation code into the MIT CAUCE repository.
-
-Treat community repositories, Reddit, X, and demos as leads. Promote technical
-claims only after checking source, paper, or live behavior.
-
-## 15. Incident lessons that must not be repeated
-
-1. **Do not infer missing capability from the visible UI.** The targeted
-   Manager HTTP queue was already available even when a remote shell was not.
-2. **Do not use `Update All` for a CAUCE-only deployment.** Update only
-   `ComfyUI-Cauce` and verify its SHA.
-3. **Do not create auxiliary infrastructure before auditing existing paths.**
-   The discarded updater-node idea duplicated Manager capability.
-4. **Do not confuse Cloudflare Tunnel with remote desktop or SSH.** It exposes
-   the ComfyUI origin only.
-5. **Do not call a completed inference successful without inspecting it.** The
-   strong horizontal Euler transport completed but was visually corrupt.
-6. **Always run a zero/identity control before an active latent intervention.**
-   The bit-identical zero control separated sampler integration from field
-   magnitude failure.
-7. **Preserve rejected results in `LAB_RESULTS`.** Negative evidence defines the
-   operating envelope and prevents repeated GPU waste.
-8. **Do not trust conversational memory after a long thread.** Recover exact
-   tool calls, commits, workflows, and outputs from repository state and narrow
-   JSONL searches.
-
-## 16. Start and finish checklists
-
-### Start of a coding turn
-
-- Read this file and the relevant linked docs.
-- Inspect Git status, branch, recent commits, and remotes.
-- Identify whether the task is design, local implementation, live deployment,
-  or all three.
-- Preserve existing changes.
-- Define the smallest evidence that would prove the requested behavior.
-- If live work is needed, verify hostname, installed CAUCE SHA, node schema, and
-  queue state before mutation.
-
-### Before a live run
-
-- Generated workflow rebuilt and locally validated.
-- Required input assets exist under ComfyUI input.
-- Model names match the live runtime.
-- Workflow-tab ledger reconciled; no unused agent staging tabs.
-- Active graph signature matches the intended experiment.
-- No validation errors in the frontend.
-- Queue idle.
-- Unique output prefix.
-- Matched baseline/control included.
-- Storage impact is bounded.
-
-### Before declaring completion
-
-- Code and generated artifacts agree.
-- Relevant local tests passed, or a missing dependency is reported.
-- Intended commit is on both required remote refs.
-- `/customnode/installed` reports that commit.
-- `/object_info` proves the updated node imported.
-- Required live workflow executed.
-- `/history` contains all expected outputs.
-- Visual and measured gates were applied.
-- Rejected behavior is documented without euphemism.
-- Agent-owned workflow tabs were closed after their reproducible state and
-  outputs were recorded; user-owned tabs remain unchanged.
-- No secrets were printed or committed.
-- No unrelated runtime component was changed.
+- Code, registry, documentation, and tests agree.
+- Pure-Python tests pass; skipped tensor dependencies are reported.
+- `git diff --check` passes.
+- Package versions match.
+- No removed or unregistered node is referenced.
+- No secret or authentication state entered the repository.
+- For deployment, installed commit and representative `/object_info` agree.
+- For live inference, history and visual/measurement gates were inspected.
+- Agent-owned workflow tabs were cleaned up without touching user-owned tabs.
+- No unrelated runtime component changed.

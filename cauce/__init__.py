@@ -1,6 +1,3 @@
-"""CAUCE core: media, exact time, and visual continuity on a master clock."""
+"""Mathematical and model-adapter operations used by CAUCE nodes."""
 
-from .contracts import *  # noqa: F401,F403
-from .timebase import *  # noqa: F401,F403
-
-__version__ = "0.6.0"
+__version__ = "1.0.0"

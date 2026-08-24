@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-cauce"
-version = "0.9.1"
-description = "Media, exact time, motion maps, and temporal video inpainting in ComfyUI"
+version = "1.0.0"
+description = "Continuity, temporal inpainting, and motion-field operations for ComfyUI"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
@@ -9,9 +9,6 @@ authors = [
   { name = "Hypereikon" }
 ]
 dependencies = []
-
-[project.scripts]
-cauce = "cauce.runner:main"
 
 [project.urls]
 Homepage = "https://hypereikon.online"

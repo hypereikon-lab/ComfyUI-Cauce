@@ -1,16 +1,11 @@
-"""Exact clocks and MiniMax H3 temporal geometry for CAUCE.
-
-This module is intentionally free of ComfyUI and torch imports.  It is the
-authoritative place for every conversion between the project clock, pixel
-frames, audio samples, H3 visual tokens, and H3 audio-latent frames.
-"""
+"""Exact MiniMax H3 visible-frame and audiovisual-latent geometry."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
 import math
-from typing import Iterable, Literal
+from typing import Literal
 
 
 H3_FPS = Fraction(24, 1)
@@ -19,8 +14,6 @@ H3_FRAME_STEP = 17
 H3_FRAME_OFFSET = 5
 H3_MIN_FRAMES = 5
 H3_TRAINED_MIN_FRAMES = 124
-H3_TRAINED_MAX_FRAMES = 362
-H3_NODE_MAX_FRAMES = 3600
 H3_FRAME_PER_TOKEN = (1, 4, 4, 4, 4)
 
 RoundMode = Literal["floor", "ceil", "nearest"]
@@ -98,94 +91,13 @@ def frames_to_seconds(frames: int, fps: Numberish = H3_FPS) -> Fraction:
     return Fraction(int(frames), 1) / fps_f
 
 
-def seconds_to_samples(seconds: Numberish, sample_rate: int, mode: RoundMode = "nearest") -> int:
-    if int(sample_rate) <= 0:
-        raise ValueError("sample_rate must be positive")
-    seconds_f = as_fraction(seconds)
-    if seconds_f < 0:
-        raise ValueError("seconds cannot be negative")
-    return quantize(seconds_f * int(sample_rate), mode)
-
-
-def frame_to_sample(frame: int, sample_rate: int, fps: Numberish = H3_FPS) -> int:
-    """Map a frame boundary to a sample using an explicit nearest rule."""
-
-    return round_fraction(Fraction(int(frame) * int(sample_rate), 1) / as_fraction(fps))
-
-
 def fraction_payload(value: Fraction) -> dict[str, int]:
     return {"numerator": value.numerator, "denominator": value.denominator}
-
-
-def fraction_from_payload(value: object) -> Fraction:
-    if isinstance(value, dict) and "numerator" in value and "denominator" in value:
-        denominator = int(value["denominator"])
-        if denominator == 0:
-            raise ValueError("rational denominator cannot be zero")
-        return Fraction(int(value["numerator"]), denominator)
-    return as_fraction(value)  # type: ignore[arg-type]
-
-
-def format_seconds(value: Fraction, digits: int = 6) -> str:
-    text = f"{float(value):.{digits}f}"
-    return text.rstrip("0").rstrip(".") or "0"
-
-
-def format_timecode(seconds: Numberish, fps: Numberish = H3_FPS) -> str:
-    fps_f = as_fraction(fps)
-    if fps_f.denominator != 1:
-        raise ValueError("non-drop timecode currently requires an integer fps")
-    total_frames = seconds_to_frames(seconds, fps_f, "nearest")
-    fps_i = int(fps_f)
-    hours, remainder = divmod(total_frames, fps_i * 3600)
-    minutes, remainder = divmod(remainder, fps_i * 60)
-    secs, frame = divmod(remainder, fps_i)
-    return f"{hours:02d}:{minutes:02d}:{secs:02d}:{frame:02d}"
 
 
 def is_h3_frame_count(frames: int) -> bool:
     frames = int(frames)
     return frames >= H3_MIN_FRAMES and (frames - H3_FRAME_OFFSET) % H3_FRAME_STEP == 0
-
-
-def is_h3_av_boundary(frames: int) -> bool:
-    """Whether a video-valid run also ends exactly on H3's 40 Hz audio grid."""
-
-    frames = int(frames)
-    audio_position = Fraction(frames, 1) / H3_FPS * H3_AUDIO_LATENT_HZ
-    return is_h3_frame_count(frames) and audio_position.denominator == 1
-
-
-def h3_av_boundaries(maximum: int = H3_NODE_MAX_FRAMES) -> tuple[int, ...]:
-    return tuple(
-        frames
-        for frames in range(H3_MIN_FRAMES, int(maximum) + 1)
-        if is_h3_av_boundary(frames)
-    )
-
-
-def snap_h3_frame_count(
-    requested: Numberish,
-    *,
-    unit: Literal["seconds", "frames"] = "seconds",
-    mode: RoundMode = "ceil",
-    maximum: int = H3_NODE_MAX_FRAMES,
-) -> int:
-    if unit == "seconds":
-        raw = as_fraction(requested) * H3_FPS
-    elif unit == "frames":
-        raw = as_fraction(requested)
-    else:
-        raise ValueError("unit must be seconds or frames")
-    if raw <= 0:
-        raise ValueError("requested duration must be positive")
-
-    grid = (raw - H3_FRAME_OFFSET) / H3_FRAME_STEP
-    step = quantize(grid, mode)
-    frames = max(H3_MIN_FRAMES, H3_FRAME_OFFSET + H3_FRAME_STEP * step)
-    if frames > int(maximum):
-        raise ValueError(f"requested duration needs {frames} frames; maximum is {maximum}")
-    return frames
 
 
 def h3_visual_latent_frames(pixel_frames: int) -> int:
@@ -234,36 +146,6 @@ def visual_token_count_for_span(pixel_frames: int) -> int:
 def visual_span_for_tokens(token_count: int) -> int:
     spans = visual_token_spans(token_count)
     return spans[-1][1]
-
-
-def audio_latent_spans(count: int) -> tuple[tuple[Fraction, Fraction], ...]:
-    if int(count) < 1:
-        raise ValueError("count must be positive")
-    step = Fraction(1, int(H3_AUDIO_LATENT_HZ))
-    return tuple((index * step, (index + 1) * step) for index in range(int(count)))
-
-
-def interval_overlap(
-    left: tuple[Fraction, Fraction], right: tuple[Fraction, Fraction]
-) -> Fraction:
-    return max(Fraction(0), min(left[1], right[1]) - max(left[0], right[0]))
-
-
-def reduce_intervals(
-    target_spans: Iterable[tuple[Fraction, Fraction]],
-    source_spans: Iterable[tuple[Fraction, Fraction, float]],
-    default: float,
-) -> tuple[float, ...]:
-    sources = tuple(source_spans)
-    values: list[float] = []
-    for target in target_spans:
-        matches: list[float] = []
-        for start, end, strength in sources:
-            if interval_overlap(target, (start, end)) > 0:
-                matches.append(float(strength))
-        value = max(matches) if matches else float(default)
-        values.append(min(1.0, max(0.0, value)))
-    return tuple(values)
 
 
 @dataclass(frozen=True)

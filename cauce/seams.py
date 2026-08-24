@@ -6,12 +6,11 @@ import copy
 import math
 from typing import Any
 
-from .contracts import SEAM_SCHEMA, content_hash, make_window
+from .contracts import SEAM_SCHEMA, content_hash
 from .h3 import (
-    execute_add_guide,
     get_av_streams,
     pixel_frames_from_video_latent,
-    require_h3_temporal_edit_runtime,
+    require_h3_temporal_mask_runtime,
 )
 from .timebase import (
     H3_FPS,
@@ -419,26 +418,6 @@ def build_native_latent_seam_window(
     return working
 
 
-def make_seam_window(plan: dict[str, Any]) -> dict[str, Any]:
-    """Compile the working seam domain into the matching exact H3 window."""
-
-    _validate_seam(plan)
-    working_frames = int(plan["working_frames"])
-    window = make_window(
-        f"temporal-inpaint-{str(plan['hash'])[:12]}",
-        0,
-        frames_to_seconds(working_frames),
-        context_frames=0,
-        duplicate_prefix_frames=0,
-        snap_mode="nearest",
-        accept_mode="full_render",
-        maximum_frames=working_frames,
-    )
-    if int(window["shape"]["pixel_frames"]) != working_frames:
-        raise RuntimeError("seam plan and generated H3 window disagree")
-    return window
-
-
 def _validate_seam(plan: dict[str, Any]) -> None:
     if plan.get("schema") != SEAM_SCHEMA:
         raise ValueError(f"seam schema must be {SEAM_SCHEMA}")
@@ -703,7 +682,7 @@ def prepare_h3_temporal_inpaint(
         raise RuntimeError("H3 temporal inpainting can only be prepared inside ComfyUI") from exc
 
     _validate_seam(plan)
-    capabilities = require_h3_temporal_edit_runtime()
+    capabilities = require_h3_temporal_mask_runtime()
     target_video, target_audio = get_av_streams(target_latent)
     encoded_video = _video_samples(encoded_video_latent)
     if pixel_frames_from_video_latent(target_video) != int(plan["working_frames"]):
@@ -711,7 +690,7 @@ def prepare_h3_temporal_inpaint(
     if tuple(encoded_video.shape) != tuple(target_video.shape):
         raise ValueError(
             "encoded video latent geometry does not match the H3 target; normalize both clips "
-            "to the execution profile before building the seam"
+            "to the same resolution and VAE geometry before building the seam"
         )
     video = encoded_video.to(device=target_video.device, dtype=target_video.dtype).clone()
     audio = target_audio.clone()
@@ -790,7 +769,7 @@ def prepare_h3_native_latent_temporal_inpaint(
         raise RuntimeError("native H3 temporal inpainting requires ComfyUI") from exc
 
     _validate_native_latent_seam(plan)
-    capabilities = require_h3_temporal_edit_runtime()
+    capabilities = require_h3_temporal_mask_runtime()
     target_video, target_audio = get_av_streams(target_latent)
     left_video, _ = get_av_streams(left_latent)
     right_video, _ = get_av_streams(right_latent)
@@ -806,7 +785,7 @@ def prepare_h3_native_latent_temporal_inpaint(
     ) != expected_geometry:
         raise ValueError(
             "native seam latents must share batch, channels, height, and width; "
-            "generate both clips with the same CAUCE execution profile"
+            "generate both clips with the same H3 resolution and latent geometry"
         )
 
     left_source_start = int(plan["left_latent_source_start_token"])
@@ -860,59 +839,6 @@ def prepare_h3_native_latent_temporal_inpaint(
         "runtime_capabilities": capabilities,
     }
     return out, report
-
-
-def add_h3_temporal_inpaint_guides(
-    positive: Any,
-    target_latent: dict[str, Any],
-    working_images: Any,
-    plan: dict[str, Any],
-    vae: Any,
-):
-    """Anchor preserved motion clips immediately before and after the gap."""
-
-    _validate_seam(plan)
-    capabilities = require_h3_temporal_edit_runtime()
-    if int(working_images.shape[0]) != int(plan["working_frames"]):
-        raise ValueError("working image batch does not match the seam plan")
-    left_start = int(plan["left_guide_start_frame"])
-    left_end = int(plan["left_guide_end_frame"])
-    right_start = int(plan["right_guide_start_frame"])
-    right_end = int(plan["right_guide_end_frame"])
-    left_clip = working_images[left_start:left_end]
-    right_clip = working_images[right_start:right_end]
-    if int(left_clip.shape[0]) != int(plan["guide_frames"]) or int(
-        right_clip.shape[0]
-    ) != int(plan["guide_frames"]):
-        raise RuntimeError("temporal inpaint guide extraction produced an invalid H3 clip")
-    conditioned = execute_add_guide(
-        positive=positive,
-        latent=target_latent,
-        frame_idx=left_start,
-        vae=vae,
-        image=left_clip,
-    )
-    conditioned = execute_add_guide(
-        positive=conditioned,
-        latent=target_latent,
-        frame_idx=right_start,
-        vae=vae,
-        image=right_clip,
-    )
-    report = {
-        "schema": "cauce.temporal-inpaint-guides/1",
-        "seam_hash": plan["hash"],
-        "guide_frames": int(plan["guide_frames"]),
-        "left_range": [left_start, left_end],
-        "right_range": [right_start, right_end],
-        "generated_range": [
-            int(plan["repair_start_frame"]),
-            int(plan["repair_end_frame"]),
-        ],
-        "audio_mode": "no-guide-audio",
-        "runtime_capabilities": capabilities,
-    }
-    return conditioned, report
 
 
 def splice_seam_patch(
@@ -977,104 +903,3 @@ def splice_seam_patch(
         "blend_source": "connected_mask" if blend_strength is not None else "temporal_curve",
     }
     return joined, patch, report
-
-
-def assemble_native_two_clip_loop(
-    first_clip: Any,
-    second_clip: Any,
-    forward_repaired_working: Any,
-    forward_plan: dict[str, Any],
-    wrap_repaired_working: Any,
-    wrap_plan: dict[str, Any],
-    *,
-    feather_frames: int = 4,
-    curve: str = "cosine",
-):
-    """Apply first→second and second→first seam proposals as a closed loop."""
-
-    _validate_native_latent_seam(forward_plan)
-    _validate_native_latent_seam(wrap_plan)
-    first_count = int(first_clip.shape[0])
-    second_count = int(second_clip.shape[0])
-    if (first_count, second_count) != (
-        int(forward_plan["left_total_frames"]),
-        int(forward_plan["right_total_frames"]),
-    ):
-        raise ValueError("forward seam plan does not match first→second clips")
-    if (second_count, first_count) != (
-        int(wrap_plan["left_total_frames"]),
-        int(wrap_plan["right_total_frames"]),
-    ):
-        raise ValueError("wrap seam plan does not match second→first clips")
-    shapes = {
-        tuple(first_clip.shape[1:]),
-        tuple(second_clip.shape[1:]),
-        tuple(forward_repaired_working.shape[1:]),
-        tuple(wrap_repaired_working.shape[1:]),
-    }
-    if len(shapes) != 1:
-        raise ValueError("all source and repaired videos must share resolution and channels")
-    for repaired, plan, label in (
-        (forward_repaired_working, forward_plan, "forward"),
-        (wrap_repaired_working, wrap_plan, "wrap"),
-    ):
-        if int(repaired.shape[0]) != int(plan["working_frames"]):
-            raise ValueError(f"{label} repaired batch does not match its seam plan")
-
-    forward_repair = int(forward_plan["repair_frames_per_side"])
-    wrap_repair = int(wrap_plan["repair_frames_per_side"])
-    if forward_repair != wrap_repair:
-        raise ValueError("closed-loop seams must replace the same frames per side")
-    repair = forward_repair
-    if repair * 2 >= min(first_count, second_count):
-        raise ValueError("seam patches overlap; use longer source clips or a smaller repair")
-
-    forward_start = int(forward_plan["repair_start_frame"])
-    forward_end = int(forward_plan["repair_end_frame"])
-    wrap_start = int(wrap_plan["repair_start_frame"])
-    wrap_end = int(wrap_plan["repair_end_frame"])
-    forward_patch = forward_repaired_working[forward_start:forward_end]
-    wrap_patch = wrap_repaired_working[wrap_start:wrap_end]
-    forward_original = _concat_image_batches(
-        [first_clip[-repair:], second_clip[:repair]]
-    )
-    wrap_original = _concat_image_batches([second_clip[-repair:], first_clip[:repair]])
-    forward_patch = _blend_patch(
-        forward_patch, forward_original, feather_frames, curve
-    )
-    wrap_patch = _blend_patch(wrap_patch, wrap_original, feather_frames, curve)
-
-    first_repaired = _concat_image_batches(
-        [
-            wrap_patch[repair:],
-            first_clip[repair : first_count - repair],
-            forward_patch[:repair],
-        ]
-    )
-    second_repaired = _concat_image_batches(
-        [
-            forward_patch[repair:],
-            second_clip[repair : second_count - repair],
-            wrap_patch[:repair],
-        ]
-    )
-    loop = _concat_image_batches([first_repaired, second_repaired])
-    if int(first_repaired.shape[0]) != first_count or int(
-        second_repaired.shape[0]
-    ) != second_count:
-        raise RuntimeError("native seam assembly changed an individual clip duration")
-    if int(loop.shape[0]) != first_count + second_count:
-        raise RuntimeError("native seam assembly changed the loop duration")
-    report = {
-        "schema": "cauce.native-two-clip-loop/1",
-        "first_frames": first_count,
-        "second_frames": second_count,
-        "loop_frames": int(loop.shape[0]),
-        "forward_seam_hash": forward_plan["hash"],
-        "wrap_seam_hash": wrap_plan["hash"],
-        "replacement_frames_per_side": repair,
-        "decoded_feather_frames": int(feather_frames),
-        "blend_curve": curve,
-        "loop_boundary": "repaired-second-to-first",
-    }
-    return loop, first_repaired, second_repaired, forward_patch, wrap_patch, report

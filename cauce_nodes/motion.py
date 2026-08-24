@@ -10,7 +10,6 @@ from ..cauce.motion import (
     INTEGRATORS,
     PADDING_MODES,
     VECTOR_FIELDS,
-    WarpedH3Noise,
     affine_motion_map,
     analytic_motion_map,
     compose_motion_maps,
@@ -21,13 +20,11 @@ from ..cauce.motion import (
     motion_map_report,
     perspective_motion_map,
     vector_field,
-    warp_h3_latent,
     warp_images,
 )
 
 
 MAP_CATEGORY = "CAUCE/Motion Maps"
-H3_CATEGORY = "CAUCE/H3 Motion"
 
 
 def _json(value):
@@ -313,63 +310,6 @@ class CauceWarpImage:
         return warped, validity, _json(report)
 
 
-class CauceWarpH3Latent:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {"required": {"latent": ("LATENT",), "motion_map": ("CAUCE_MAP",), "padding_mode": (list(PADDING_MODES), {"default": "border"}), "mask_mode": (["none", "holes", "all"], {"default": "holes"})}}
-
-    RETURN_TYPES = ("LATENT", "MASK", "STRING")
-    RETURN_NAMES = ("latent", "validity", "report_json")
-    FUNCTION = "warp"
-    CATEGORY = H3_CATEGORY
-
-    def warp(self, latent, motion_map, padding_mode, mask_mode):
-        result, validity, report = warp_h3_latent(latent, motion_map, padding_mode=padding_mode, mask_mode=mask_mode)
-        return result, validity, _json(report)
-
-
-class CauceWarpedH3Noise:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "seed": (
-                    "INT",
-                    {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF},
-                ),
-                "motion_map": ("CAUCE_MAP",),
-                "padding_mode": (list(PADDING_MODES), {"default": "reflection"}),
-                "temporal_correlation": (
-                    "FLOAT",
-                    {"default": 0.05, "min": 0.0, "max": 1.0, "step": 0.005},
-                ),
-            }
-        }
-
-    RETURN_TYPES = ("NOISE", "STRING")
-    RETURN_NAMES = ("noise", "report_json")
-    FUNCTION = "build"
-    CATEGORY = H3_CATEGORY
-    DESCRIPTION = "Create subtly motion-correlated H3 visual noise; begin near 0.05 because strong zero-shot correlation can leave H3's learned noise manifold."
-
-    def build(self, seed, motion_map, padding_mode, temporal_correlation):
-        report = motion_map_report(motion_map) | {
-            "seed": int(seed),
-            "padding_mode": padding_mode,
-            "temporal_correlation": float(temporal_correlation),
-            "output": "h3_warped_noise",
-        }
-        return (
-            WarpedH3Noise(
-                seed,
-                motion_map,
-                padding_mode,
-                temporal_correlation=temporal_correlation,
-            ),
-            _json(report),
-        )
-
-
 NODE_CLASS_MAPPINGS = {
     "CauceAffineMotionMap": CauceAffineMotionMap,
     "CauceAnalyticMotionMap": CauceAnalyticMotionMap,
@@ -381,8 +321,6 @@ NODE_CLASS_MAPPINGS = {
     "CauceDepthCameraMotionMap": CauceDepthCameraMotionMap,
     "CauceComposeMotionMaps": CauceComposeMotionMaps,
     "CauceWarpImage": CauceWarpImage,
-    "CauceWarpH3Latent": CauceWarpH3Latent,
-    "CauceWarpedH3Noise": CauceWarpedH3Noise,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -396,6 +334,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceDepthCameraMotionMap": "CAUCE Depth Camera Motion Map",
     "CauceComposeMotionMaps": "CAUCE Compose Motion Maps",
     "CauceWarpImage": "CAUCE Warp Image",
-    "CauceWarpH3Latent": "CAUCE Warp H3 Latent",
-    "CauceWarpedH3Noise": "CAUCE Warped H3 Noise",
 }

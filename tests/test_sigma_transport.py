@@ -4,15 +4,20 @@ import types
 import unittest
 from unittest.mock import patch
 
-import torch
+try:
+    import numpy  # noqa: F401
+    import torch
+except ImportError:
+    torch = None
 
-from cauce.motion import affine_motion_map
-from cauce.sigma_transport import (
-    SigmaMotionSampler,
-    sigma_schedule_increments,
-    sigma_schedule_series,
-    warp_h3_video_step,
-)
+if torch is not None:
+    from cauce.motion import affine_motion_map
+    from cauce.sigma_transport import (
+        SigmaMotionSampler,
+        sigma_schedule_increments,
+        sigma_schedule_series,
+        warp_h3_video_step,
+    )
 
 
 class _FakeSamplerFunction:
@@ -31,6 +36,7 @@ class _FakeEulerSampler:
     sampler_function = _FakeEulerSamplerFunction()
 
 
+@unittest.skipIf(torch is None, "NumPy and PyTorch are supplied by ComfyUI, not CAUCE")
 class SigmaTransportTests(unittest.TestCase):
     def test_accumulate_schedule_reaches_strength_and_increments_sum_to_it(self):
         parameters = {

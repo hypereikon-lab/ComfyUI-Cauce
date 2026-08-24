@@ -1,26 +1,31 @@
 import unittest
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
-from cauce.motion import (
-    _sample_numpy,
-    WarpedH3Noise,
-    affine_motion_map,
-    analytic_motion_map,
-    compose_motion_maps,
-    depth_camera_motion_map,
-    displacement_motion_map,
-    identity_grid,
-    integrate_advection,
-    modulate_motion_map,
-    motion_map_report,
-    perspective_motion_map,
-    resample_motion_map,
-    validate_motion_map,
-    vector_field,
-)
+if np is not None:
+    from cauce.motion import (
+        _sample_numpy,
+        WarpedH3Noise,
+        affine_motion_map,
+        analytic_motion_map,
+        compose_motion_maps,
+        depth_camera_motion_map,
+        displacement_motion_map,
+        identity_grid,
+        integrate_advection,
+        modulate_motion_map,
+        motion_map_report,
+        perspective_motion_map,
+        resample_motion_map,
+        validate_motion_map,
+        vector_field,
+    )
 
 
+@unittest.skipIf(np is None, "NumPy is supplied by ComfyUI, not CAUCE")
 class MotionMapTests(unittest.TestCase):
     def test_identity_affine_is_exact_and_fully_valid(self):
         value = affine_motion_map(9, 12, 16)

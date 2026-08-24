@@ -1,37 +1,9 @@
-"""Aggregate native CAUCE node mappings without any web UI."""
+"""Aggregate the stable and research CAUCE node mappings."""
 
-from . import (
-    artifacts,
-    audio,
-    continuity,
-    h3,
-    maintenance,
-    masks,
-    media,
-    motion,
-    plates,
-    profiles,
-    samplers,
-    seams,
-    timeline,
-)
+from . import continuity, motion, persistence, research, seams
 
 
-MODULES = (
-    timeline,
-    media,
-    motion,
-    samplers,
-    plates,
-    h3,
-    masks,
-    audio,
-    continuity,
-    seams,
-    artifacts,
-    profiles,
-    maintenance,
-)
+MODULES = (continuity, seams, motion, persistence, research)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

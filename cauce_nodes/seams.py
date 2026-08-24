@@ -1,4 +1,4 @@
-"""Native ComfyUI nodes for localized temporal video inpainting."""
+"""ComfyUI bindings for decoded-source H3 temporal inpainting."""
 
 from __future__ import annotations
 
@@ -6,20 +6,12 @@ import json
 
 from ..cauce.seams import (
     MASK_CURVES,
-    NATIVE_SEAM_CONTEXT_FRAMES,
-    NATIVE_SEAM_WORKING_FRAMES,
     TOKEN_PROJECTIONS,
-    add_h3_temporal_inpaint_guides,
-    assemble_native_two_clip_loop,
-    build_native_latent_seam_window,
     build_seam_window,
-    make_native_latent_seam_plan,
-    make_seam_window,
     make_seam_plan,
-    prepare_h3_native_latent_temporal_inpaint,
     prepare_h3_temporal_inpaint,
-    temporal_inpaint_fields,
     splice_seam_patch,
+    temporal_inpaint_fields,
 )
 
 
@@ -54,14 +46,13 @@ class CauceBuildSeamWindow:
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "CAUCE_SEAM", "CAUCE_WINDOW", "STRING")
-    RETURN_NAMES = ("working_images", "seam", "window", "seam_json")
+    RETURN_TYPES = ("IMAGE", "CAUCE_SEAM", "STRING")
+    RETURN_NAMES = ("working_images", "seam", "seam_json")
     FUNCTION = "build"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Take an opaque tail from A and head from B, place the cut at the center, "
-        "validate both sources at 24 fps, and add symmetric guard frames until "
-        "the working batch is a legal H3 run."
+        "Build a legal H3 working batch around the cut and report the exact repair, "
+        "guide, sampling, and splice ranges."
     )
 
     def build(
@@ -86,56 +77,7 @@ class CauceBuildSeamWindow:
             maximum_frames=maximum_frames,
         )
         working = build_seam_window(left_frames, right_frames, plan)
-        window = make_seam_window(plan)
-        return working, plan, window, json.dumps(plan, ensure_ascii=False, indent=2)
-
-
-class CaucePrepareH3TemporalInpaint:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "target_latent": ("LATENT",),
-                "encoded_video_latent": ("LATENT",),
-                "seam": ("CAUCE_SEAM",),
-                "token_projection": (TOKEN_PROJECTIONS,),
-                "sampling_threshold": (
-                    "FLOAT",
-                    {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01},
-                ),
-            },
-            "optional": {
-                "generation_support": ("MASK",),
-            }
-        }
-
-    RETURN_TYPES = ("LATENT", "STRING")
-    RETURN_NAMES = ("masked_latent", "mask_report")
-    FUNCTION = "prepare"
-    CATEGORY = CATEGORY
-    DESCRIPTION = (
-        "Inject the encoded source video into H3 and attach the official per-token "
-        "temporal denoise mask. Refuses runtimes that cannot preserve masked rows."
-    )
-
-    def prepare(
-        self,
-        target_latent,
-        encoded_video_latent,
-        seam,
-        token_projection="cover",
-        sampling_threshold=0.5,
-        generation_support=None,
-    ):
-        latent, report = prepare_h3_temporal_inpaint(
-            target_latent,
-            encoded_video_latent,
-            seam,
-            projection=token_projection,
-            sampling_threshold=sampling_threshold,
-            generation_support=generation_support,
-        )
-        return latent, json.dumps(report, ensure_ascii=False, indent=2)
+        return working, plan, json.dumps(plan, ensure_ascii=False, indent=2)
 
 
 class CauceTemporalInpaintFields:
@@ -163,55 +105,69 @@ class CauceTemporalInpaintFields:
     FUNCTION = "build"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Compile exact H3 token sampling support, the accepted interval, and a soft "
-        "decoded output opacity used only for the final duration-preserving splice."
+        "Compile binary H3 sampling support, hard decoded acceptance, and a separate "
+        "soft opacity field for the final splice."
     )
 
-    def build(
-        self,
-        working_images,
-        seam,
-        decoded_blend_frames,
-        curve,
-    ):
+    def build(self, working_images, seam, decoded_blend_frames, curve):
         generation, acceptance, opacity, report = temporal_inpaint_fields(
             working_images,
             seam,
             decoded_blend_frames=decoded_blend_frames,
             curve=curve,
         )
-        return generation, acceptance, opacity, json.dumps(
-            report, ensure_ascii=False, indent=2
+        return (
+            generation,
+            acceptance,
+            opacity,
+            json.dumps(report, ensure_ascii=False, indent=2),
         )
 
 
-class CauceH3TemporalInpaintGuides:
+class CaucePrepareH3TemporalInpaint:
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "positive": ("CONDITIONING",),
                 "target_latent": ("LATENT",),
-                "working_images": ("IMAGE",),
+                "encoded_video_latent": ("LATENT",),
                 "seam": ("CAUCE_SEAM",),
-                "vae": ("VAE",),
-            }
+                "token_projection": (TOKEN_PROJECTIONS,),
+                "sampling_threshold": (
+                    "FLOAT",
+                    {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+            },
+            "optional": {"generation_support": ("MASK",)},
         }
 
-    RETURN_TYPES = ("CONDITIONING", "STRING")
-    RETURN_NAMES = ("positive", "guide_report")
-    FUNCTION = "apply"
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("masked_latent", "mask_report")
+    FUNCTION = "prepare"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Attach two H3 guide clips immediately outside the generated interval so the "
-        "model sees incoming and outgoing motion, not only distant endpoint images."
+        "Inject encoded source video into H3 and attach a binary per-token temporal "
+        "denoise mask while freezing structural audio."
     )
 
-    def apply(self, positive, target_latent, working_images, seam, vae):
-        conditioned, report = add_h3_temporal_inpaint_guides(
-            positive, target_latent, working_images, seam, vae
+    def prepare(
+        self,
+        target_latent,
+        encoded_video_latent,
+        seam,
+        token_projection="cover",
+        sampling_threshold=0.5,
+        generation_support=None,
+    ):
+        latent, report = prepare_h3_temporal_inpaint(
+            target_latent,
+            encoded_video_latent,
+            seam,
+            projection=token_projection,
+            sampling_threshold=sampling_threshold,
+            generation_support=generation_support,
         )
-        return conditioned, json.dumps(report, ensure_ascii=False, indent=2)
+        return latent, json.dumps(report, ensure_ascii=False, indent=2)
 
 
 class CauceApplySeamPatch:
@@ -229,9 +185,7 @@ class CauceApplySeamPatch:
                 ),
                 "blend_curve": (MASK_CURVES,),
             },
-            "optional": {
-                "blend_strength": ("MASK",),
-            }
+            "optional": {"blend_strength": ("MASK",)},
         }
 
     RETURN_TYPES = ("IMAGE", "IMAGE", "STRING")
@@ -239,8 +193,8 @@ class CauceApplySeamPatch:
     FUNCTION = "apply"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Replace only the inner tail/head frames with the generated patch. "
-        "Everything outside the repair remains byte-identical and duration is unchanged."
+        "Replace only the declared inner frames, apply decoded opacity feathering, "
+        "and preserve the exact combined duration."
     )
 
     def apply(
@@ -265,177 +219,16 @@ class CauceApplySeamPatch:
         return joined, patch, json.dumps(report, ensure_ascii=False, indent=2)
 
 
-class CauceBuildNativeLatentSeam:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "left_frames": ("IMAGE",),
-                "right_frames": ("IMAGE",),
-                "left_fps": ("FLOAT", {"default": 24.0}),
-                "right_fps": ("FLOAT", {"default": 24.0}),
-                "context_frames_per_side": (
-                    [str(value) for value in NATIVE_SEAM_CONTEXT_FRAMES],
-                    {"default": "22"},
-                ),
-                "working_frames": (
-                    [str(value) for value in NATIVE_SEAM_WORKING_FRAMES],
-                    {"default": "124"},
-                ),
-                "accepted_repair_frames": (
-                    "INT",
-                    {
-                        "default": 72,
-                        "min": 2,
-                        "max": 358,
-                        "step": 2,
-                        "tooltip": (
-                            "Decoded center frames retained in the final splice. "
-                            "Sampling may use a wider interval as temporal overscan."
-                        ),
-                    },
-                ),
-            }
-        }
-
-    RETURN_TYPES = ("IMAGE", "CAUCE_SEAM", "CAUCE_WINDOW", "STRING")
-    RETURN_NAMES = ("working_images", "seam", "window", "seam_json")
-    FUNCTION = "build"
-    CATEGORY = CATEGORY
-    DESCRIPTION = (
-        "Build a phase-safe H3 seam domain from decoded previews while preserving "
-        "the matching clean source latents for the sampling node."
-    )
-
-    def build(
-        self,
-        left_frames,
-        right_frames,
-        left_fps,
-        right_fps,
-        context_frames_per_side,
-        working_frames,
-        accepted_repair_frames,
-    ):
-        if abs(float(left_fps) - 24.0) > 1e-3 or abs(float(right_fps) - 24.0) > 1e-3:
-            raise ValueError("native H3 temporal inpainting requires 24 fps sources")
-        plan = make_native_latent_seam_plan(
-            int(left_frames.shape[0]),
-            int(right_frames.shape[0]),
-            context_frames_per_side=int(context_frames_per_side),
-            working_frames=int(working_frames),
-            accepted_repair_frames=int(accepted_repair_frames),
-        )
-        working = build_native_latent_seam_window(left_frames, right_frames, plan)
-        window = make_seam_window(plan)
-        return working, plan, window, json.dumps(plan, ensure_ascii=False, indent=2)
-
-
-class CaucePrepareH3NativeLatentInpaint:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "target_latent": ("LATENT",),
-                "left_latent": ("LATENT",),
-                "right_latent": ("LATENT",),
-                "seam": ("CAUCE_SEAM",),
-            }
-        }
-
-    RETURN_TYPES = ("LATENT", "STRING")
-    RETURN_NAMES = ("masked_latent", "mask_report")
-    FUNCTION = "prepare"
-    CATEGORY = CATEGORY
-    DESCRIPTION = (
-        "Copy phase-matched clean AV latent context from both source generations "
-        "and expose only the central token interval to H3 denoising."
-    )
-
-    def prepare(self, target_latent, left_latent, right_latent, seam):
-        latent, report = prepare_h3_native_latent_temporal_inpaint(
-            target_latent, left_latent, right_latent, seam
-        )
-        return latent, json.dumps(report, ensure_ascii=False, indent=2)
-
-
-class CauceAssembleNativeTwoClipLoop:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "first_clip": ("IMAGE",),
-                "second_clip": ("IMAGE",),
-                "forward_repaired_working": ("IMAGE",),
-                "forward_seam": ("CAUCE_SEAM",),
-                "wrap_repaired_working": ("IMAGE",),
-                "wrap_seam": ("CAUCE_SEAM",),
-                "decoded_feather_frames": (
-                    "INT",
-                    {"default": 4, "min": 0, "max": 24, "step": 1},
-                ),
-                "blend_curve": (MASK_CURVES,),
-            }
-        }
-
-    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", "IMAGE", "IMAGE", "STRING")
-    RETURN_NAMES = (
-        "loop",
-        "first_repaired",
-        "second_repaired",
-        "forward_patch",
-        "wrap_patch",
-        "assembly_report",
-    )
-    FUNCTION = "assemble"
-    CATEGORY = CATEGORY
-    DESCRIPTION = (
-        "Apply first→second and second→first native seam proposals to disjoint clip "
-        "edges, preserving the exact source durations and closing the final loop."
-    )
-
-    def assemble(
-        self,
-        first_clip,
-        second_clip,
-        forward_repaired_working,
-        forward_seam,
-        wrap_repaired_working,
-        wrap_seam,
-        decoded_feather_frames=4,
-        blend_curve="cosine",
-    ):
-        result = assemble_native_two_clip_loop(
-            first_clip,
-            second_clip,
-            forward_repaired_working,
-            forward_seam,
-            wrap_repaired_working,
-            wrap_seam,
-            feather_frames=decoded_feather_frames,
-            curve=blend_curve,
-        )
-        return (*result[:-1], json.dumps(result[-1], ensure_ascii=False, indent=2))
-
-
 NODE_CLASS_MAPPINGS = {
     "CauceBuildSeamWindow": CauceBuildSeamWindow,
     "CauceTemporalInpaintFields": CauceTemporalInpaintFields,
-    "CauceH3TemporalInpaintGuides": CauceH3TemporalInpaintGuides,
     "CaucePrepareH3TemporalInpaint": CaucePrepareH3TemporalInpaint,
     "CauceApplySeamPatch": CauceApplySeamPatch,
-    "CauceBuildNativeLatentSeam": CauceBuildNativeLatentSeam,
-    "CaucePrepareH3NativeLatentInpaint": CaucePrepareH3NativeLatentInpaint,
-    "CauceAssembleNativeTwoClipLoop": CauceAssembleNativeTwoClipLoop,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceBuildSeamWindow": "CAUCE · Build Temporal Inpaint Window",
     "CauceTemporalInpaintFields": "CAUCE · Temporal Inpaint Fields",
-    "CauceH3TemporalInpaintGuides": "CAUCE · H3 Temporal Guide Clips",
     "CaucePrepareH3TemporalInpaint": "CAUCE · Prepare H3 Temporal Inpaint",
     "CauceApplySeamPatch": "CAUCE · Splice Temporal Inpaint Patch",
-    "CauceBuildNativeLatentSeam": "CAUCE · Build Native Latent Seam",
-    "CaucePrepareH3NativeLatentInpaint": "CAUCE · Prepare Native Latent Inpaint",
-    "CauceAssembleNativeTwoClipLoop": "CAUCE · Assemble Native Two-Clip Loop",
 }

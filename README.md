@@ -119,6 +119,8 @@ See [Node catalog](docs/NODE_CATALOG.md),
 [sigma-conditioned transport](docs/SIGMA_TRANSPORT.md),
 [laboratory results](docs/LAB_RESULTS.md). The canonical terminology and run
 report format are defined in [technical language](docs/TECHNICAL_LANGUAGE.md).
+Coding agents must also read the repository-wide
+[agent runbook](AGENTS.md) before implementation or live laboratory work.
 The current upstream and community
 comparison is recorded in [research notes](docs/RESEARCH.md).
 

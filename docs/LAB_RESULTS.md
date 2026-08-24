@@ -1,6 +1,6 @@
 # Resultados medidos en el laboratorio
 
-Fecha de esta matriz: 2026-08-22. La instancia remota comenzó la jornada en
+Fecha de esta matriz: 2026-08-23. La instancia remota comenzó la jornada en
 ComfyUI `0.33.1`, frontend `1.48.7`, Windows portable, Python `3.12.10`,
 PyTorch `2.13.0+cu130`, RTX 5090 de 32 GB y 64 GB de RAM. El core de ComfyUI se
 actualizó posteriormente para disponer de las máscaras H3 oficiales por token y
@@ -20,6 +20,12 @@ actualizó posteriormente para disponer de las máscaras H3 oficiales por token 
 | Temporal inpainting, LanPaint + campos continuos | rechazado por revisión de implementación | — | — | LanPaint umbraliza el denoise mask; la supuesta fuerza continua no llega al sampler |
 | Temporal inpainting, overscan binario | runtime real; gesto rechazado | 124 f working / 72 f sampling / 48 f aceptación → 248 f join | 487,85 s | output histórico rechazado |
 | Temporal inpainting, máscara H3 nativa + guías bidireccionales | verificado live | 124 f working / 72 f sampling y aceptación / guías 22+22 → 248 f join | 135,5 s | output histórico aprobado |
+| Motion maps, composición vs dos resamples | verificado live | 124 f, 768×512 | 57,73 s | `cauce/motion_maps/70_composed_once_00001_.mp4` + `70_sequential_two_pass_00001_.mp4` |
+| Depth-camera + RK4 advection preview | verificado live | 124 f, 768×512 | 22,12 s | `cauce/motion_maps/73_depth_advection_00001_.mp4` |
+| H3 warped noise, stress `0,85`/`0,7` | ejecuta; decode rechazado | 124 f, 768×512 | 93,86 s | `cauce/motion_maps/71_h3_warped_noise_00001_.mp4` |
+| H3 warped noise, seguro `0,05`/`0,15` | decode válido; control pendiente de métrica | 124 f, 768×512 | 89,45 s | `cauce/motion_maps/71_h3_warped_noise_safe_00001_.mp4` |
+| H3 baseline seed/prompt matched | verificado | 124 f, 768×512 | 89,95 s | `cauce/motion_maps/71_h3_baseline_matched_00001_.mp4` |
+| H3 latent warp + repair | decode válido; control pendiente de métrica | 124 f, 768×512, 20+12 steps | 153,55 s | `cauce/motion_maps/72_pass_1_00001_.mp4` + `72_pass_2_00001_.mp4` |
 
 ## Lectura de los resultados
 
@@ -106,6 +112,30 @@ bajo `cauce/demos/temporal_inpaint_*`.
 
 Receipt Ref2VA landscape:
 `357751bc96407eda0532dcc7b7a2b459c25838106a7a1a654f56daff219d6bc1`.
+
+## Movimiento nativo sin referencia de video
+
+Los workflows 71 y 72 se ejecutaron sin ningún MP4 de movimiento. El primero
+intervino el ruido visual entregado a `SamplerCustomAdvanced`; el segundo
+deformó directamente los 37 tokens visuales del parent H3 y realizó una pasada
+de reparación. El stream estructural de audio permaneció copiado o con máscara
+de generación cero y nunca se aceptó como audio de la pieza.
+
+La primera calibración de ruido mostró el límite decisivo: `0,85` de
+correlación temporal no equivale a una mezcla al 85 %, porque el anchor entra
+con amplitud `sqrt(0,85)`. Junto al envelope de mapa `0,7`, la generación salió
+del manifold visual aunque el job terminara sin error. Con `0,05` y `0,15`, el
+decode volvió a ser coherente y conservó los endpoints. Por eso el workflow
+publicado adopta esos valores como punto de partida y deja los valores altos
+como stress/material failure cases.
+
+La ruta de latent secuencial fue más tolerante: pass 1 generó el parent normal;
+CAUCE aplicó un pan de 2 % y escala máxima 1,04 directamente sobre la grilla
+latente causal; pass 2 reparó con 12 steps y denoise `0,35`. Ambos MP4 son
+visualmente coherentes. Esto prueba que la geometría, el nested AV latent, la
+máscara y el sampler están cableados correctamente, pero no demuestra todavía
+que H3 reproduzca con precisión el campo pedido. La promoción requiere medir
+optical-flow agreement y drift de endpoints contra el baseline matched.
 
 ## Reglas de promoción
 

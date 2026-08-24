@@ -1,11 +1,13 @@
 # Laboratory validation matrix
 
 Local unit tests establish contracts, clocks, generated workflow integrity, and
-runner materialization; they cannot establish model quality. The seven earlier
-visual graphs load without unknown nodes in the live lab frontend; four new
-motion-map graphs remain pending there, and both API
-templates match the live `/object_info` signatures. Validate the following on
-the RTX 5090 before promoting advanced workflows to production defaults.
+runner materialization; they cannot establish model quality. All four motion-map
+graphs now load and execute in the live lab frontend. Workflows 70 and 73 pass
+their deterministic visual gates; 71 and 72 produce valid H3 decodes, but their
+intended-motion agreement remains an empirical measurement rather than a
+production guarantee. Both API templates match the live `/object_info`
+signatures. Validate the following on the RTX 5090 before promoting advanced
+workflows to production defaults.
 
 ## Gate 1 — load and compatibility
 
@@ -145,6 +147,9 @@ are committed as receipts and documented measurements.
 - Confirm H3 latent warping changes only the visual stream and leaves the audio
   stream copied with a zero generation mask.
 - Compare normal seeded noise against warped visual noise with the same seed.
+- Begin warped-noise correlation near `0.05` and map envelope near `0.15`;
+  workflow 71's `0.85`/`0.7` stress ablation completed but failed the visual
+  manifold gate with a chromatically corrupt decode.
 - Test second-pass denoise 0.15, 0.35, and 0.55 against the unmodified parent.
 - Measure endpoint drift, intended/observed optical-flow agreement, temporal
   acceleration, local folding, and high-frequency loss.

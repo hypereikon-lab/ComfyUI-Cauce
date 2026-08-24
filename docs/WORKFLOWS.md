@@ -45,8 +45,8 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 50 | `50_h3_temporal_inpainting.json` | 1 sample | Temporal inpainting localizado; verificado live con intervalo de 3 s. |
 | 60 | `60_h3_native_latent_loop.json` | 4 samples | A→B→A con dos seams nativos sobre los AV latents originales. |
 | 70 | `70_motion_map_composition.json` | 0 samples | Compara mapas compuestos con dos warps secuenciales de imagen. |
-| 71 | `71_h3_warped_noise.json` | 1 sample | Campo advectado cerrado aplicado al ruido visual inicial de H3. |
-| 72 | `72_h3_sequential_latent_pass.json` | 2 samples | Generación base + warp del latent H3 + segunda pasada a denoise 0,35. |
+| 71 | `71_h3_warped_noise.json` | 1 sample | Campo advectado cerrado aplicado al ruido visual inicial de H3; preset conservador live-validado. |
+| 72 | `72_h3_sequential_latent_pass.json` | 2 samples | Generación base + warp del latent H3 + segunda pasada a denoise 0,35; decode live-validado. |
 | 73 | `73_depth_advection_preview.json` | 0 samples | Reproyección 2.5D + advección compuestas con validity de disoclusiones. |
 | 90 | `90_storage_maintenance.json` | CPU | Inventario físico y limpieza en dos fases de `input/` u `output/`. |
 
@@ -55,6 +55,14 @@ producción. Ejecutar primero 70 y 73 permite descartar mapas inválidos sin usa
 la GPU generativa. 71 prueba control desde el ruido; 72 prueba una intervención
 nativa y secuencial sobre el latent. La comparación completa y sus criterios
 están en [`MOTION_MAPS.md`](MOTION_MAPS.md).
+
+En la validación del lab, 71 sólo permaneció dentro del manifold visual con
+señal conservadora (`temporal_correlation=0,05`, envelope `0,15`). El stress
+test `0,85`/`0,7` ejecutó pero produjo un decode cromáticamente corrupto. El
+workflow 72 completó ambas pasadas y mantuvo un decode coherente después de un
+pan de 2 %, escala 1,04 y denoise 0,35. Estos resultados validan la ruta tensorial;
+la fidelidad del movimiento pretendido todavía debe medirse contra el baseline
+con seed, prompt y endpoints idénticos.
 
 Los workflows visuales 00–50 fueron cargados y resueltos por el frontend real
 de la instancia del lab: ningún graph contiene nodos desconocidos ni depende de

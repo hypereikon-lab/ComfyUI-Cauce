@@ -23,24 +23,6 @@ class _FakeSampler:
     sampler_function = _FakeSamplerFunction()
 
 
-class _ExecutingFakeSampler(_FakeSampler):
-    def sample(
-        self,
-        model_wrap,
-        sigmas,
-        extra_args,
-        callback,
-        noise,
-        latent_image=None,
-        denoise_mask=None,
-        disable_pbar=False,
-    ):
-        state = noise.clone()
-        for index in range(len(sigmas) - 1):
-            model_wrap(state, sigmas[index], denoise_mask=denoise_mask)
-        return state
-
-
 class SigmaTransportTests(unittest.TestCase):
     def test_accumulate_schedule_reaches_strength_and_increments_sum_to_it(self):
         parameters = {
@@ -130,15 +112,6 @@ class SigmaTransportTests(unittest.TestCase):
         comfy_utils.unpack_latents = unpack_latents
         comfy.utils = comfy_utils
 
-        class Inner:
-            latent_shapes = shapes
-
-        class ModelWrap:
-            inner_model = Inner()
-
-            def __call__(self, state, sigma, **kwargs):
-                return state
-
         packed, _ = pack_latents([video, audio])
         motion = affine_motion_map(
             17,
@@ -148,25 +121,18 @@ class SigmaTransportTests(unittest.TestCase):
             easing="linear",
         )
         sampler = SigmaMotionSampler(
-            _ExecutingFakeSampler(),
+            _FakeSampler(),
             motion,
             start_percent=0.0,
             end_percent=0.75,
             strength=0.25,
         )
+        sampler._latent_shapes = shapes
         with patch.dict(sys.modules, {"comfy": comfy, "comfy.utils": comfy_utils}):
-            result = sampler.sample(
-                ModelWrap(),
-                torch.linspace(1.0, 0.0, 5),
-                {},
-                None,
-                packed,
-                packed.clone(),
-            )
+            result = sampler._transport_packed_state(packed, 0.25)
         video_out, audio_out = unpack_latents(result, shapes)
         self.assertGreater(float(torch.mean(torch.abs(video_out - video))), 0.01)
         torch.testing.assert_close(audio_out, audio, atol=0.0, rtol=0.0)
-        self.assertEqual(sampler._step_index, 4)
 
     def test_schedule_rejects_inverted_window(self):
         with self.assertRaises(ValueError):

@@ -15,10 +15,18 @@ performs exactly one model evaluation per nonterminal sigma and retains its
 previous denoised estimate internally.
 
 ComfyUI packs H3's nested audiovisual latent before sampling and records the
-original stream shapes on the prepared model. CAUCE wraps the sampler's model
-call, unpacks that state, transports only the visual tensor, repacks it, and
-then requests the prediction. Therefore the denoiser and subsequent solver
-update operate on the same transported state.
+original stream shapes on the prepared model. CAUCE retains ComfyUI's
+deterministic RES equations but owns the small solver loop required for the
+operator split. At a transport step it unpacks both the current state and the
+retained previous denoised estimate, applies the same visual pullback to both,
+repacks them, and only then requests the next prediction.
+
+This covariance is not optional. The first live smoke test transported only
+the current state while leaving RES's second-order history in its old
+coordinate frame. The graph executed successfully, but the decoded video
+showed strong horizontal colour bands. That implementation was rejected. The
+current contract transports state and history together so every finite
+difference compares registered fields.
 
 ## Operator split
 
@@ -29,14 +37,15 @@ map, and `a_i` the cumulative sigma envelope. CAUCE computes
 delta_i = a_i - a_(i-1)
 grid_i  = identity + delta_i * (M - identity)
 x_i*    = grid_sample(x_i.video, grid_i)
+h_(i-1)*= grid_sample(d_(i-1).video, grid_i)
 d_i     = H3(x_i*, sigma_i, conditioning)
-x_(i+1) = res_multistep_update(x_i*, d_i, d_(i-1), sigma_i, sigma_(i+1))
+x_(i+1) = res_multistep_update(x_i*, d_i, h_(i-1)*, sigma_i, sigma_(i+1))
 ```
 
-The audio stream is copied when `x_i*` is repacked. This is first-order
-transport/diffusion operator splitting. It preserves the solver's history but
-does not pretend that a nonlinear map interpolated by displacement is an exact
-diffeomorphic exponential. Strength must therefore remain small.
+The audio stream is copied when either packed state is rebuilt. This is
+first-order transport/diffusion operator splitting with covariant solver
+history. It does not pretend that a nonlinear map interpolated by displacement
+is an exact diffeomorphic exponential. Strength must therefore remain small.
 
 ## Sigma envelopes
 

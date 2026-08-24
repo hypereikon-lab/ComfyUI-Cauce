@@ -65,10 +65,10 @@ Warped noise preserves the normal seeded noise path, correlates the visual
 stream spatially, and leaves audio noise unchanged. See
 [`MOTION_MAPS.md`](MOTION_MAPS.md).
 
-Sigma-conditioned transport wraps an existing deterministic `res_multistep`
-sampler. It applies small incremental pullbacks to the packed visual state
-before selected model evaluations without splitting the sigma schedule into
-separate jobs. See [`SIGMA_TRANSPORT.md`](SIGMA_TRANSPORT.md).
+Sigma-conditioned transport preserves deterministic `res_multistep` while
+applying each small incremental pullback to both the packed visual state and
+the retained solver history. The sigma schedule remains one job and the audio
+stream remains unchanged. See [`SIGMA_TRANSPORT.md`](SIGMA_TRANSPORT.md).
 
 ## H3
 

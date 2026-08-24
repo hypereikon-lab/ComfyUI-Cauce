@@ -164,6 +164,10 @@ are committed as receipts and documented measurements.
   evaluation for every nonterminal sigma.
 - Confirm the denoiser sees the transported state before computing its current
   prediction; do not mutate a callback tensor after prediction.
+- Apply every incremental pullback to the retained RES denoised estimate as
+  well as the current state. Reject any decode with horizontal chromatic bands:
+  that is the known signature of comparing solver history across mismatched
+  coordinate frames.
 - Unpack the packed H3 state with the latent shapes supplied by ComfyUI, warp
   only the `[B,C,T,H,W]` visual stream, and repack the audio stream unchanged.
 - Compare baseline, early `[0,0.45]`, middle `[0.25,0.75]`, and late

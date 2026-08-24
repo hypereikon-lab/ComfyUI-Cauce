@@ -1,11 +1,12 @@
 """Sigma-conditioned operator splitting for native H3 latent transport.
 
-This module wraps an existing deterministic ``res_multistep`` sampler rather
-than reimplementing its solver.  Immediately before each model evaluation, a
-small incremental pullback is applied to the packed H3 visual latent.  The
-denoiser therefore observes the transported state while ComfyUI keeps the
-solver, sigma schedule, conditioning, progress callback, and multistep history
-inside one normal sampling call.
+This module preserves ComfyUI's deterministic ``res_multistep`` equations and
+adds one covariant operator-splitting step.  Immediately before each model
+evaluation, the same small incremental pullback is applied to both the packed
+H3 state and the solver's retained denoised history.  Keeping both tensors in
+the same coordinate frame is essential: transporting only the current state
+causes the second-order residual to compare misregistered fields and produces
+strong banding artifacts.
 
 Only the visual stream is resampled.  The packed audio stream is unpacked and
 repacked byte-for-byte without spatial transformation.
@@ -160,19 +161,6 @@ def warp_h3_video_step(
     ).reshape(batch, tokens, channels, height, width).permute(0, 2, 1, 3, 4)
 
 
-class _TransportModelProxy:
-    def __init__(self, owner: "SigmaMotionSampler", wrapped: Any):
-        self.owner = owner
-        self.wrapped = wrapped
-
-    def __getattr__(self, name: str):
-        return getattr(self.wrapped, name)
-
-    def __call__(self, x, sigma, *args, **kwargs):
-        self.owner._transport_packed_state_in_place(x)
-        return self.wrapped(x, sigma, *args, **kwargs)
-
-
 class SigmaMotionSampler:
     """Comfy ``SAMPLER`` wrapper for first-order transport/diffusion splitting."""
 
@@ -215,10 +203,10 @@ class SigmaMotionSampler:
 
     def report(self) -> dict[str, Any]:
         return {
-            "schema": "cauce.sigma-conditioned-transport/1",
+            "schema": "cauce.sigma-conditioned-transport/2",
             "solver": self.sampler_name,
             "map_hash": self.motion_map["tensor_hash"],
-            "operator_split": "transport_before_model_evaluation",
+            "operator_split": "covariant_transport_of_state_and_solver_history",
             "stream_policy": "warp_visual_copy_audio",
             "start_percent": self.start_percent,
             "end_percent": self.end_percent,
@@ -229,9 +217,27 @@ class SigmaMotionSampler:
             "supported_samplers": list(SUPPORTED_SAMPLERS),
         }
 
-    def _transport_packed_state_in_place(self, packed):
+    def _transport_packed_state(self, packed, incremental: float):
         import comfy.utils  # type: ignore
 
+        if abs(incremental) <= 1e-12:
+            return packed
+
+        streams = list(comfy.utils.unpack_latents(packed, self._latent_shapes))
+        if len(streams) < 2 or streams[0].ndim != 5 or streams[1].ndim != 4:
+            raise RuntimeError("sigma transport requires a packed MiniMax H3 AV latent")
+        audio_before = streams[1]
+        streams[0] = warp_h3_video_step(
+            streams[0],
+            self.motion_map,
+            incremental,
+            padding_mode=self.padding_mode,
+        )
+        streams[1] = audio_before
+        transported, _ = comfy.utils.pack_latents(streams)
+        return transported
+
+    def _next_increment(self) -> float:
         if self._step_index >= self._total_steps:
             raise RuntimeError("sampler performed more model evaluations than sigma steps")
         cumulative = sigma_envelope_value(
@@ -246,22 +252,131 @@ class SigmaMotionSampler:
         incremental = cumulative - self._previous_strength
         self._previous_strength = cumulative
         self._step_index += 1
-        if abs(incremental) <= 1e-12:
-            return
+        return incremental
 
-        streams = list(comfy.utils.unpack_latents(packed, self._latent_shapes))
-        if len(streams) < 2 or streams[0].ndim != 5 or streams[1].ndim != 4:
-            raise RuntimeError("sigma transport requires a packed MiniMax H3 AV latent")
-        audio_before = streams[1]
-        streams[0] = warp_h3_video_step(
-            streams[0],
-            self.motion_map,
-            incremental,
-            padding_mode=self.padding_mode,
+    def _integrated_res_multistep(
+        self,
+        model,
+        x,
+        sigmas,
+        extra_args=None,
+        callback=None,
+        disable=None,
+        s_noise=1.0,
+        noise_sampler=None,
+    ):
+        """Comfy's deterministic RES solver with covariant history transport.
+
+        The numerical update intentionally follows ComfyUI's ``res_multistep``
+        implementation.  The CAUCE addition is confined to the start of each
+        iteration, where ``x`` and ``old_denoised`` receive the same incremental
+        pullback before the next prediction is evaluated.
+        """
+
+        import torch
+        import comfy.k_diffusion.sampling as sampling  # type: ignore
+        import comfy.model_patcher  # type: ignore
+
+        extra_args = {} if extra_args is None else extra_args.copy()
+        seed = extra_args.get("seed", None)
+        noise_sampler = (
+            sampling.default_noise_sampler(x, seed=seed)
+            if noise_sampler is None
+            else noise_sampler
         )
-        streams[1] = audio_before
-        transported, _ = comfy.utils.pack_latents(streams)
-        packed.copy_(transported)
+        noise_scale = getattr(
+            model.inner_model.model_patcher.get_model_object("model_sampling"),
+            "noise_scale",
+            1.0,
+        )
+        s_noise = float(s_noise) * noise_scale
+        s_in = x.new_ones([x.shape[0]])
+        sigma_fn = lambda t: t.neg().exp()
+        t_fn = lambda sigma: sigma.log().neg()
+        phi1_fn = lambda t: torch.expm1(t) / t
+        phi2_fn = lambda t: (phi1_fn(t) - 1.0) / t
+
+        old_sigma_down = None
+        old_denoised = None
+        uncond_denoised = None
+        cfg_pp = self.sampler_name == "sample_res_multistep_cfg_pp"
+
+        def post_cfg_function(args):
+            nonlocal uncond_denoised
+            uncond_denoised = args["uncond_denoised"]
+            return args["denoised"]
+
+        if cfg_pp:
+            model_options = extra_args.get("model_options", {}).copy()
+            extra_args["model_options"] = (
+                comfy.model_patcher.set_model_options_post_cfg_function(
+                    model_options,
+                    post_cfg_function,
+                    disable_cfg1_optimization=True,
+                )
+            )
+
+        for index in range(len(sigmas) - 1):
+            incremental = self._next_increment()
+            if abs(incremental) > 1e-12:
+                x = self._transport_packed_state(x, incremental)
+                if old_denoised is not None:
+                    old_denoised = self._transport_packed_state(
+                        old_denoised, incremental
+                    )
+
+            denoised = model(x, sigmas[index] * s_in, **extra_args)
+            sigma_down, sigma_up = sampling.get_ancestral_step(
+                sigmas[index], sigmas[index + 1], eta=0.0
+            )
+            if callback is not None:
+                callback(
+                    {
+                        "x": x,
+                        "i": index,
+                        "sigma": sigmas[index],
+                        "sigma_hat": sigmas[index],
+                        "denoised": denoised,
+                    }
+                )
+
+            if sigma_down == 0 or old_denoised is None:
+                if cfg_pp:
+                    derivative = sampling.to_d(x, sigmas[index], uncond_denoised)
+                    x = denoised + derivative * sigma_down
+                else:
+                    derivative = sampling.to_d(x, sigmas[index], denoised)
+                    x = x + derivative * (sigma_down - sigmas[index])
+            else:
+                t = t_fn(sigmas[index])
+                t_old = t_fn(old_sigma_down)
+                t_next = t_fn(sigma_down)
+                t_prev = t_fn(sigmas[index - 1])
+                h = t_next - t
+                c2 = (t_prev - t_old) / h
+                phi1_value, phi2_value = phi1_fn(-h), phi2_fn(-h)
+                b1 = torch.nan_to_num(phi1_value - phi2_value / c2, nan=0.0)
+                b2 = torch.nan_to_num(phi2_value / c2, nan=0.0)
+                if cfg_pp:
+                    x = x + (denoised - uncond_denoised)
+                    x = sigma_fn(h) * x + h * (
+                        b1 * uncond_denoised + b2 * old_denoised
+                    )
+                else:
+                    x = sigma_fn(h) * x + h * (
+                        b1 * denoised + b2 * old_denoised
+                    )
+
+            if sigma_up > 0:
+                x = x + (
+                    noise_sampler(sigmas[index], sigmas[index + 1])
+                    * s_noise
+                    * sigma_up
+                )
+
+            old_denoised = uncond_denoised if cfg_pp else denoised
+            old_sigma_down = sigma_down
+        return x
 
     def sample(
         self,
@@ -284,9 +399,15 @@ class SigmaMotionSampler:
         self._total_steps = total_steps
         self._step_index = 0
         self._previous_strength = 0.0
-        proxy = _TransportModelProxy(self, model_wrap)
-        result = self.base_sampler.sample(
-            proxy,
+        import comfy.samplers  # type: ignore
+
+        integrated_sampler = comfy.samplers.KSAMPLER(
+            self._integrated_res_multistep,
+            extra_options=dict(getattr(self.base_sampler, "extra_options", {})),
+            inpaint_options=dict(getattr(self.base_sampler, "inpaint_options", {})),
+        )
+        result = integrated_sampler.sample(
+            model_wrap,
             sigmas,
             extra_args,
             callback,

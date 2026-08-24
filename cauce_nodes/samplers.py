@@ -44,8 +44,8 @@ class CauceSigmaMotionSampler:
     FUNCTION = "build"
     CATEGORY = SAMPLER_CATEGORY
     DESCRIPTION = (
-        "Run deterministic res_multistep with covariant H3 visual-latent "
-        "pullbacks on state and solver history; packed audio is unchanged."
+        "Apply sigma-conditioned H3 visual-latent pullbacks inside deterministic "
+        "RES or Euler sampling; packed audio is unchanged."
     )
 
     def build(

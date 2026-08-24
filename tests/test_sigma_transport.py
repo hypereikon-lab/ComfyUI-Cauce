@@ -23,6 +23,14 @@ class _FakeSampler:
     sampler_function = _FakeSamplerFunction()
 
 
+class _FakeEulerSamplerFunction:
+    __name__ = "sample_euler"
+
+
+class _FakeEulerSampler:
+    sampler_function = _FakeEulerSamplerFunction()
+
+
 class SigmaTransportTests(unittest.TestCase):
     def test_accumulate_schedule_reaches_strength_and_increments_sum_to_it(self):
         parameters = {
@@ -79,6 +87,8 @@ class SigmaTransportTests(unittest.TestCase):
         motion = affine_motion_map(5, 4, 6)
         built = SigmaMotionSampler(sampler, motion)
         self.assertEqual(built.sampler_name, "sample_res_multistep")
+        euler = SigmaMotionSampler(_FakeEulerSampler(), motion)
+        self.assertEqual(euler.sampler_name, "sample_euler")
 
         class Unsupported:
             sampler_function = lambda: None

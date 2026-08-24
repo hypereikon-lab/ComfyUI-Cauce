@@ -23,7 +23,11 @@ from .motion import PADDING_MODES, _h3_positions, _torch_grid, identity_grid, va
 
 SIGMA_ENVELOPES = ("accumulate", "pulse")
 SIGMA_EASINGS = ("linear", "smoothstep", "cosine")
-SUPPORTED_SAMPLERS = ("sample_res_multistep", "sample_res_multistep_cfg_pp")
+SUPPORTED_SAMPLERS = (
+    "sample_res_multistep",
+    "sample_res_multistep_cfg_pp",
+    "sample_euler",
+)
 
 
 def _ease_unit(value: float, easing: str) -> float:
@@ -185,7 +189,7 @@ class SigmaMotionSampler:
         if sampler_name not in SUPPORTED_SAMPLERS:
             raise ValueError(
                 "sigma-conditioned transport currently supports deterministic "
-                "res_multistep and res_multistep_cfg_pp only"
+                "res_multistep, res_multistep_cfg_pp, and Euler only"
             )
         self.base_sampler = base_sampler
         self.motion_map = motion_map
@@ -378,6 +382,64 @@ class SigmaMotionSampler:
             old_sigma_down = sigma_down
         return x
 
+    def _integrated_euler(
+        self,
+        model,
+        x,
+        sigmas,
+        extra_args=None,
+        callback=None,
+        disable=None,
+        s_churn=0.0,
+        s_tmin=0.0,
+        s_tmax=float("inf"),
+        s_noise=1.0,
+    ):
+        """Comfy's Euler ODE step with one visual transport before evaluation.
+
+        Euler retains no denoised history, so it is the minimal causal control
+        path and an important diagnostic for separating H3 manifold limits from
+        multistep-history interactions.
+        """
+
+        import torch
+        import comfy.k_diffusion.sampling as sampling  # type: ignore
+
+        extra_args = {} if extra_args is None else extra_args
+        s_in = x.new_ones([x.shape[0]])
+        for index in range(len(sigmas) - 1):
+            incremental = self._next_increment()
+            if abs(incremental) > 1e-12:
+                x = self._transport_packed_state(x, incremental)
+
+            if float(s_churn) > 0.0:
+                gamma = (
+                    min(float(s_churn) / (len(sigmas) - 1), 2**0.5 - 1.0)
+                    if float(s_tmin) <= sigmas[index] <= float(s_tmax)
+                    else 0.0
+                )
+            else:
+                gamma = 0.0
+            sigma_hat = sigmas[index] * (gamma + 1.0)
+            if gamma > 0.0:
+                epsilon = torch.randn_like(x) * float(s_noise)
+                x = x + epsilon * (sigma_hat**2 - sigmas[index] ** 2) ** 0.5
+
+            denoised = model(x, sigma_hat * s_in, **extra_args)
+            derivative = sampling.to_d(x, sigma_hat, denoised)
+            if callback is not None:
+                callback(
+                    {
+                        "x": x,
+                        "i": index,
+                        "sigma": sigmas[index],
+                        "sigma_hat": sigma_hat,
+                        "denoised": denoised,
+                    }
+                )
+            x = x + derivative * (sigmas[index + 1] - sigma_hat)
+        return x
+
     def sample(
         self,
         model_wrap,
@@ -401,8 +463,13 @@ class SigmaMotionSampler:
         self._previous_strength = 0.0
         import comfy.samplers  # type: ignore
 
+        integrated_function = (
+            self._integrated_euler
+            if self.sampler_name == "sample_euler"
+            else self._integrated_res_multistep
+        )
         integrated_sampler = comfy.samplers.KSAMPLER(
-            self._integrated_res_multistep,
+            integrated_function,
             extra_options=dict(getattr(self.base_sampler, "extra_options", {})),
             inpaint_options=dict(getattr(self.base_sampler, "inpaint_options", {})),
         )

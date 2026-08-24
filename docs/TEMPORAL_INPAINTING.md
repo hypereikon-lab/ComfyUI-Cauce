@@ -145,11 +145,9 @@ length      124
 fps         24
 ```
 
-Do not begin with LanPaint, a turbo LoRA, low denoise, or several simultaneous
-interventions. Native H3 row masking now exists in ComfyUI core and gives the
-cleanest causal baseline. LanPaint remains a useful external comparator for
-conditional sampling, but its inner Langevin iterations alter both runtime and
-the experiment being measured.
+Do not begin with an alternate sampler, a turbo LoRA, low denoise, or several
+simultaneous interventions. Native H3 row masking in ComfyUI core is the
+canonical sampling path for this operation.
 
 Run structural tests at 864×480 or 960×544. Promote a setting to 1344×768 only
 after its geometry and qualitative effect pass.
@@ -207,4 +205,3 @@ native-latent seams remain Research.
 The current operation repairs one bounded interval. Long-form construction is
 built by applying the same local contract repeatedly with explicit source,
 seed, prompt, parameters, and accepted-output records.
-

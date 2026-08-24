@@ -36,8 +36,6 @@ Primary implementation sources:
 
 Relevant algorithmic references:
 
-- LanPaint: training-free exact conditional sampling with Langevin iterations:
-  <https://arxiv.org/abs/2502.03491>
 - RePaint: known-region reinjection and diffusion resampling:
   <https://github.com/Yidan-Zhang/RePaint-Inpainting-using-Denoising-Diffusion-Probabilistic-Models>
 - VACE: unified video condition units for creation and masked editing:
@@ -53,8 +51,8 @@ Relevant algorithmic references:
 
 Consequences for CAUCE:
 
-1. native ComfyUI row masking is the baseline; LanPaint is an optional sampler
-   comparison, not a required dependency;
+1. native ComfyUI row masking is the canonical temporal-inpainting sampler
+   path;
 2. preserved latent context, AddGuide conditioning, prompt, and decoded opacity
    are separate interventions and require ablations;
 3. sampling support and decoded acceptance are separate domains;

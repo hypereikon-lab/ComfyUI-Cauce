@@ -1170,7 +1170,14 @@ result is not used by CAUCE production.""", size=(850, 260))
     field = wf.add("CauceVectorField", (2080, 360), [37, 32, 48, 24.0, 5.125, "curl_sine", 0.0, 0.0, 5.0, 1.5, 1.0, "sine_loop"])
     integrate = wf.add("CauceIntegrateAdvection", (2470, 400), ["rk4"])
     modulate = wf.add("CauceModulateMotionMap", (2810, 400), [0.0, 0.7, "sine_loop"])
-    noise = wf.add("CauceWarpedH3Noise", (3170, 360), [2026082401, "reflection", 0.85])
+    # ComfyUI inserts its automatic control_after_generate widget immediately
+    # after any seed widget. Visual workflow JSON must therefore carry the
+    # explicit "fixed" value even though it is not a backend INPUT_TYPES field.
+    noise = wf.add(
+        "CauceWarpedH3Noise",
+        (3170, 360),
+        [2026082401, "fixed", "reflection", 0.85],
+    )
     guider = wf.add("BasicGuider", (3170, 0))
     sample = wf.add("SamplerCustomAdvanced", (3510, 100))
     parent = wf.add("CauceResolveParentLatent", (3820, 100))

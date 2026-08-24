@@ -198,6 +198,15 @@ class VisualWorkflowTests(unittest.TestCase):
         self.assertIn("CauceWarpedH3Noise", noise_types)
         self.assertNotIn("RandomNoise", noise_types)
         self.assertEqual(noise_types.count("SamplerCustomAdvanced"), 1)
+        warped_noise_node = next(
+            node
+            for node in warped_noise["nodes"]
+            if node["type"] == "CauceWarpedH3Noise"
+        )
+        self.assertEqual(
+            warped_noise_node["widgets_values"],
+            [2026082401, "fixed", "reflection", 0.85],
+        )
 
         sequential = json.loads(
             (WORKFLOW_DIR / "72_h3_sequential_latent_pass.json").read_text()

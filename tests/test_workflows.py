@@ -25,6 +25,7 @@ class VisualWorkflowTests(unittest.TestCase):
             "71_h3_warped_noise.json",
             "72_h3_sequential_latent_pass.json",
             "73_depth_advection_preview.json",
+            "74_h3_sigma_transport_ablation.json",
             "90_storage_maintenance.json",
         }
         paths = sorted(WORKFLOW_DIR.glob("*.json"))
@@ -236,6 +237,35 @@ class VisualWorkflowTests(unittest.TestCase):
                 "CauceIntegrateAdvection",
                 "CauceComposeMotionMaps",
             }.issubset(depth_types)
+        )
+
+        sigma = json.loads(
+            (WORKFLOW_DIR / "74_h3_sigma_transport_ablation.json").read_text()
+        )
+        sigma_types = [node["type"] for node in sigma["nodes"]]
+        self.assertEqual(sigma_types.count("CauceSigmaMotionSampler"), 3)
+        self.assertEqual(sigma_types.count("SamplerCustomAdvanced"), 4)
+        self.assertEqual(sigma_types.count("RandomNoise"), 1)
+        wrappers = [
+            node for node in sigma["nodes"] if node["type"] == "CauceSigmaMotionSampler"
+        ]
+        self.assertEqual(
+            [node["widgets_values"] for node in wrappers],
+            [
+                [0.0, 0.45, 0.25, "accumulate", "smoothstep", "reflection"],
+                [0.25, 0.75, 0.25, "accumulate", "smoothstep", "reflection"],
+                [0.55, 0.95, 0.25, "accumulate", "smoothstep", "reflection"],
+            ],
+        )
+        saves = [node["widgets_values"][0] for node in sigma["nodes"] if node["type"] == "SaveVideo"]
+        self.assertEqual(
+            saves,
+            [
+                "cauce/motion_maps/74_sigma_baseline",
+                "cauce/motion_maps/74_sigma_early",
+                "cauce/motion_maps/74_sigma_middle",
+                "cauce/motion_maps/74_sigma_late",
+            ],
         )
 
 

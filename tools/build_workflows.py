@@ -313,6 +313,16 @@ SPECS = {
         [("noise", "NOISE"), ("report_json", "STRING")],
         [310, 102],
     ),
+    "CauceSigmaMotionSampler": (
+        [
+            L("base_sampler", "SAMPLER"), L("motion_map", "CAUCE_MAP"),
+            W("start_percent", "FLOAT"), W("end_percent", "FLOAT"),
+            W("strength", "FLOAT"), W("envelope", "COMBO"),
+            W("easing", "COMBO"), W("padding_mode", "COMBO"),
+        ],
+        [("sampler", "SAMPLER"), ("report_json", "STRING")],
+        [340, 190],
+    ),
     "PrimitiveInt": (
         [W("value", "INT")],
         [("INT", "INT")],
@@ -1308,6 +1318,94 @@ sample. The validity output is the exact region a later H3 pass may regenerate."
     return wf.data()
 
 
+def build_h3_sigma_transport_ablation():
+    wf = Workflow("74_h3_sigma_transport_ablation", scale=0.16, offset=(70, 140))
+    note(wf, (-40, -560), """# CAUCE 74 · sigma-conditioned H3 latent transport
+
+Four seed/prompt/endpoint-matched samples isolate where a small affine pullback
+enters one intact res_multistep call: baseline, early, middle, and late sigma
+windows. CAUCE unpacks H3's AV state internally, transports only the 37 visual
+tokens before each selected model evaluation, copies audio unchanged, and
+preserves the solver's multistep history. No motion-reference video enters any
+branch. High strength is intentionally excluded from this first live gate.""", size=(980, 320))
+    first = wf.add("LoadImage", (0, 0), ["cauce_forest_a.jpg", "image"])
+    last = wf.add("LoadImage", (0, 290), ["cauce_forest_b.jpg", "image"])
+    first_scale = wf.add("ImageScale", (320, 0), ["lanczos", 768, 512, "center"])
+    last_scale = wf.add("ImageScale", (320, 290), ["lanczos", 768, 512, "center"])
+    window = wf.add("CauceGenerationWindow", (680, 0), ["sigma_transport_124f", 0.0, 5.166666667, "0", "0", "nearest", "full_render", 124])
+    profile = wf.add("CauceExecutionProfile", (680, 430), ["h3-5090-fl2va-768x512"])
+    stack = add_model_stack(wf, 1080, 0, "FL2VA")
+    condition = wf.add(
+        "CauceH3FL2VA",
+        (2080, 0),
+        ["continuous coherent forward drift through the forest"],
+    )
+    motion = wf.add(
+        "CauceAffineMotionMap",
+        (2080, 390),
+        [124, 32, 48, 24.0, 0.0, 8.0, 0.0, 0.0, 1.0, 1.08, 0.0, 0.0, 50.0, 50.0, "sine_loop"],
+        title="Endpoint-safe affine pullback",
+    )
+    noise = wf.add("RandomNoise", (2490, 0), [2026082404, "fixed"])
+    wf.connect(first, "IMAGE", first_scale, "image")
+    wf.connect(last, "IMAGE", last_scale, "image")
+    wf.connect(stack["clip"], "CLIP", condition, "clip")
+    wf.connect(stack["video_vae"], "VAE", condition, "vae")
+    wf.connect(window, "window", condition, "window")
+    wf.connect(profile, "profile", condition, "profile")
+    wf.connect(first_scale, "IMAGE", condition, "first_frame")
+    wf.connect(last_scale, "IMAGE", condition, "last_frame")
+
+    branches = [
+        ("baseline", None, 0.0, 0.0),
+        ("early", (0.0, 0.45), 0.25, 420.0),
+        ("middle", (0.25, 0.75), 0.25, 840.0),
+        ("late", (0.55, 0.95), 0.25, 1260.0),
+    ]
+    for label, sigma_window, strength, y in branches:
+        guider = wf.add("BasicGuider", (2820, y))
+        sample = wf.add("SamplerCustomAdvanced", (3600, y), title=f"{label} sample")
+        parent = wf.add("CauceResolveParentLatent", (3890, y))
+        decode = wf.add("VAEDecode", (4180, y))
+        accept = wf.add("CauceAcceptDecodedWindow", (4390, y))
+        video = wf.add("CreateVideo", (4700, y), [24.0, 8])
+        save = wf.add(
+            "SaveVideo",
+            (5010, y),
+            [f"cauce/motion_maps/74_sigma_{label}", "mp4", "auto"],
+        )
+        wf.connect(stack["model"], "MODEL", guider, "model")
+        wf.connect(condition, "positive", guider, "conditioning")
+        wf.connect(noise, "NOISE", sample, "noise")
+        wf.connect(guider, "GUIDER", sample, "guider")
+        if sigma_window is None:
+            wf.connect(stack["sampler"], "SAMPLER", sample, "sampler")
+        else:
+            wrapped = wf.add(
+                "CauceSigmaMotionSampler",
+                (3180, y + 150),
+                [sigma_window[0], sigma_window[1], strength, "accumulate", "smoothstep", "reflection"],
+                title=f"{label} sigma window",
+            )
+            wf.connect(stack["sampler"], "SAMPLER", wrapped, "base_sampler")
+            wf.connect(motion, "motion_map", wrapped, "motion_map")
+            wf.connect(wrapped, "sampler", sample, "sampler")
+        wf.connect(stack["scheduler"], "SIGMAS", sample, "sigmas")
+        wf.connect(condition, "latent", sample, "latent_image")
+        wf.connect(sample, "output", parent, "latent")
+        wf.connect(window, "window", parent, "window")
+        wf.connect(parent, "LATENT", decode, "samples")
+        wf.connect(stack["video_vae"], "VAE", decode, "vae")
+        wf.connect(decode, "IMAGE", accept, "images")
+        wf.connect(window, "window", accept, "window")
+        wf.connect(accept, "images", video, "images")
+        wf.connect(video, "VIDEO", save, "video")
+
+    wf.group("ENDPOINTS + H3 + MAP", (-40, -150, 2750, 1100))
+    wf.group("MATCHED SIGMA ABLATIONS", (2740, -150, 2600, 1800))
+    return wf.data()
+
+
 def api_fl2va():
     return {
         "1": {"class_type": "CauceGenerationWindow", "inputs": {
@@ -1408,6 +1506,7 @@ def main():
         "71_h3_warped_noise.json": build_h3_warped_noise(),
         "72_h3_sequential_latent_pass.json": build_h3_sequential_latent_pass(),
         "73_depth_advection_preview.json": build_depth_advection_preview(),
+        "74_h3_sigma_transport_ablation.json": build_h3_sigma_transport_ablation(),
     }
     for filename, data in visual.items():
         write_json(WORKFLOWS / filename, data)

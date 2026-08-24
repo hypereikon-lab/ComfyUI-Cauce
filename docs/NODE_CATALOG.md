@@ -57,12 +57,18 @@ nodes are deliberate sequential feedback passes.
 
 - `CAUCE Warp H3 Latent`
 - `CAUCE Warped H3 Noise`
+- `CAUCE Sigma-Conditioned H3 Transport`
 
 Latent warping samples only the visual H3 stream at the actual centers of its
 causal VAE support intervals. H3's structural audio stream is copied and frozen.
 Warped noise preserves the normal seeded noise path, correlates the visual
 stream spatially, and leaves audio noise unchanged. See
 [`MOTION_MAPS.md`](MOTION_MAPS.md).
+
+Sigma-conditioned transport wraps an existing deterministic `res_multistep`
+sampler. It applies small incremental pullbacks to the packed visual state
+before selected model evaluations without splitting the sigma schedule into
+separate jobs. See [`SIGMA_TRANSPORT.md`](SIGMA_TRANSPORT.md).
 
 ## H3
 

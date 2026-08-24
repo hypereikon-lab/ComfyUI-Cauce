@@ -12,7 +12,7 @@ workflows to production defaults.
 ## Gate 1 — load and compatibility
 
 - CAUCE imports with no startup exception.
-- All 57 nodes appear under `CAUCE/*`.
+- All 58 nodes appear under `CAUCE/*`.
 - Preflight identifies the existing models without modifying files.
 - FL2VA and Ref2VA wrappers locate current official Comfy H3 classes.
 - No CUDA, PyTorch, ComfyUI, Manager, or model update is triggered.
@@ -155,3 +155,24 @@ are committed as receipts and documented measurements.
   acceleration, local folding, and high-frequency loss.
 - Save parent latent, map hash, seed, sigma schedule, padding, and mask policy.
 - Promote no operation merely because the sampler completes.
+
+## Gate 11 — sigma-conditioned latent transport
+
+- Use deterministic `res_multistep`; reject unsupported sampler functions before
+  allocating H3 models.
+- Keep one intact sampler call and verify exactly one transported model
+  evaluation for every nonterminal sigma.
+- Confirm the denoiser sees the transported state before computing its current
+  prediction; do not mutate a callback tensor after prediction.
+- Unpack the packed H3 state with the latent shapes supplied by ComfyUI, warp
+  only the `[B,C,T,H,W]` visual stream, and repack the audio stream unchanged.
+- Compare baseline, early `[0,0.45]`, middle `[0.25,0.75]`, and late
+  `[0.55,0.95]` with identical endpoints, prompt, seed, map, sampler and sigmas.
+- Verify incremental strengths sum to the declared cumulative strength for
+  `accumulate` and return to zero for `pulse`.
+- Begin with endpoint-safe maps and total strength no higher than `0.25`.
+- Measure endpoint drift, optical-flow agreement, chromatic stability,
+  high-frequency loss and runtime overhead against the matched baseline.
+- Reject the operation if solver evaluation count differs from sigma-step count;
+  this indicates a sampler whose internal staging is incompatible with the
+  current operator split.

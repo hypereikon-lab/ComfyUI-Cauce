@@ -24,7 +24,7 @@ media
 
 ## Current status
 
-The greenfield core and 57 ComfyUI nodes are implemented. Eleven visual workflows,
+The greenfield core and 58 ComfyUI nodes are implemented. Twelve visual workflows,
 one maintenance workflow, two API templates, bounded demo assets, and a
 restartable two-window project are included. Plate export, FL2VA first/last,
 Ref2VA landscape, and endpoint-guided
@@ -89,8 +89,9 @@ The laboratory installation is tracked by ComfyUI Manager under this URL.
   selection.
 - **CAUCE / Motion Maps** — affine, projective, nonlinear, advected, depth, and
   imported coordinate fields with composition and spatial/temporal modulation.
-- **CAUCE / H3 Motion** — native visual-latent warping and motion-correlated H3
-  noise; H3's structural audio stream is copied/frozen or left unchanged.
+- **CAUCE / H3 Motion** — native visual-latent warping, motion-correlated H3
+  noise, and sigma-conditioned transport inside deterministic res_multistep;
+  H3's structural audio stream is copied/frozen or left unchanged.
 - **CAUCE / Plates** — canvas, layers, masks, dome preview, point versions, and
   PNG/prompt handoff.
 - **CAUCE / H3** — native FL2VA, ordered Ref2VA references, and absolute-time
@@ -115,6 +116,7 @@ See [Node catalog](docs/NODE_CATALOG.md),
 [workflow guide](docs/WORKFLOWS.md),
 [validation matrix](docs/VALIDATION.md), and
 [motion-map algebra](docs/MOTION_MAPS.md),
+[sigma-conditioned transport](docs/SIGMA_TRANSPORT.md),
 [laboratory results](docs/LAB_RESULTS.md). The canonical terminology and run
 report format are defined in [technical language](docs/TECHNICAL_LANGUAGE.md).
 The current upstream and community

@@ -11,6 +11,7 @@ from . import (
     motion,
     plates,
     profiles,
+    samplers,
     seams,
     timeline,
 )
@@ -20,6 +21,7 @@ MODULES = (
     timeline,
     media,
     motion,
+    samplers,
     plates,
     h3,
     masks,

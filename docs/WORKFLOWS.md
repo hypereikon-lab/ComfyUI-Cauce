@@ -48,6 +48,7 @@ vae/minimax_h3_audio_vae_fp32.safetensors
 | 71 | `71_h3_warped_noise.json` | 1 sample | Campo advectado cerrado aplicado al ruido visual inicial de H3; preset conservador live-validado. |
 | 72 | `72_h3_sequential_latent_pass.json` | 2 samples | Generación base + warp del latent H3 + segunda pasada a denoise 0,35; decode live-validado. |
 | 73 | `73_depth_advection_preview.json` | 0 samples | Reproyección 2.5D + advección compuestas con validity de disoclusiones. |
+| 74 | `74_h3_sigma_transport_ablation.json` | 4 samples | Baseline matched + transporte visual temprano, medio y tardío dentro de res_multistep. |
 | 90 | `90_storage_maintenance.json` | CPU | Inventario físico y limpieza en dos fases de `input/` u `output/`. |
 
 Los recorridos 70–73 forman una matriz experimental, no cuatro presets de
@@ -63,6 +64,21 @@ workflow 72 completó ambas pasadas y mantuvo un decode coherente después de un
 pan de 2 %, escala 1,04 y denoise 0,35. Estos resultados validan la ruta tensorial;
 la fidelidad del movimiento pretendido todavía debe medirse contra el baseline
 con seed, prompt y endpoints idénticos.
+
+El workflow 74 mantiene una sola llamada completa de `res_multistep` por rama.
+No simula el proceso con veinte samples de un step. Las cuatro ramas comparten
+seed, prompt, endpoints, sigmas y mapa; sólo cambia la ventana de inyección:
+
+```text
+baseline  → sin transporte
+early     → 0,00–0,45 del recorrido high→low sigma
+middle    → 0,25–0,75
+late      → 0,55–0,95
+```
+
+Las tres variantes acumulan fuerza `0,25` sobre un mapa endpoint-safe. No
+reciben video de movimiento. La ruta exacta, limitaciones de solver y ecuaciones
+están en [`SIGMA_TRANSPORT.md`](SIGMA_TRANSPORT.md).
 
 Los workflows visuales 00–50 fueron cargados y resueltos por el frontend real
 de la instancia del lab: ningún graph contiene nodos desconocidos ni depende de

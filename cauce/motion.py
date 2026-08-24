@@ -1032,10 +1032,12 @@ class WarpedH3Noise:
         seed: int,
         motion_map: dict[str, Any],
         padding_mode: str = "reflection",
-        temporal_correlation: float = 0.85,
+        temporal_correlation: float = 0.05,
     ):
         self.seed = int(seed)
         self.motion_map = motion_map
+        if padding_mode not in PADDING_MODES:
+            raise ValueError(f"padding mode must be one of {', '.join(PADDING_MODES)}")
         self.padding_mode = padding_mode
         if not 0.0 <= float(temporal_correlation) <= 1.0:
             raise ValueError("temporal noise correlation must lie in [0,1]")

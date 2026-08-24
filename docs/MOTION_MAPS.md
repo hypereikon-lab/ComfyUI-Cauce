@@ -137,11 +137,21 @@ noise using an explicit `temporal_correlation` in `[0,1]`. Unsupported regions
 retain independent noise and per-frame spatial variance is normalized.
 The audio noise stream is unchanged.
 
+`temporal_correlation` is a target covariance, not a simple opacity: the
+transported anchor enters with amplitude `sqrt(correlation)`. Live H3 testing
+therefore uses `0.05` as the conservative starting point together with a
+modest motion-map envelope (`0.15` in workflow 71). A stress preset of `0.85`
+plus a `0.7` map envelope completed numerically but produced a chromatically
+corrupt decode, while the conservative preset and a seed-matched normal-noise
+baseline remained on-manifold. Treat higher values as deliberate material
+experiments and increase them in small steps.
+
 This is a training-free H3 experiment related to the warped-noise strategy in
 [Go-with-the-Flow](https://openaccess.thecvf.com/content/CVPR2025/html/Burgert_Go-with-the-Flow_Motion-Controllable_Video_Diffusion_Models_Using_Real-Time_Warped_Noise_CVPR_2025_paper.html):
 that work also fine-tunes its video model on structured warped noise. CAUCE does
-not train or modify H3, so zero-shot transfer may be substantially weaker. It
-remains an empirical control, not a guarantee that H3 will reproduce the field.
+not train or modify H3, so zero-shot transfer is substantially less tolerant of
+strong correlation. It remains an empirical control, not a guarantee that H3
+will reproduce the field.
 
 ## Possibility matrix
 

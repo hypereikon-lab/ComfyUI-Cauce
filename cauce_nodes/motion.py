@@ -341,7 +341,7 @@ class CauceWarpedH3Noise:
                 "padding_mode": (list(PADDING_MODES), {"default": "reflection"}),
                 "temporal_correlation": (
                     "FLOAT",
-                    {"default": 0.85, "min": 0.0, "max": 1.0, "step": 0.01},
+                    {"default": 0.05, "min": 0.0, "max": 1.0, "step": 0.005},
                 ),
             }
         }
@@ -350,7 +350,7 @@ class CauceWarpedH3Noise:
     RETURN_NAMES = ("noise", "report_json")
     FUNCTION = "build"
     CATEGORY = H3_CATEGORY
-    DESCRIPTION = "Create H3 visual noise correlated by a CAUCE motion map; H3 audio noise remains unchanged."
+    DESCRIPTION = "Create subtly motion-correlated H3 visual noise; begin near 0.05 because strong zero-shot correlation can leave H3's learned noise manifold."
 
     def build(self, seed, motion_map, padding_mode, temporal_correlation):
         report = motion_map_report(motion_map) | {

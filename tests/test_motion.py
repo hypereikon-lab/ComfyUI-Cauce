@@ -172,8 +172,11 @@ class MotionMapTests(unittest.TestCase):
     def test_warped_noise_rejects_invalid_temporal_correlation(self):
         motion = affine_motion_map(5, 4, 6)
         self.assertEqual(WarpedH3Noise(7, motion, temporal_correlation=0.85).seed, 7)
+        self.assertEqual(WarpedH3Noise(7, motion).temporal_correlation, 0.05)
         with self.assertRaises(ValueError):
             WarpedH3Noise(7, motion, temporal_correlation=1.01)
+        with self.assertRaises(ValueError):
+            WarpedH3Noise(7, motion, padding_mode="wrap")
 
 
 if __name__ == "__main__":

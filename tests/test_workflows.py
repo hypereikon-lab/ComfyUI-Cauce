@@ -205,8 +205,14 @@ class VisualWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             warped_noise_node["widgets_values"],
-            [2026082401, "fixed", "reflection", 0.85],
+            [2026082401, "fixed", "reflection", 0.05],
         )
+        modulate_node = next(
+            node
+            for node in warped_noise["nodes"]
+            if node["type"] == "CauceModulateMotionMap"
+        )
+        self.assertEqual(modulate_node["widgets_values"], [0.0, 0.15, "sine_loop"])
 
         sequential = json.loads(
             (WORKFLOW_DIR / "72_h3_sequential_latent_pass.json").read_text()

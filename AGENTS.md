@@ -301,17 +301,120 @@ unreachable and request the smallest lab action required.
 
 ## 7. Browser operation practices
 
-Use an agent-created blank Comfy workflow for tests. Preserve the user's open
-graphs:
+### Distinguish the three tab layers
 
-1. click `Create a new blank workflow`;
-2. paste or load the generated workflow JSON there;
-3. do not clear, overwrite, or close an unknown user workflow;
-4. give test outputs unique technical prefixes.
+Do not use the generic word “tab” without identifying its layer:
 
-Pasting a complete workflow JSON into a blank canvas may create another unsaved
-workflow tab. Track which tabs were agent-created and close only those when
-cleanup is requested.
+1. **Browser page tab:** an in-app browser tab whose URL is the Comfy origin.
+2. **Comfy workflow tab:** a graph tab inside the single-page Comfy frontend,
+   such as `Unsaved Workflow (3)`.
+3. **Agent tab handle:** the automation object claimed for one browser page tab.
+
+One browser page can contain many Comfy workflow tabs. Creating a blank Comfy
+workflow does not create a clean browser session and does not remove old graph
+state. A Comfy restart or browser reload may restore workflow tabs from frontend
+storage; do not assume the interface returned clean.
+
+### Workflow-tab ownership ledger
+
+At the beginning of live work, snapshot the visible Comfy workflow-tab labels
+and record a small in-turn ledger:
+
+```text
+workflow label | owner | purpose | identifying signature | output prefix | state
+```
+
+Ownership rules:
+
+- every workflow present before the agent creates one is user-owned or unknown;
+- an unknown workflow is treated as user-owned;
+- an agent owns only a workflow it created during the current trace or whose
+  provenance is otherwise exact;
+- ordinal names such as `Unsaved Workflow (4)` are weak identifiers and may
+  change after close/reload;
+- use a unique Markdown note, workflow title, seed, and output prefix as the
+  durable signature of an experimental graph.
+
+Never close, clear, overwrite, or approve an unsaved-changes prompt for a
+user-owned or unknown graph.
+
+### Strict lifecycle
+
+Use at most:
+
+- one active agent experiment workflow;
+- one optional agent reference/comparison workflow when simultaneous visual
+  comparison is genuinely necessary.
+
+Do not accumulate a new workflow tab for every parameter change. Prefer to:
+
+1. finish and inspect the current experiment;
+2. preserve its reproducible source in `tools/build_workflows.py`, a committed
+   workflow JSON, or the run report;
+3. enumerate outputs through `/history`;
+4. close that agent-owned workflow;
+5. only then create the next workflow.
+
+Use an agent-created blank workflow for a test:
+
+1. snapshot existing workflow tabs;
+2. click `Create a new blank workflow` once;
+3. record the new workflow as agent-owned;
+4. paste or load the generated JSON;
+5. detect whether Comfy opened the JSON in a second new workflow tab;
+6. if so, immediately close the now-unused agent-owned blank staging tab;
+7. verify the loaded graph's signature;
+8. run and inspect it;
+9. close the loaded agent-owned workflow when its reproducible state and
+   outputs have been recorded.
+
+Pasting a complete workflow JSON may create another unsaved workflow tab rather
+than replacing the blank canvas. This behavior was the cause of previous
+`Unsaved Workflow (2)…(5)` accumulation. Treat every paste as a possible tab
+creation event and reconcile the ledger immediately.
+
+### Pre-Run active-graph check
+
+Immediately before clicking Run, verify the active workflow, not merely the
+visible canvas:
+
+- active workflow-tab label and signature;
+- expected unique Markdown note or workflow title;
+- expected input filenames;
+- sampler, scheduler, steps, seed, and active/muted branches;
+- expected output prefixes;
+- zero validation errors;
+- queue idle.
+
+If any signature belongs to a previous experiment, stop. Do not “try the run”
+to discover which graph is active.
+
+Errors, parameter panels, selected nodes, and workflow overviews belong to the
+currently active Comfy workflow. A stale error banner from another graph can
+mislead diagnosis if the active tab was not verified.
+
+### Closing and cleanup
+
+A backend job is a queued snapshot. Switching or closing its graph tab does not
+cancel the job. Nevertheless, keep its workflow active until queuing is
+confirmed so that a second graph is not accidentally submitted.
+
+After completion:
+
+1. read `/history` and record exact outputs;
+2. save or commit any graph state that must remain reproducible;
+3. close only the agent-owned workflow tabs in the ledger;
+4. confirm the user-owned tab set is unchanged;
+5. leave no blank staging tabs;
+6. leave no previous experimental graph active for the next agent.
+
+If a future instance finds several stale unsaved workflows and cannot prove
+ownership, it must not close them. Report their labels and ask the user. Context
+recovery from a session JSONL may establish ownership, but ordinal similarity
+alone does not.
+
+Give every test output a unique technical prefix. Outputs and backend history
+survive workflow-tab closure; the tab is not the artifact archive.
 
 For a long GPU job:
 
@@ -620,6 +723,8 @@ claims only after checking source, paper, or live behavior.
 - Generated workflow rebuilt and locally validated.
 - Required input assets exist under ComfyUI input.
 - Model names match the live runtime.
+- Workflow-tab ledger reconciled; no unused agent staging tabs.
+- Active graph signature matches the intended experiment.
 - No validation errors in the frontend.
 - Queue idle.
 - Unique output prefix.
@@ -637,6 +742,7 @@ claims only after checking source, paper, or live behavior.
 - `/history` contains all expected outputs.
 - Visual and measured gates were applied.
 - Rejected behavior is documented without euphemism.
+- Agent-owned workflow tabs were closed after their reproducible state and
+  outputs were recorded; user-owned tabs remain unchanged.
 - No secrets were printed or committed.
 - No unrelated runtime component was changed.
-

@@ -66,8 +66,9 @@ whether the result lies inside the documented approximate trained range.
 
 `CAUCE_H3_REFERENCE_PLAN` records the source and resolved target counts, exact
 accepted `17k+5` prefix, discarded tail, and the frame indices/timestamps shown
-to Qwen at 2 fps. The accepted IMAGE batch remains decoded media and is passed
-to official Ref2VA conditioning.
+to Qwen at 2 fps. It distinguishes the current ComfyUI runtime minimum from the
+model's documented 2–15 second reference-video range. The accepted IMAGE batch
+remains decoded media and is passed to official Ref2VA conditioning.
 
 ## `CAUCE_FRAME_RANGE_SET`
 

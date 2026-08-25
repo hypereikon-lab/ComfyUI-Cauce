@@ -69,6 +69,8 @@ class H3InputPlanningTests(unittest.TestCase):
         self.assertEqual(plan["resolved_target_frames"], 124)
         self.assertEqual(plan["accepted_frames"], 56)
         self.assertEqual(plan["discarded_tail_frames"], 4)
+        self.assertTrue(plan["inside_documented_duration_range"])
+        self.assertEqual(plan["documented_duration_range_frames"], [48, 360])
         self.assertEqual(plan["qwen_sample_indices"], [0, 12, 24, 36, 48])
         self.assertEqual(plan["qwen_timestamps_seconds"], [0.0, 0.5, 1.0, 1.5, 2.0])
 
@@ -76,6 +78,9 @@ class H3InputPlanningTests(unittest.TestCase):
         limited = plan_h3_reference_clip(long_clip, 120)
         self.assertEqual(limited["accepted_frames"], 124)
         self.assertEqual(limited["discarded_tail_frames"], 76)
+        out_of_spec = plan_h3_reference_clip(clip[:22], 124)
+        self.assertEqual(out_of_spec["accepted_frames"], 22)
+        self.assertFalse(out_of_spec["inside_documented_duration_range"])
         with self.assertRaisesRegex(ValueError, "at least 5"):
             plan_h3_reference_clip(clip[:4], 124)
         with self.assertRaisesRegex(ValueError, "positive"):

@@ -29,7 +29,7 @@ continuation preset.
 | --- | --- |
 | `CauceH3ResolveTargetShape` | expose target ceil-to-`17k+5`, duration, visual/audio tokens, and trained-range status |
 | `CauceH3PrepareGuideClip` | make official AddGuide single-image/floor clipping and resolved placement explicit |
-| `CauceH3PrepareReferenceClip` | make Ref2VA target clamp, floor clipping, and 2 fps Qwen samples explicit |
+| `CauceH3PrepareReferenceClip` | make Ref2VA target clamp, floor clipping, documented 2–15 s status, and 2 fps Qwen samples explicit |
 | `CauceH3InspectConditioning` | report active H3 keyframes, references, ranges, and overlaps without mutation |
 
 Planning nodes do not encode media, create conditioning, or sample. Their

@@ -73,6 +73,7 @@ The registry is assembled from:
 ```text
 cauce_nodes/assembly.py
 cauce_nodes/av_latent.py
+cauce_nodes/planning.py
 cauce_nodes/motion.py
 cauce_nodes/persistence.py
 ```
@@ -237,6 +238,11 @@ GET /object_info/CauceH3AllocateAVWindow
 GET /object_info/CauceH3ExtractAVSpan
 GET /object_info/CauceH3AddAVSpanGuide
 GET /object_info/CauceH3AppendAVSpan
+GET /object_info/CauceH3SplitAVLatent
+GET /object_info/CauceH3ResolveTargetShape
+GET /object_info/CauceH3PrepareGuideClip
+GET /object_info/CauceH3PrepareReferenceClip
+GET /object_info/CauceH3InspectConditioning
 GET /queue
 ```
 

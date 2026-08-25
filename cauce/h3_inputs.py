@@ -22,6 +22,8 @@ from .timebase import (
 H3_TRAINED_MAX_FRAMES = 362
 H3_CANVAS_MULTIPLE = 32
 H3_QWEN_VIDEO_STRIDE = 12  # 24 fps decoded media presented to Qwen at 2 fps.
+H3_REFERENCE_DOCUMENTED_MIN_FRAMES = 2 * 24
+H3_REFERENCE_DOCUMENTED_MAX_FRAMES = 15 * 24
 
 
 def _with_hash(value: dict[str, Any], field: str) -> dict[str, Any]:
@@ -155,6 +157,16 @@ def plan_h3_reference_clip(
         "accepted_frames": accepted,
         "discarded_tail_frames": source_frames - accepted,
         "duration_seconds": accepted / 24.0,
+        "inside_documented_duration_range": (
+            H3_REFERENCE_DOCUMENTED_MIN_FRAMES
+            <= accepted
+            <= H3_REFERENCE_DOCUMENTED_MAX_FRAMES
+        ),
+        "documented_duration_range_seconds": [2, 15],
+        "documented_duration_range_frames": [
+            H3_REFERENCE_DOCUMENTED_MIN_FRAMES,
+            H3_REFERENCE_DOCUMENTED_MAX_FRAMES,
+        ],
         "qwen_sample_indices": sample_indices,
         "qwen_timestamps_seconds": [index / 2.0 for index in range(len(sample_indices))],
         "qwen_sample_count": len(sample_indices),

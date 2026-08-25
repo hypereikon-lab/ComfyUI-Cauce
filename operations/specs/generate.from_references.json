@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "generate.from_references",
-  "version": 1,
+  "version": 2,
   "title": "Generate from ordered references",
   "kind": "h3-inference",
   "implementation_class": "official-h3",
@@ -22,7 +22,10 @@
     "preferred_frame_count_range": [124, 362],
     "reference_clip_count_range": [0, 3],
     "reference_image_count_range": [0, 9],
-    "reference_clip_min_frames": 5,
+    "runtime_reference_clip_min_frames": 5,
+    "documented_reference_clip_duration_seconds": [2, 15],
+    "production_reference_clip_frame_range": [56, 345],
+    "reference_video_total_max_seconds": 15,
     "audio_reference_inputs": false,
     "fixed_soundtrack_conditioning": false
   },

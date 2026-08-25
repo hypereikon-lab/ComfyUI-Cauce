@@ -5,21 +5,22 @@
 ### `CauceAcceptDecodedRange`
 
 Returns an exact `[start_frame, start_frame + frame_count)` IMAGE slice and its
-count.
+count. Workflow meaning such as “guide,” “accepted center,” or “edit” remains
+outside the node.
 
-## CAUCE/Native H3
+## CAUCE/H3 AV Latent
 
-### `CaucePrepareH3TwoSidedGuideWindow`
+| Node | Operation |
+| --- | --- |
+| `CauceH3InspectAVLatent` | validate and report packed AV shape, absolute frames, and token lengths |
+| `CauceH3PlanAVWindow` | calculate one absolute overlap+extension layout on both H3 clocks |
+| `CauceH3AllocateAVWindow` | allocate the layout's zero target using prior latent geometry |
+| `CauceH3ExtractAVSpan` | extract synchronized visual/audio tokens as `CAUCE_H3_AV_SPAN` |
+| `CauceH3AddAVSpanGuide` | add one compatible span to H3 positive conditioning at a frame index |
+| `CauceH3AppendAVSpan` | append one globally contiguous span to a cumulative H3 latent |
 
-Inputs two matching 24 fps IMAGE batches. Returns the left tail guide, right
-head guide, a hashed window plan, target frame count, right-guide frame index,
-and JSON report. Defaults: 22-frame guides in a 124-frame target.
-
-### `CauceAssembleH3TwoSidedGuideWindow`
-
-Consumes the original sources, decoded H3 target, and window plan. Discards the
-two conditioning intervals, returns the complete joined video and isolated
-accepted generated range, and reports exact ranges.
+No node owns prompt, seed, sampler, scheduler, denoise, decode, or a
+continuation preset.
 
 ## CAUCE/Motion Maps
 
@@ -40,10 +41,10 @@ accepted generated range, and reports exact ranges.
 
 ### `CauceSaveAVLatent`
 
-Atomically saves the visual and structural-audio tensors of one H3 latent to an
-indexed `safetensors` artifact inside the ComfyUI output root.
+Atomically saves both streams of one packed H3 latent to an indexed
+`safetensors` artifact inside the ComfyUI output root.
 
 ### `CauceLoadAVLatent`
 
-Loads an explicit or latest indexed CAUCE H3 audiovisual latent from the output
-root. Paths are checked against traversal outside that root.
+Loads an explicit or latest indexed CAUCE H3 AV latent. Paths are constrained
+to the output root.

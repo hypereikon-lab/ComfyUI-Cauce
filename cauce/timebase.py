@@ -111,7 +111,16 @@ def h3_visual_latent_frames(pixel_frames: int) -> int:
 def h3_audio_latent_frames(pixel_frames: int) -> int:
     if not is_h3_frame_count(pixel_frames):
         raise ValueError("H3 pixel frames must lie on the 17k+5 grid")
-    return round_fraction(Fraction(int(pixel_frames), 1) / H3_FPS * H3_AUDIO_LATENT_HZ)
+    return h3_audio_token_boundary(pixel_frames)
+
+
+def h3_audio_token_boundary(frame_index: int) -> int:
+    """Return the cumulative 40 Hz token index at a 24 fps frame boundary."""
+
+    frame = int(frame_index)
+    if frame < 0:
+        raise ValueError("frame_index cannot be negative")
+    return round_fraction(Fraction(frame, 1) / H3_FPS * H3_AUDIO_LATENT_HZ)
 
 
 def visual_token_spans(token_count: int) -> tuple[tuple[int, int], ...]:
@@ -141,6 +150,17 @@ def visual_token_count_for_span(pixel_frames: int) -> int:
             f"{pixel_frames} pixel frames do not end on an H3 visual-token boundary"
         )
     return tokens
+
+
+def visual_token_boundary(pixel_frame_boundary: int) -> int:
+    """Return the token index for an exactly representable pixel-frame boundary."""
+
+    boundary = int(pixel_frame_boundary)
+    if boundary < 0:
+        raise ValueError("pixel_frame_boundary cannot be negative")
+    if boundary == 0:
+        return 0
+    return visual_token_count_for_span(boundary)
 
 
 def visual_span_for_tokens(token_count: int) -> int:

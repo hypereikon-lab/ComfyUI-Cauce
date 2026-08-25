@@ -1,57 +1,45 @@
 # Operations guide
 
-## Prepare an H3 two-sided guide window
+## Build a native AV continuation graph
 
-1. Load source A and B as IMAGE batches.
-2. Normalize both to the same width, height, channels, and 24 fps.
-3. Add `CaucePrepareH3TwoSidedGuideWindow`.
-4. Start with `guide_frames = 22` and `target_frames = 124`.
-5. Record the returned plan hash and inspect both guide batches.
+1. Keep the completed packed H3 AV latent before decoding.
+2. Inspect it with `CauceH3InspectAVLatent`.
+3. Plan an absolute window with `CauceH3PlanAVWindow`.
+4. Allocate that target with `CauceH3AllocateAVWindow`.
+5. Extract the previous tail using `CauceH3ExtractAVSpan`.
+6. Build normal official H3 positive conditioning for `window_frames`, without
+   first/last images.
+7. Insert the span with `CauceH3AddAVSpanGuide` at frame zero.
+8. Run the ordinary official guider and sampler against the allocated target.
+9. Extract only the new suffix from the sampled window using the returned
+   timeline origin and exact overlap/extension values.
+10. Append that suffix with `CauceH3AppendAVSpan`.
+11. Save the cumulative latent only when persistence is useful; decode normal
+   visual outputs separately.
 
-## Build the official H3 section
+Keep prompt, model, resolution, sigma shifts, seed, sampler, scheduler, steps,
+overlap, extension, and output prefix explicit in the workflow/run receipt.
 
-1. Use the official H3 node to create a fresh target with the returned frame
-   count and matching resolution.
-2. Chain `MiniMaxH3AddGuide` for the left guide at frame 0.
-3. Chain a second `MiniMaxH3AddGuide` for the right guide at the returned frame
-   index.
-4. Wire the normal official guider, sampler, and decoder.
-5. Keep all inference parameters explicit.
+## Build a two-sided decoded guide graph
 
-## Assemble and review
-
-1. Feed the decoded target, both original sources, and plan to
-   `CauceAssembleH3TwoSidedGuideWindow`.
-2. Save both `accepted_generated_range` and `joined_images` with distinct prefixes.
-3. Verify frame count and fps.
-4. Watch the A-to-center and center-to-B boundaries at normal speed and frame by
-   frame.
-5. Mark the run `visually accepted` or `rejected`; queue completion alone means
-   only `executes`.
+1. Normalize A and B to matching geometry and 24 fps.
+2. Select A's tail and B's head with `CauceAcceptDecodedRange`.
+3. Create a fresh official H3 target.
+4. Add the tail at frame zero and the head at `target_frames-guide_frames` with
+   two official `MiniMaxH3AddGuide` nodes.
+5. Sample and decode normally.
+6. Select only `[guide_frames, target_frames-guide_frames)` from the target.
+7. Chain vanilla `ImageBatch` nodes to assemble `A + accepted + B`.
+8. Inspect both boundaries before assigning visual evidence.
 
 ## Controlled iteration
 
-Change one variable per comparison. Recommended order:
-
-1. prompt wording;
-2. guide length (22, then 39, then 56 frames);
-3. target length;
-4. sampler parameters.
-
-Keep source media, model, quantization, resolution, frame count, seed, sampler,
-scheduler, steps, decode, and output handling fixed whenever they are not the
-active variable.
-
-## Motion-reference workflow
-
-Build or import a coordinate map, compose all desired maps, warp an image or
-primitive batch once, then pass the resulting video as an ordinary H3 reference
-through official nodes. Review the reference itself before spending inference
-time.
+Change one variable per comparison. Start with the characterized continuation
+layout `22 + 119 = 141`; then vary prompt, overlap, extension, or sampling
+parameters independently.
 
 ## Persistence
 
 Use `CauceSaveAVLatent` only for packed H3 latents that must survive a graph or
-process boundary. Artifacts live below the ComfyUI output root. Use indexed
-filenames; resolve explicit versions for reproducible production runs and
-`latest` only during exploration.
+process boundary. Use explicit indexed paths for reproducible runs and `latest`
+only during exploration.

@@ -20,7 +20,7 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 15)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 19)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
@@ -32,17 +32,20 @@ class RegistrationTests(unittest.TestCase):
                 {node.CATEGORY for node in module.NODE_CLASS_MAPPINGS.values()},
                 {
                     "CAUCE/Assembly",
-                    "CAUCE/Native H3",
+                    "CAUCE/H3 AV Latent",
                     "CAUCE/Motion Maps",
                     "CAUCE/Persistence",
                 },
             )
-            self.assertIn(
-                "CaucePrepareH3TwoSidedGuideWindow", module.NODE_CLASS_MAPPINGS
-            )
-            self.assertIn(
-                "CauceAssembleH3TwoSidedGuideWindow", module.NODE_CLASS_MAPPINGS
-            )
+            for name in (
+                "CauceH3InspectAVLatent",
+                "CauceH3PlanAVWindow",
+                "CauceH3AllocateAVWindow",
+                "CauceH3ExtractAVSpan",
+                "CauceH3AddAVSpanGuide",
+                "CauceH3AppendAVSpan",
+            ):
+                self.assertIn(name, module.NODE_CLASS_MAPPINGS)
         finally:
             for key in list(sys.modules):
                 if key == name or key.startswith(name + "."):

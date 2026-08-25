@@ -7,7 +7,8 @@ import json
 from typing import Any
 
 
-TWO_SIDED_WINDOW_SCHEMA = "cauce.h3-two-sided-guide-window/1"
+AV_WINDOW_LAYOUT_SCHEMA = "cauce.h3-av-window-layout/1"
+AV_SPAN_SCHEMA = "cauce.h3-av-span/1"
 
 
 def canonical_json(value: Any) -> str:

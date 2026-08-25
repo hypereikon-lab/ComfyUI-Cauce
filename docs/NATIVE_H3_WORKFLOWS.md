@@ -1,88 +1,92 @@
 # Native H3 workflow recipes
 
-These are graph contracts, not bundled workflow JSON. Resolve exact sockets
-from the live `/object_info` registry before materializing a browser graph or
-API prompt.
+These are graph recipes, not bundled workflow JSON. Resolve exact official
+sockets against live `/object_info` before creating a UI graph or API prompt.
 
-## 1. Two-sided guide window
+## Native AV tail continuation
 
-Purpose: generate a new interval conditioned by the outgoing gesture of video A
-and incoming gesture of video B.
-
-```text
-A IMAGE batch ─┐
-               ├─ CaucePrepareH3TwoSidedGuideWindow
-B IMAGE batch ─┘       | left_guide, frame_idx = 0
-                       | right_guide, frame_idx = returned value
-                       | target_frames
-                       v
-official MiniMaxH3ImageToVideo (fresh target, no first/last image)
-  -> official MiniMaxH3AddGuide(left_guide, 0)
-  -> official MiniMaxH3AddGuide(right_guide, right_guide_frame_idx)
-  -> official guider / sampler / H3 decode
-  -> CauceAssembleH3TwoSidedGuideWindow(original A, original B, decoded target, plan)
-  -> Save Video
-```
-
-The fresh target matters: the two guide clips are the explicit conditioning
-anchors. CAUCE accepts only the center between them, so guide reconstruction is
-not duplicated in the final edit.
-
-Default frame geometry:
+The operation is composed from low-level CAUCE data transformations and ordinary
+official H3 inference:
 
 ```text
-0                    22                           102                  124
-|-- A tail guide -----|------- generated center ---|-- B head guide ----|
-                                              accepted: [22, 102)
+previous AV latent
+  -> CauceH3PlanAVWindow(overlap=22, extension=119)
+      -> CauceH3AllocateAVWindow ---------------------------> sampler latent
+      -> window_frames ------------------------------------> H3 conditioning length
+
+previous AV latent
+  -> CauceH3ExtractAVSpan(start=previous_frames-22, count=22)
+      -> CauceH3AddAVSpanGuide(target_frame_idx=0)
+
+official MiniMaxH3ImageToVideo positive conditioning
+  -> CauceH3AddAVSpanGuide
+  -> official guider / sampler using allocated target
+  -> CauceH3ExtractAVSpan(
+       timeline_origin=window_start,
+       start=overlap,
+       count=extension
+     )
+  -> CauceH3AppendAVSpan(base=previous AV latent)
 ```
 
-The graph uses a documented official H3 conditioning operation, but the
-generated range remains subject to visual evaluation. Start with 22-frame guides;
-compare only one variable at a time when testing 39 or 56 frames.
+The allocated target, positive conditioning, sampler, scheduler, seed, model,
+sigma shifts, and decode remain separate visible graph edges. The first
+characterized comparison should retain the upstream reference geometry:
 
-Prompting should describe the intended transition motion without narrating the
-guide mechanics. Hold prompt, seed, model, resolution, sampler, and steps fixed
-when comparing guide lengths.
+```text
+overlap            22 frames
+new suffix        119 frames
+sampled window    141 frames
+```
 
-## 2. Native tail continuation
+This mechanism is derived from the inspected, known-running MIT reference
+implementation, but CAUCE's implementation must earn live schema, execution,
+and visual evidence independently.
 
-For extending one H3 generation, compose the external
-`ComfyUI-Minimax-H3-Continuation` pack rather than duplicating it inside CAUCE.
-Its characterized workflow keeps a native tail guide, builds a fresh official
-target, supplies the exact guide through the supported conditioning path,
-discards the regenerated overlap, and appends the new suffix.
+## Two-sided decoded guide window
 
-Use the external pack's documented 22-frame overlap and live node schemas. Save
-the resulting packed latent with `CauceSaveAVLatent` only when persistence is
-useful to the production graph.
+No CAUCE node owns this workflow. Compose it from one range primitive and
+official/vanilla nodes:
 
-## 3. Motion-reference media
+```text
+A frames -> CauceAcceptDecodedRange(last guide range) -> AddGuide at 0
+B frames -> CauceAcceptDecodedRange(first guide range) -> AddGuide at target-guide
 
-CAUCE motion maps act before H3:
+official H3 fresh target -> official sampling -> decoded target
+decoded target -> CauceAcceptDecodedRange(guide, target-2*guide)
+
+A complete -> vanilla ImageBatch -> accepted generated range
+           -> vanilla ImageBatch -> B complete
+```
+
+For a 124-frame target with 22-frame guides, accept `[22, 102)`, or 80
+generated frames. Those numbers belong to the workflow/run receipt rather than
+to hidden node state.
+
+## Motion-reference media
 
 ```text
 source IMAGE batch or generated primitive frames
-  -> one or more CAUCE map builders
+  -> CAUCE map builders
   -> CauceComposeMotionMaps
   -> CauceWarpImage
-  -> video-reference encoder
+  -> inspect decoded reference
   -> official Ref2VA or MiniMaxH3AddGuide graph
 ```
 
-This path gives the model observable reference media. It does not assume that a
-geometric operation in pixel space has a corresponding valid intervention in
-H3's internal state.
+This path does not modify H3 latents or sampler internals. A correct coordinate
+map is not evidence that H3 followed it; evaluate that separately.
 
-## 4. Fixed soundtrack alignment
+## Fixed soundtrack alignment
 
-Keep the final soundtrack as the editorial clock. Convert its time slots into
-24 fps frame ranges, generate the required visual intervals, and mux
-the unchanged soundtrack only after the visual edit is assembled. Do not add
-audio conditioning unless a specific H3 workflow genuinely needs it.
+Keep the final soundtrack as the editorial clock. Convert timeslots to exact 24
+fps frame ranges and mux the unchanged soundtrack after visual assembly. H3's
+structural-audio latent remains synchronized internally wherever native AV
+continuation requires it, but the production soundtrack is not a model input.
 
 ## Sources
 
 - [Official MiniMax H3 repository](https://github.com/MiniMax-AI/MiniMax-H3)
 - [Official ComfyUI H3 nodes](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_minimax_h3.py)
 - [Official MiniMaxH3AddGuide documentation](https://github.com/Comfy-Org/embedded-docs/blob/main/comfyui_embedded_docs/docs/MiniMaxH3AddGuide/en.md)
-- [Native H3 continuation pack](https://github.com/ttulttul/ComfyUI-Minimax-H3-Continuation)
+- [Inspected native continuation reference](https://github.com/ttulttul/ComfyUI-Minimax-H3-Continuation)

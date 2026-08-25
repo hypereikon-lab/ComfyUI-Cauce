@@ -1,10 +1,10 @@
 # Documentation index
 
 - [Architecture](ARCHITECTURE.md): ownership, modules, and data flow.
-- [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, ComfyUI,
-  external packs, and the remote runtime.
+- [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official
+  ComfyUI graphs, and the remote runtime.
 - [Capability map](CAPABILITY_MAP.md): implemented and composable operations.
-- [Node catalog](NODE_CATALOG.md): all 15 registered nodes.
+- [Node catalog](NODE_CATALOG.md): all 19 registered nodes.
 - [Native H3 workflows](NATIVE_H3_WORKFLOWS.md): graph recipes using official
   conditioning/sampling nodes.
 - [Motion maps](MOTION_MAPS.md): reference-media coordinate algebra.

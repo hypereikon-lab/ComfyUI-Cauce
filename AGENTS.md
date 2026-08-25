@@ -9,13 +9,16 @@ instructions remain authoritative.
 CAUCE owns only operations for which it adds an explicit mathematical,
 reproducibility, or safety contract:
 
-- deterministic decoded-media selection and assembly;
-- preparation of decoded guide clips for official H3 conditioning nodes;
+- deterministic decoded-media range selection;
+- absolute H3 AV frame/video-token/audio-token layouts;
+- synchronized packed-AV span extraction, native guide insertion, and append;
 - generic image-space coordinate maps and reference-media warps;
 - bounded persistence of packed H3 audiovisual latents.
 
-Official ComfyUI/MiniMax nodes own H3 conditioning, latent construction,
-sampling, and decoding. Compose those nodes directly in workflows.
+Official ComfyUI/MiniMax nodes own model loading, decoded-media conditioning,
+sampling, and decoding. CAUCE may create or structurally transform a packed AV
+target only when the operation has an explicit clock/layout contract. Compose
+all operations explicitly in workflows.
 
 CAUCE does not own a second UI, production scheduling, remote authentication,
 model management, semantic image descriptions, generative audio, training,
@@ -56,7 +59,7 @@ The registry is assembled from:
 
 ```text
 cauce_nodes/assembly.py
-cauce_nodes/two_sided_window.py
+cauce_nodes/av_latent.py
 cauce_nodes/motion.py
 cauce_nodes/persistence.py
 ```
@@ -89,14 +92,18 @@ Do not install or upgrade global GPU packages to satisfy tests.
 - Prefer trained-range targets from 124 through 362 frames.
 - H3 state contains visual and structural-audio streams.
 - Use `cauce/timebase.py` for frame/token arithmetic.
+- Never calculate the 40 Hz stream from relative duration alone when a latent
+  has a nonzero global frame origin. Use absolute frame boundaries.
+- A subrange of an AV latent is `CAUCE_H3_AV_SPAN`, not a standalone `LATENT`,
+  until an explicit append/allocation operation establishes its timeline.
 - Use official `MiniMaxH3ImageToVideo`, `MiniMaxH3AddGuide`, Ref2VA/FL2VA
   conditioning, guider, sampler, and decoder nodes directly.
-- Treat upstream implementations as dependencies or graph components; do not
-  copy their internals into CAUCE without a separate reason and validation.
-
-A CAUCE two-sided window plan selects guide media and accepted output ranges. It never
-claims to determine the model's internal transition. Every window report must
-retain `quality_status = requires_visual_validation`.
+- Use inspected upstream implementations as references and test oracles. Do not
+  create a runtime dependency when the useful mechanism is a small deterministic
+  primitive already within CAUCE's ownership boundary.
+- Do not add monolithic workflow-intent nodes such as “continue,” “bridge,” or
+  “two-sided transition.” Expose layout/span/range operations; let the graph
+  assign intent.
 
 ## 5. Evidence language
 
@@ -124,22 +131,27 @@ source filenames and ordering
 resolution, fps, frame count
 official H3 nodes and model variant
 prompt, seed, sampler, scheduler, steps
-CAUCE plan hash
+CAUCE layout/span hashes
 output prefix
 ```
 
-For the H3 two-sided guide window:
+For native H3 AV continuation:
 
-1. normalize both sources to matching geometry and 24 fps;
-2. run `CaucePrepareH3TwoSidedGuideWindow`;
-3. create a fresh official H3 target of the returned length;
-4. chain two official `MiniMaxH3AddGuide` nodes using returned clips and frame
-   indices;
-5. sample and decode with the normal official graph;
-6. run `CauceAssembleH3TwoSidedGuideWindow`;
-7. inspect the complete result and the isolated accepted generated range.
+1. inspect the completed cumulative AV latent;
+2. plan an absolute AV window;
+3. allocate the target from that layout;
+4. extract the prior synchronized tail as `CAUCE_H3_AV_SPAN`;
+5. place it on the active official positive-conditioning edge;
+6. sample with the ordinary official graph;
+7. extract only the explicit new suffix from the sampled window;
+8. append that globally contiguous span;
+9. decode and inspect the result.
 
-Do not describe this graph as successful before step 7.
+For a two-sided decoded guide graph, use `CauceAcceptDecodedRange`, two official
+`MiniMaxH3AddGuide` nodes, and vanilla `ImageBatch`; do not recreate a preset
+wrapper.
+
+Do not describe either graph as successful before visual inspection.
 
 ## 7. Laboratory topology
 
@@ -200,8 +212,11 @@ A brief 502 is expected while ComfyUI restarts. Afterwards verify:
 
 ```text
 GET /customnode/installed
-GET /object_info/CaucePrepareH3TwoSidedGuideWindow
-GET /object_info/CauceAssembleH3TwoSidedGuideWindow
+GET /object_info/CauceH3PlanAVWindow
+GET /object_info/CauceH3AllocateAVWindow
+GET /object_info/CauceH3ExtractAVSpan
+GET /object_info/CauceH3AddAVSpanGuide
+GET /object_info/CauceH3AppendAVSpan
 GET /queue
 ```
 
@@ -249,4 +264,4 @@ on an ambiguous progress display.
 - documentation matches the current registry;
 - no output is called successful without visual inspection;
 - live deployment, if requested and confirmed, reports the intended commit and
-  exposes both H3 two-sided guide-window nodes through `/object_info`.
+  exposes all six H3 AV primitive nodes through `/object_info`.

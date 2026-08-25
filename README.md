@@ -1,51 +1,48 @@
 # CAUCE
 
-CAUCE is a small native ComfyUI node pack for deterministic media preparation,
-H3 two-sided guide-window assembly, reusable motion-reference construction, and
-packed H3 audiovisual-latent persistence.
+CAUCE is a native ComfyUI standard library for deterministic media ranges,
+MiniMax H3 audiovisual-latent structure, reference-media coordinate maps, and
+bounded latent persistence.
 
-It deliberately leaves MiniMax H3 conditioning and sampling to the official
-ComfyUI nodes. CAUCE does not wrap a sampler, modify H3 latents, or claim that a
-completed queue item is a successful visual result.
+Nodes expose low-level operations. Workflow graphs assign them production
+meaning. CAUCE does not own H3 model loading, prompts, conditioning from decoded
+media, sampling, decoding, scheduling, or a second interface.
 
 ## Node surface
 
-The package registers 15 nodes:
+The package registers 19 nodes:
 
+- 1 exact decoded-range node under `CAUCE/Assembly`;
+- 6 packed H3 AV operations under `CAUCE/H3 AV Latent`;
 - 10 coordinate-map and image-warp nodes under `CAUCE/Motion Maps`;
-- 2 two-sided guide-window nodes under `CAUCE/Native H3`;
-- 2 packed audiovisual-latent save/load nodes under `CAUCE/Persistence`;
-- 1 exact decoded-range node under `CAUCE/Assembly`.
+- 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
 
-## H3 two-sided guide window
+## Native AV continuation as graph composition
 
-`CaucePrepareH3TwoSidedGuideWindow` extracts the final guide clip from source A and the
-initial guide clip from source B. The graph supplies them to two official
-`MiniMaxH3AddGuide` nodes on a fresh H3 target. After normal official sampling
-and decoding, `CauceAssembleH3TwoSidedGuideWindow` discards both guide intervals, accepts
-only the generated center, and assembles:
+CAUCE does not provide a monolithic “continue video” node. A continuation graph
+is composed explicitly:
 
 ```text
-complete A + generated center + complete B
+previous H3 AV latent
+  -> Plan H3 AV Window
+  -> Allocate H3 AV Window
+
+previous H3 AV latent
+  -> Extract H3 AV Span (tail)
+  -> Add H3 AV Span Guide to official positive conditioning
+  -> official guider / sampler
+  -> Extract H3 AV Span (new suffix)
+  -> Append H3 AV Span
 ```
 
-The default geometry is:
-
-```text
-target                         124 frames at 24 fps
-A tail guide                    22 frames at frame_idx 0
-B head guide                    22 frames at frame_idx 102
-accepted generated center       80 frames [22, 102)
-```
-
-This is a deterministic graph contract around an official conditioning
-mechanism. Its visual quality remains an empirical result that must be checked
-for every source pair.
+The layout keeps video at H3's `17k+5` frame grid and structural audio at its
+40 Hz token grid against absolute 24 fps frame boundaries. The sampler remains
+an ordinary official ComfyUI sampler.
 
 ## Install
 
-Install the repository as a ComfyUI custom node and restart the ComfyUI Python
-process. No additional Python package is declared by CAUCE.
+Install this repository as a ComfyUI custom node and restart the ComfyUI Python
+process. CAUCE declares no additional Python package.
 
 ```text
 https://github.com/hypereikon-lab/ComfyUI-Cauce

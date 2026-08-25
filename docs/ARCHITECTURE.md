@@ -1,18 +1,18 @@
 # Architecture
 
-CAUCE is a thin native ComfyUI package. It supplies deterministic data
-operations; the official ComfyUI graph remains the orchestration layer.
+CAUCE is a thin native ComfyUI package. It exposes deterministic operations;
+ComfyUI graphs provide orchestration and official MiniMax nodes provide model
+conditioning and inference.
 
 ```text
-source media
-  |-- exact range/guide selection ----------- CAUCE
-  |-- coordinate maps -> warped references -- CAUCE
-  v
-official H3 conditioning -> sampler -> decode ComfyUI/MiniMax
-  v
-range acceptance / exact assembly ----------- CAUCE
-  v
-normal ComfyUI save nodes
+decoded media ---------------- exact ranges / reference maps ------ CAUCE
+packed H3 AV latent ----------- layout / span / guide / append ---- CAUCE
+                                      |
+                                      v
+official H3 conditioning -> official guider/sampler -> official decode
+                                      |
+                                      v
+decoded range selection / native AV persistence ------------------ CAUCE
 ```
 
 ## Modules
@@ -20,32 +20,45 @@ normal ComfyUI save nodes
 ```text
 cauce/
   assembly.py      exact decoded-frame selection
-  two_sided_window.py  AddGuide window plan, extraction, assembly
-  contracts.py     canonical JSON and content hashes
+  av_latent.py     absolute AV layouts, synchronized spans, guides, append
+  contracts.py     canonical JSON, schemas, and content hashes
   h3.py            packed audiovisual-latent validation
   motion.py        coordinate maps, fields, image-space sampling
   persistence.py   atomic packed audiovisual-latent save/load
-  timebase.py      exact H3 frame/token arithmetic
+  timebase.py      exact H3 frame/video-token/audio-token arithmetic
 
 cauce_nodes/
-  assembly.py      one ComfyUI binding
-  two_sided_window.py  two ComfyUI bindings
-  motion.py        ten ComfyUI bindings
-  persistence.py   two ComfyUI bindings
+  assembly.py      one decoded-range binding
+  av_latent.py     six H3 AV bindings
+  motion.py        ten reference-map bindings
+  persistence.py   two persistence bindings
 ```
 
-## Contracts
+## H3 AV contracts
 
-The two-sided window plan is serializable and content-addressed. It records source
-ranges, guide placement, accepted generated range, and ownership. It contains
-no prompt semantics and no hidden process state.
+`CAUCE_H3_AV_LAYOUT` is serializable and content-addressed. It records one
+absolute 24 fps window and its exact visual/audio token boundaries.
+
+`CAUCE_H3_AV_SPAN` carries synchronized video and structural-audio tensor
+slices plus their absolute frame range. It intentionally is not exposed as a
+standalone `LATENT`: a subrange may inherit a nonzero timeline origin and must
+not silently reset its 40 Hz audio clock.
+
+The six operations remain orthogonal:
+
+```text
+inspect -> plan -> allocate -> extract -> add guide -> append
+```
+
+None loads a model, creates a prompt, selects a sampler, samples, decodes, or
+claims a visual objective.
+
+## Motion-map contract
 
 Motion maps use inverse pullback coordinates (`target -> source`) normalized for
 PyTorch `grid_sample(..., align_corners=False)`. Maps carry validity and hashes
-and can be composed before a single image sample.
-
-Packed H3 persistence saves the visual and structural-audio tensors atomically
-as `safetensors`. It does not reinterpret either stream.
+and can be composed before a single decoded-image sample. Whether a resulting
+reference controls H3 as intended is a separate empirical question.
 
 ## Dependency policy
 

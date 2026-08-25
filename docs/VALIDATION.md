@@ -12,7 +12,7 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-Confirm 24 registered nodes, matching display mappings, 19 stable categories,
+Confirm 25 registered nodes, matching display mappings, 20 stable nodes,
 and exactly five `CAUCE/Research` nodes.
 
 ## Gate 2 — H3 runtime
@@ -25,6 +25,9 @@ Verify:
 - native H3 denoise-mask hooks from ComfyUI PR `#15375` pass the CAUCE
   capability probe, including clean-latent reinjection and model forward mask
   arguments;
+- fractional mask values reach per-row H3 timestep labels; current core
+  quantizes strength upward to `1/256` increments and max-pools every `2×2`
+  visual-latent patch;
 - queue is idle before test submission.
 
 ## Gate 3 — temporal geometry
@@ -34,13 +37,21 @@ Unit-test:
 - legal `17k+5` working lengths;
 - token-aligned repair boundaries;
 - guide ranges outside the generated interval;
-- sampling mask binary values;
+- binary sampling-mask values for the production baseline;
+- continuous shoulders remain constant inside each H3 temporal token and
+  contain no values outside the declared sampling interval;
+- `mean` and `maximum` visible-frame projections have their declared ordering;
 - exact duration-preserving splice ranges;
 - unchanged frames outside the patch.
 
 Run the matched W0/W1/W2 comparison. W1 isolates native masked sampling; W2
 adds only the two official guide clips. Do not accept W2 without proving an
 improvement over W1.
+
+Then compare W2 with W3, changing only binary versus continuous denoise
+strength. Inspect both token boundaries and the complete accepted interval. A
+completed generation is not evidence that fractional shoulders improved the
+seam.
 
 ## Gate 4 — continuation
 

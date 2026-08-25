@@ -99,11 +99,13 @@ def h3_temporal_mask_capabilities() -> dict[str, Any]:
     if missing_engine_hooks:
         problems.append("incomplete H3 per-row mask engine: " + ", ".join(missing_engine_hooks))
 
+    mask_runtime_ready = not missing_mask_hooks and not missing_engine_hooks
     return {
-        "schema": "cauce.h3-temporal-mask-capabilities/2",
+        "schema": "cauce.h3-temporal-mask-capabilities/3",
         "ready": not problems,
-        "per_token_denoise_mask": not missing_mask_hooks and not missing_engine_hooks,
-        "per_row_denoise_mask": not missing_mask_hooks and not missing_engine_hooks,
+        "per_token_denoise_mask": mask_runtime_ready,
+        "per_row_denoise_mask": mask_runtime_ready,
+        "fractional_per_row_denoise_mask": mask_runtime_ready,
         "model_base": model_base_checks,
         "missing_mask_hooks": missing_mask_hooks,
         "mask_engine": engine_checks,

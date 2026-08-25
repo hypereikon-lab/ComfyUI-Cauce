@@ -73,9 +73,15 @@ official H3 target latent --------------------------┐
 encoded_video_latent -> PrepareH3TemporalInpaint ---┴-> masked latent
 ```
 
-`CauceTemporalInpaintFields` can supply visible sampling support. The H3
-adapter projects that support to binary latent tokens. Structural audio is
-zero-masked.
+`CauceTemporalInpaintFields` supplies the binary baseline. For the continuous
+comparison, use `CauceBuildTemporalDenoiseField`, set
+`CaucePrepareH3TemporalInpaint.mask_mode = continuous`, and connect its
+`denoise_strength` output as `generation_support`.
+
+For a spatially animated field, combine the temporal strength with any standard
+Comfy `MASK[T,H,W]` using the native `Combine Masks` node in `multiply` mode.
+CAUCE then projects time to the H3 visual-token grid; official ComfyUI performs
+the final `2×2` latent-patch max pooling. Structural audio remains zero-masked.
 
 ### 3.4 Sample, decode, splice
 

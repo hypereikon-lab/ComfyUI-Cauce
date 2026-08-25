@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 
 from ..cauce.seams import (
+    CONTINUOUS_TOKEN_PROJECTIONS,
     MASK_CURVES,
     TOKEN_PROJECTIONS,
     build_seam_window,
     make_seam_plan,
     prepare_h3_temporal_inpaint,
     splice_seam_patch,
+    temporal_denoise_field,
     temporal_inpaint_fields,
 )
 
@@ -124,6 +126,41 @@ class CauceTemporalInpaintFields:
         )
 
 
+class CauceBuildTemporalDenoiseField:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "working_images": ("IMAGE",),
+                "seam": ("CAUCE_SEAM",),
+                "shoulder_tokens": (
+                    "INT",
+                    {"default": 3, "min": 0, "max": 32, "step": 1},
+                ),
+                "curve": (MASK_CURVES,),
+            }
+        }
+
+    RETURN_TYPES = ("MASK", "STRING")
+    RETURN_NAMES = ("denoise_strength", "field_report")
+    FUNCTION = "build"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Build a continuous token-aligned temporal denoise field: zero preserves, "
+        "one fully generates, and fractional values partially denoise. Combine with "
+        "animated spatial masks using the native Combine Masks node."
+    )
+
+    def build(self, working_images, seam, shoulder_tokens, curve):
+        field, report = temporal_denoise_field(
+            working_images,
+            seam,
+            shoulder_tokens=shoulder_tokens,
+            curve=curve,
+        )
+        return field, json.dumps(report, ensure_ascii=False, indent=2)
+
+
 class CaucePrepareH3TemporalInpaint:
     @classmethod
     def INPUT_TYPES(cls):
@@ -137,6 +174,8 @@ class CaucePrepareH3TemporalInpaint:
                     "FLOAT",
                     {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01},
                 ),
+                "mask_mode": (("binary", "continuous"),),
+                "continuous_projection": (CONTINUOUS_TOKEN_PROJECTIONS,),
             },
             "optional": {"generation_support": ("MASK",)},
         }
@@ -146,8 +185,8 @@ class CaucePrepareH3TemporalInpaint:
     FUNCTION = "prepare"
     CATEGORY = CATEGORY
     DESCRIPTION = (
-        "Inject encoded source video into H3 and attach a binary per-token temporal "
-        "denoise mask while freezing structural audio."
+        "Inject encoded source video into H3 and attach a binary or continuous "
+        "per-row denoise mask while freezing structural audio."
     )
 
     def prepare(
@@ -157,6 +196,8 @@ class CaucePrepareH3TemporalInpaint:
         seam,
         token_projection="cover",
         sampling_threshold=0.5,
+        mask_mode="binary",
+        continuous_projection="mean",
         generation_support=None,
     ):
         latent, report = prepare_h3_temporal_inpaint(
@@ -166,6 +207,8 @@ class CaucePrepareH3TemporalInpaint:
             projection=token_projection,
             sampling_threshold=sampling_threshold,
             generation_support=generation_support,
+            mask_mode=mask_mode,
+            continuous_projection=continuous_projection,
         )
         return latent, json.dumps(report, ensure_ascii=False, indent=2)
 
@@ -222,6 +265,7 @@ class CauceApplySeamPatch:
 NODE_CLASS_MAPPINGS = {
     "CauceBuildSeamWindow": CauceBuildSeamWindow,
     "CauceTemporalInpaintFields": CauceTemporalInpaintFields,
+    "CauceBuildTemporalDenoiseField": CauceBuildTemporalDenoiseField,
     "CaucePrepareH3TemporalInpaint": CaucePrepareH3TemporalInpaint,
     "CauceApplySeamPatch": CauceApplySeamPatch,
 }
@@ -229,6 +273,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceBuildSeamWindow": "CAUCE · Build Temporal Inpaint Window",
     "CauceTemporalInpaintFields": "CAUCE · Temporal Inpaint Fields",
+    "CauceBuildTemporalDenoiseField": "CAUCE · Build Temporal Denoise Field",
     "CaucePrepareH3TemporalInpaint": "CAUCE · Prepare H3 Temporal Inpaint",
     "CauceApplySeamPatch": "CAUCE · Splice Temporal Inpaint Patch",
 }

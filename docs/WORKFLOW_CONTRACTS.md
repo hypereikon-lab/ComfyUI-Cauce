@@ -43,7 +43,32 @@ working images ─ slice G_R ─ MiniMaxH3AddGuide(frame_idx = G_R.start) ─┘
 The mask path is unchanged. Purpose: measure whether explicit incoming and
 outgoing motion clips improve the seam beyond the preserved main latent.
 
-## W3 — native-latent seam research
+## W3 — continuous temporal denoise strength
+
+W3 is W2 with only the sampling field changed:
+
+```text
+CauceBuildTemporalDenoiseField(shoulder_tokens = 3, curve = cosine)
+  └─ denoise_strength ─> CaucePrepareH3TemporalInpaint(
+                           mask_mode = continuous,
+                           continuous_projection = mean)
+```
+
+Purpose: test whether partial denoising at the incoming and outgoing token rows
+reduces boundary acceleration or resets relative to W2's binary field. Guides,
+prompt, seed, source, sampler, accepted range, and decoded opacity are identical.
+
+An animated spatial-mask variant is composed without another CAUCE node:
+
+```text
+temporal denoise_strength ─┐
+                           ├─ Combine Masks(multiply) ─ generation_support
+animated Comfy MASK[T,H,W] ┘
+```
+
+Run this only after the temporal-only W3 comparison.
+
+## W4 — native-latent seam research
 
 ```text
 left H3 AV latent  ─┐
@@ -77,11 +102,11 @@ Outputs use unique prefixes:
 cauce/temporal/W0_join/<case>_<seed>
 cauce/temporal/W1_mask/<case>_<seed>
 cauce/temporal/W2_guides/<case>_<seed>
-cauce/temporal/W3_native/<case>_<seed>
+cauce/temporal/W3_continuous/<case>_<seed>
+cauce/temporal/W4_native/<case>_<seed>
 ```
 
 The browser workflow JSON and API prompt JSON are separate artifacts. Build the
 browser graph first against the exact live schemas, save it, then export and
 validate the API representation. Never hand-assume socket order from a stale
 workflow.
-

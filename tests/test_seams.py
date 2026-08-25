@@ -9,10 +9,14 @@ from cauce.seams import (
     build_native_latent_seam_window,
     make_native_latent_seam_plan,
     make_seam_plan,
+    seam_continuous_video_token_values,
+    seam_soft_video_token_values,
+    seam_soft_visible_frame_values,
     seam_splice_ranges,
     seam_video_token_values,
     seam_visible_frame_values,
     splice_seam_patch,
+    temporal_denoise_field,
 )
 
 
@@ -92,6 +96,72 @@ class TemporalInpaintTests(unittest.TestCase):
         cover = seam_video_token_values(plan, projection="cover")
         majority = seam_video_token_values(plan, projection="majority")
         self.assertTrue(all(left >= right for left, right in zip(cover, majority)))
+
+    def test_soft_temporal_field_is_continuous_and_exactly_token_aligned(self):
+        plan = make_seam_plan(200, 180)
+        tokens = seam_soft_video_token_values(
+            plan,
+            shoulder_tokens=3,
+            curve="cosine",
+        )
+        self.assertEqual(len(tokens), 37)
+        self.assertEqual(tokens[:8], (0.0,) * 8)
+        self.assertEqual(tokens[8], 0.0)
+        self.assertAlmostEqual(tokens[9], 0.25)
+        self.assertAlmostEqual(tokens[10], 0.75)
+        self.assertEqual(tokens[11], 1.0)
+        self.assertEqual(tokens[25], 1.0)
+        self.assertAlmostEqual(tokens[26], 0.75)
+        self.assertAlmostEqual(tokens[27], 0.25)
+        self.assertEqual(tokens[28:], (0.0,) * 9)
+
+        visible = seam_soft_visible_frame_values(
+            plan,
+            shoulder_tokens=3,
+            curve="cosine",
+        )
+        self.assertEqual(len(visible), 124)
+        projected = seam_continuous_video_token_values(
+            plan,
+            visible,
+            projection="mean",
+        )
+        for actual, expected in zip(projected, tokens):
+            self.assertAlmostEqual(actual, expected)
+
+    def test_continuous_projection_exposes_mean_and_maximum_semantics(self):
+        plan = make_seam_plan(200, 180)
+        support = [0.0] * plan["working_frames"]
+        support[26:30] = [0.0, 0.25, 0.5, 1.0]
+        means = seam_continuous_video_token_values(plan, support, projection="mean")
+        maxima = seam_continuous_video_token_values(
+            plan,
+            support,
+            projection="maximum",
+        )
+        self.assertTrue(all(left <= right for left, right in zip(means, maxima)))
+        self.assertTrue(any(0.0 < value < 1.0 for value in means))
+
+    def test_soft_temporal_field_rejects_more_shoulders_than_the_interval(self):
+        plan = make_seam_plan(200, 180)
+        with self.assertRaisesRegex(ValueError, "shoulder_tokens"):
+            seam_soft_video_token_values(plan, shoulder_tokens=11)
+
+    @unittest.skipIf(numpy is None, "NumPy is supplied by ComfyUI, not CAUCE")
+    def test_continuous_field_has_image_geometry_and_fractional_report(self):
+        plan = make_seam_plan(200, 180)
+        working = numpy.zeros((124, 8, 12, 3), dtype=numpy.float32)
+        field, report = temporal_denoise_field(
+            working,
+            plan,
+            shoulder_tokens=3,
+            curve="cosine",
+        )
+        self.assertEqual(field.shape, (124, 8, 12))
+        self.assertEqual(report["domain"], "h3_visual_token")
+        self.assertEqual(report["soft_tokens"], 4)
+        self.assertGreater(float(field.max()), 0.99)
+        self.assertEqual(float(field[0].max()), 0.0)
 
     def test_visible_fields_separate_sampling_acceptance_and_output_opacity(self):
         plan = make_seam_plan(200, 180)

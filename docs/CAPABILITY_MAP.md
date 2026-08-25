@@ -14,7 +14,8 @@ the operation is not already expressed faithfully by an official node.
 | phase-aware continuation | CAUCE adapter | copy protected visual tail, freeze structural audio |
 | decoded frame acceptance | CAUCE operation | exact local slicing |
 | temporal edit planning | CAUCE operation | legal H3 window, mask and splice geometry |
-| per-token temporal mask | CAUCE H3 adapter | binary visual support, frozen structural audio |
+| per-row H3 denoise mask | CAUCE H3 adapter | binary or continuous visual strength, frozen structural audio |
+| animated spatial-mask composition | official ComfyUI mask nodes | accept the resulting standard `MASK` only |
 | decoded seam splice | CAUCE operation | opacity feather + duration preservation |
 | coordinate-map construction | CAUCE operation | reusable inverse pullbacks |
 | motion-map composition | CAUCE operation | one final resample |

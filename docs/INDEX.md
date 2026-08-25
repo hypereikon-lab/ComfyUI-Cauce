@@ -4,7 +4,7 @@
 
 - [Architecture](ARCHITECTURE.md): dependency direction, data contracts, stable
   surface, and research boundary.
-- [Node catalog](NODE_CATALOG.md): all 24 registered nodes and their sockets.
+- [Node catalog](NODE_CATALOG.md): all 25 registered nodes and their sockets.
 - [Capability map](CAPABILITY_MAP.md): operation ownership and composition with
   official ComfyUI nodes.
 - [System boundaries](SYSTEM_BOUNDARIES.md): package, graph, model, runtime, and
@@ -13,7 +13,7 @@
   continuation, temporal inpainting, motion maps, persistence, and research.
 - [Bidirectional temporal inpainting](TEMPORAL_INPAINTING.md): formal operation,
   H3 row-mask mechanism, prompting, sampling, splice, and quality gates.
-- [Workflow contracts](WORKFLOW_CONTRACTS.md): W0/W1/W2/W3 matched graphs and
+- [Workflow contracts](WORKFLOW_CONTRACTS.md): W0–W4 matched graphs and
   their shared starting configuration.
 
 ## Mathematics and evidence

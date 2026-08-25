@@ -43,6 +43,7 @@ def _concat_image_batches(parts: list[Any]):
 
 MASK_CURVES = ("cosine", "smoothstep", "linear")
 TOKEN_PROJECTIONS = ("cover", "majority")
+CONTINUOUS_TOKEN_PROJECTIONS = ("mean", "maximum")
 NATIVE_SEAM_CONTEXT_FRAMES = (22, 39, 56, 73)
 NATIVE_SEAM_WORKING_FRAMES = tuple(range(124, 363, 34))
 
@@ -501,6 +502,96 @@ def seam_video_token_values(
     return tuple(values)
 
 
+def seam_continuous_video_token_values(
+    plan: dict[str, Any],
+    generation_support: Any,
+    projection: str = "mean",
+) -> tuple[float, ...]:
+    """Project continuous visible-frame strength onto H3 temporal tokens.
+
+    H3 assigns one denoise strength to every visual token, while one token may
+    represent one or four decoded frames. ``mean`` preserves the average
+    requested strength in that span; ``maximum`` conservatively regenerates at
+    the strongest requested value. Spatial pooling remains owned by ComfyUI.
+    """
+
+    _validate_seam(plan)
+    if projection not in CONTINUOUS_TOKEN_PROJECTIONS:
+        raise ValueError(
+            "continuous token projection must be one of "
+            f"{', '.join(CONTINUOUS_TOKEN_PROJECTIONS)}"
+        )
+    frames = int(plan["working_frames"])
+    if len(generation_support) != frames:
+        raise ValueError("generation support must match the working frame count")
+    strengths = [min(1.0, max(0.0, float(value))) for value in generation_support]
+    domain = [0.0] * frames
+    start = int(plan["sampling_start_frame"])
+    end = int(plan["sampling_end_frame"])
+    domain[start:end] = strengths[start:end]
+    values = []
+    for token_start, token_end in visual_token_spans(
+        h3_visual_latent_frames(frames)
+    ):
+        support = domain[token_start:token_end]
+        if projection == "maximum":
+            values.append(max(support))
+        else:
+            values.append(sum(support) / len(support))
+    return tuple(values)
+
+
+def seam_soft_video_token_values(
+    plan: dict[str, Any],
+    *,
+    shoulder_tokens: int = 3,
+    curve: str = "cosine",
+) -> tuple[float, ...]:
+    """Build a token-aligned continuous temporal denoise envelope."""
+
+    hard = seam_video_token_values(plan)
+    active = [index for index, value in enumerate(hard) if value > 0.0]
+    if not active:
+        raise ValueError("seam plan has no sampling interval")
+    if active != list(range(active[0], active[-1] + 1)):
+        raise ValueError("seam sampling tokens must form one contiguous interval")
+    shoulder = int(shoulder_tokens)
+    maximum = len(active) // 2
+    if shoulder < 0 or shoulder > maximum:
+        raise ValueError(
+            f"shoulder_tokens must lie in [0, {maximum}] for this seam interval"
+        )
+    weights = _symmetric_weights(len(active), shoulder, curve)
+    values = [0.0] * len(hard)
+    for index, weight in zip(active, weights):
+        values[index] = weight
+    return tuple(values)
+
+
+def seam_soft_visible_frame_values(
+    plan: dict[str, Any],
+    *,
+    shoulder_tokens: int = 3,
+    curve: str = "cosine",
+) -> tuple[float, ...]:
+    """Expand a token-domain envelope to visible frames for Comfy MASK output."""
+
+    token_values = seam_soft_video_token_values(
+        plan,
+        shoulder_tokens=shoulder_tokens,
+        curve=curve,
+    )
+    visible: list[float] = []
+    for value, (start, end) in zip(
+        token_values,
+        visual_token_spans(len(token_values)),
+    ):
+        visible.extend([value] * (end - start))
+    if len(visible) != int(plan["working_frames"]):
+        raise RuntimeError("continuous field and H3 token geometry disagree")
+    return tuple(visible)
+
+
 def seam_visible_frame_values(
     plan: dict[str, Any],
     *,
@@ -599,19 +690,87 @@ def temporal_inpaint_fields(
     return sampling, acceptance, blend, report
 
 
+def temporal_denoise_field(
+    working_images: Any,
+    plan: dict[str, Any],
+    *,
+    shoulder_tokens: int = 3,
+    curve: str = "cosine",
+):
+    """Build a spatially uniform, token-aligned continuous denoise field."""
+
+    _validate_seam(plan)
+    frames = int(plan["working_frames"])
+    if int(working_images.shape[0]) != frames:
+        raise ValueError("working image batch does not match the seam plan")
+    height, width = int(working_images.shape[1]), int(working_images.shape[2])
+    visible_values = seam_soft_visible_frame_values(
+        plan,
+        shoulder_tokens=shoulder_tokens,
+        curve=curve,
+    )
+    token_values = seam_soft_video_token_values(
+        plan,
+        shoulder_tokens=shoulder_tokens,
+        curve=curve,
+    )
+    shape = (frames, 1, 1)
+    try:
+        import torch
+
+        if not isinstance(working_images, torch.Tensor):
+            raise TypeError
+        field = torch.tensor(
+            visible_values,
+            dtype=torch.float32,
+            device=working_images.device,
+        ).view(shape).expand(frames, height, width).clone()
+    except (ImportError, TypeError):
+        import numpy
+
+        field = numpy.broadcast_to(
+            numpy.asarray(visible_values, dtype=numpy.float32).reshape(shape),
+            (frames, height, width),
+        ).copy()
+    report = {
+        "schema": "cauce.temporal-denoise-field/1",
+        "seam_hash": plan["hash"],
+        "domain": "h3_visual_token",
+        "meaning": "0=preserve, 1=fully-generate, fractional=partial-denoise",
+        "curve": curve,
+        "shoulder_tokens": int(shoulder_tokens),
+        "token_values": list(token_values),
+        "soft_tokens": sum(1e-6 < value < 1.0 - 1e-6 for value in token_values),
+        "native_spatial_composition": "Combine Masks (multiply)",
+    }
+    return field, report
+
+
 def _project_visible_strength(
     strength: Any,
     plan: dict[str, Any],
     video: Any,
-    projection: str,
+    *,
+    mask_mode: str,
+    binary_projection: str,
+    continuous_projection: str,
     threshold: float,
 ):
-    """Project an arbitrary visible MASK to explicit binary H3 support."""
+    """Project an arbitrary visible MASK onto H3 visual latent tokens."""
 
     import torch
 
-    if projection not in TOKEN_PROJECTIONS:
-        raise ValueError(f"token projection must be one of {', '.join(TOKEN_PROJECTIONS)}")
+    if mask_mode not in {"binary", "continuous"}:
+        raise ValueError("mask_mode must be binary or continuous")
+    if binary_projection not in TOKEN_PROJECTIONS:
+        raise ValueError(
+            f"token projection must be one of {', '.join(TOKEN_PROJECTIONS)}"
+        )
+    if continuous_projection not in CONTINUOUS_TOKEN_PROJECTIONS:
+        raise ValueError(
+            "continuous token projection must be one of "
+            f"{', '.join(CONTINUOUS_TOKEN_PROJECTIONS)}"
+        )
     frames = int(plan["working_frames"])
     mask = _resize_visible_mask(
         strength,
@@ -621,11 +780,18 @@ def _project_visible_strength(
     ).to(device=video.device, dtype=torch.float32)
     hard = torch.zeros((frames, 1, 1), dtype=torch.float32, device=video.device)
     hard[int(plan["sampling_start_frame"]) : int(plan["sampling_end_frame"])] = 1.0
-    mask = (mask * hard >= float(threshold)).to(dtype=torch.float32)
+    mask = mask * hard
+    if mask_mode == "binary":
+        mask = (mask >= float(threshold)).to(dtype=torch.float32)
     reduced = []
     for token_start, token_end in visual_token_spans(int(video.shape[2])):
         support = mask[token_start:token_end]
-        if projection == "cover":
+        if mask_mode == "continuous":
+            if continuous_projection == "maximum":
+                reduced.append(support.amax(dim=0))
+            else:
+                reduced.append(support.mean(dim=0))
+        elif binary_projection == "cover":
             reduced.append(support.amax(dim=0))
         else:
             reduced.append((support.mean(dim=0) >= 0.5).to(dtype=torch.float32))
@@ -671,8 +837,10 @@ def prepare_h3_temporal_inpaint(
     projection: str = "cover",
     sampling_threshold: float = 0.5,
     generation_support: Any = None,
+    mask_mode: str = "binary",
+    continuous_projection: str = "mean",
 ):
-    """Inject the source video domain and denoise only its central seam."""
+    """Inject source video and attach a binary or continuous H3 denoise mask."""
 
     import torch
 
@@ -683,6 +851,12 @@ def prepare_h3_temporal_inpaint(
 
     _validate_seam(plan)
     capabilities = require_h3_temporal_mask_runtime()
+    if mask_mode not in {"binary", "continuous"}:
+        raise ValueError("mask_mode must be binary or continuous")
+    if mask_mode == "continuous" and generation_support is None:
+        raise ValueError(
+            "continuous mask mode requires a connected generation_support field"
+        )
     target_video, target_audio = get_av_streams(target_latent)
     encoded_video = _video_samples(encoded_video_latent)
     if pixel_frames_from_video_latent(target_video) != int(plan["working_frames"]):
@@ -711,7 +885,13 @@ def prepare_h3_temporal_inpaint(
         field_source = "plan_token_aligned_repair"
     else:
         projected = _project_visible_strength(
-            generation_support, plan, video, projection, sampling_threshold
+            generation_support,
+            plan,
+            video,
+            mask_mode=mask_mode,
+            binary_projection=projection,
+            continuous_projection=continuous_projection,
+            threshold=sampling_threshold,
         )
         video_mask = projected.unsqueeze(0).unsqueeze(0).expand(
             int(video.shape[0]),
@@ -721,7 +901,7 @@ def prepare_h3_temporal_inpaint(
             int(video.shape[4]),
         ).clone()
         token_values = [float(value) for value in projected.mean(dim=(1, 2)).tolist()]
-        field_source = "connected_mask"
+        field_source = f"connected_{mask_mode}_mask"
     audio_mask = torch.zeros(
         (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[-1])),
         dtype=torch.float32,
@@ -731,20 +911,27 @@ def prepare_h3_temporal_inpaint(
     out["samples"] = comfy.nested_tensor.NestedTensor((video, audio))
     out["noise_mask"] = comfy.nested_tensor.NestedTensor((video_mask, audio_mask))
     report = {
-        "schema": "cauce.temporal-inpaint-mask-report/1",
+        "schema": "cauce.temporal-inpaint-mask-report/2",
         "seam_hash": plan["hash"],
         "working_frames": int(plan["working_frames"]),
         "repair_start_frame": int(plan["repair_start_frame"]),
         "repair_end_frame": int(plan["repair_end_frame"]),
         "sampling_start_frame": int(plan["sampling_start_frame"]),
         "sampling_end_frame": int(plan["sampling_end_frame"]),
-        "token_projection": projection,
-        "sampling_threshold": float(sampling_threshold),
-        "sampling_mask_mode": "official_h3_per_token_denoise_mask",
+        "mask_mode": mask_mode,
+        "token_projection": (
+            projection if mask_mode == "binary" else continuous_projection
+        ),
+        "sampling_threshold": (
+            float(sampling_threshold) if mask_mode == "binary" else None
+        ),
+        "sampling_mask_mode": "official_h3_per_row_denoise_strength",
         "field_source": field_source,
         "video_generate_tokens": sum(value > 0.0 for value in token_values),
         "video_full_generate_tokens": sum(value >= 1.0 - 1e-6 for value in token_values),
-        "video_soft_tokens": 0,
+        "video_soft_tokens": sum(
+            1e-6 < value < 1.0 - 1e-6 for value in token_values
+        ),
         "video_token_values": list(token_values),
         "audio_mode": "internal-zero-mask-discarded",
         "acceptance_mode": "hard-decoded-splice",

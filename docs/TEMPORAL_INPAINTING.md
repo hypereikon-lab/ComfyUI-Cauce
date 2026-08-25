@@ -67,7 +67,7 @@ present because H3 samples a packed audiovisual state, but its denoise mask is
 zero and its decoded audio is discarded. The production soundtrack is never
 sent through this operation.
 
-Define visible sampling support
+The binary baseline defines visible sampling support
 
 ```text
 m_f = 1  when f ∈ S
@@ -75,9 +75,27 @@ m_f = 1  when f ∈ S
 ```
 
 CAUCE projects this field onto H3 temporal latent spans `(1,4,4,4,4)` and emits
-a nested AV noise mask. The canonical temporal operation is binary. Spatial
-masks may be attached independently, but ComfyUI pools them to the H3 DiT's
-`2×2` latent-patch row grid.
+a nested AV noise mask. Binary remains the default and the first production
+control.
+
+The official runtime also accepts a continuous denoise strength
+
+```text
+m(t,x,y) in [0,1]
+```
+
+where zero preserves the encoded source row, one follows the full generation
+schedule, and intermediate values run at intermediate row timesteps. Current
+ComfyUI quantizes this strength upward to `1/256` increments. This is nonlinear
+diffusion control, not linear pixel opacity.
+
+CAUCE constructs temporal shoulders directly on the H3 visual-token grid, then
+expands them to a standard visible `MASK` for graph composition. An arbitrary
+animated spatial mask can be multiplied with that field using official
+`Combine Masks`. When the field enters the H3 adapter, CAUCE reduces visible
+frames to temporal tokens using either `mean` or `maximum`; official ComfyUI
+then max-pools each `2×2` visual-latent patch, approximately a `32×32` source
+pixel cell with the current VAE and DiT patch sizes.
 
 Current ComfyUI core implements the row timestep as
 
@@ -90,6 +108,24 @@ row (`m_i = 0`) remains near H3's visual conditioning timestep. ComfyUI also
 reinjects the clean latent in preserved regions during sampling. This is the
 mechanism that makes the operation conditional inpainting rather than ordinary
 video-to-video denoising.
+
+### Continuous temporal shoulders
+
+`CauceBuildTemporalDenoiseField` assigns a symmetric curve to the tokens inside
+`S`. With three cosine shoulder tokens, each side follows approximately
+
+```text
+0.00, 0.25, 0.75, 1.00, ...
+```
+
+and the reverse at the outgoing edge. Values outside `S` remain exactly zero.
+The node changes sampling strength only: `A`, decoded feathering, guides,
+prompt, and source latent remain independent.
+
+Set `CaucePrepareH3TemporalInpaint.mask_mode = continuous` and connect this
+field as `generation_support`. The continuous mode fails explicitly when no
+field is connected. `mean` is the neutral temporal projection; `maximum` is the
+more regenerative alternative for masks that vary inside one H3 token span.
 
 ## 4. Conditioning is separate from preservation
 
@@ -176,6 +212,7 @@ frame count is exactly `nL + nR`.
 - `S` begins and ends on H3 temporal-token boundaries;
 - `G_L` and `G_R` fit completely and do not overlap `S`;
 - the structural-audio mask is zero;
+- continuous values remain in `[0,1]` and zero outside `S`;
 - no frame outside `A` changes;
 - total duration is preserved.
 
@@ -201,6 +238,11 @@ temporal latents. Exact pixel-frame control therefore requires token-aligned
 sampling ranges and a separate decoded acceptance range. Copying arbitrary
 latent rows between independently encoded runs is not automatically safe;
 native-latent seams remain Research.
+
+Continuous shoulders are structurally supported but remain an experimental
+quality variable until W3 beats its matched binary control across representative
+cuts. Animated spatial masks add another independent variable and should be
+tested only after the temporal-only comparison.
 
 The current operation repairs one bounded interval. Long-form construction is
 built by applying the same local contract repeatedly with explicit source,

@@ -1,6 +1,6 @@
 # Node catalog
 
-CAUCE registers 24 nodes: 19 stable and five experimental.
+CAUCE registers 25 nodes: 20 stable and five experimental.
 
 ## Continuity
 
@@ -44,10 +44,23 @@ Returns:
 - soft decoded output opacity;
 - numerical report.
 
+### `CauceBuildTemporalDenoiseField`
+
+Builds a spatially uniform continuous denoise-strength field on exact H3 visual
+tokens. `shoulder_tokens = 0` reproduces hard temporal support; larger values
+apply linear, smoothstep, or cosine shoulders while leaving decoded acceptance
+unchanged.
+
+For animated spatial control, multiply this output by a standard Comfy mask
+batch with the official `Combine Masks` node. CAUCE intentionally does not
+duplicate native mask composition.
+
 ### `CaucePrepareH3TemporalInpaint`
 
 Injects an encoded source video into an H3 target latent, projects visible
-support to binary H3 tokens, and freezes structural audio.
+support to H3 visual tokens, and freezes structural audio. `binary` is the
+backward-compatible default. `continuous` preserves fractional strength and
+requires an explicit `generation_support` input.
 
 ### `CauceApplySeamPatch`
 

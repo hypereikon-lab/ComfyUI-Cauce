@@ -11,9 +11,9 @@ nodes directly.
 
 ## Surface
 
-The installed package registers 24 nodes:
+The installed package registers 25 nodes:
 
-- 19 stable nodes under `CAUCE/Continuity`, `CAUCE/Temporal Inpainting`,
+- 20 stable nodes under `CAUCE/Continuity`, `CAUCE/Temporal Inpainting`,
   `CAUCE/Motion Maps`, and `CAUCE/Persistence`;
 - 5 experimental nodes under `CAUCE/Research`.
 
@@ -21,6 +21,8 @@ Stable operations:
 
 - phase-aware H3 continuation and exact decoded-range acceptance;
 - duration-preserving temporal inpainting across a video cut;
+- token-aligned continuous temporal denoise fields, composable with native
+  animated masks;
 - affine, projective, analytic, displacement, depth-camera, and advected motion
   maps;
 - motion-map modulation, composition, and decoded image warping;
@@ -42,7 +44,7 @@ or motion-obedience guarantee.
   descriptions.
 - Motion maps are inverse pullbacks in normalized PyTorch
   `align_corners=False` coordinates.
-- Temporal sampling support and decoded opacity blending are distinct fields.
+- Temporal denoise strength and decoded opacity blending are distinct fields.
 - Independent H3 latents are never treated as safely concatenable by default.
 - H3 structural audio is preserved or frozen; it is not production audio.
 - Official ComfyUI/H3 nodes are used whenever they already own the operation.

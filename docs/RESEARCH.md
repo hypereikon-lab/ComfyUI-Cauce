@@ -31,6 +31,9 @@ Primary implementation sources:
 - native per-token AV noise masks, merged as ComfyUI PR `#15375` on
   2026-08-18, merge commit `ff6c8a8af144fc9e9e7bc436b1b202f9316848d8`:
   <https://github.com/Comfy-Org/ComfyUI/pull/15375>
+- current H3 mask implementation, including `1/256` strength quantization,
+  per-row timesteps, and `2×2` latent-patch max pooling:
+  <https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/model_base.py>
 - arbitrary clip guides, merged as ComfyUI PR `#15439`:
   <https://github.com/Comfy-Org/ComfyUI/pull/15439>
 
@@ -60,8 +63,18 @@ Consequences for CAUCE:
    from a visually soft crossfade;
 5. causal-VAE frame/token phase is a structural constraint, not an editorial
    convenience.
+6. fractional denoise strength is a native runtime capability; CAUCE should
+   compile fields into it rather than patching the model or wrapping the
+   sampler.
 
 ## Current research questions
+
+### Continuous spatiotemporal denoise fields
+
+Do token-aligned fractional shoulders reduce motion discontinuity relative to a
+binary mask without weakening preservation? After the temporal-only ablation,
+can an independently animated spatial field direct where repair propagates
+without introducing `32×32` patch-grid artifacts? These are separate tests.
 
 ### Native-latent temporal inpainting
 

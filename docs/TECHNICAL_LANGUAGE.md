@@ -9,6 +9,8 @@ Preferred terms:
 - ordered reference conditioning;
 - temporal inpainting;
 - binary per-token denoise mask;
+- continuous per-row denoise strength;
+- animated spatiotemporal denoise field;
 - decoded opacity feather;
 - duration-preserving splice;
 - affine or projective pullback;
@@ -34,6 +36,7 @@ Avoid metaphorical algorithm names in code, graphs, filenames, and reports.
 ## Required distinctions
 
 - sampling support is not output opacity;
+- fractional denoise strength is not linear pixel opacity;
 - nonzero pixel difference is not directional motion fidelity;
 - clean decode is not production quality;
 - H3 structural audio is not the production soundtrack;

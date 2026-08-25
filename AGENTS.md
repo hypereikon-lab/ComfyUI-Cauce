@@ -154,7 +154,7 @@ The characterized operation is:
 two decoded 24 fps clips
 -> tail/head working batch
 -> encoded source video latent
--> binary H3 per-token denoise support
+-> binary or explicit continuous H3 per-row denoise support
 -> official guide nodes wired outside CAUCE
 -> sample masked interval
 -> decode
@@ -170,8 +170,11 @@ incoming guide:  [4, 26)  = 22 frames
 outgoing guide:  [98, 120) = 22 frames
 ```
 
-A soft decoded opacity feather is not a soft denoise mask. The H3 sampling mask
-is binary per latent token. Do not conflate the two.
+A soft decoded opacity feather is not a continuous denoise mask. Binary support
+remains the default production control. An explicitly connected continuous
+field may assign fractional denoise strength per H3 visual row; its temporal
+values must be compiled on the H3 token grid. Do not conflate either sampling
+mode with decoded compositing.
 
 ### Motion maps
 

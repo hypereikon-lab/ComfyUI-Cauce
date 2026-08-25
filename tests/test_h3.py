@@ -60,6 +60,7 @@ class H3Tests(unittest.TestCase):
         self.assertTrue(capabilities["ready"])
         self.assertTrue(capabilities["per_token_denoise_mask"])
         self.assertTrue(capabilities["per_row_denoise_mask"])
+        self.assertTrue(capabilities["fractional_per_row_denoise_mask"])
         self.assertTrue(capabilities["model_base"]["scale_latent_receives_x_and_mask"])
 
     def test_temporal_mask_runtime_rejects_old_scale_latent_signature(self):

@@ -88,15 +88,15 @@ tensors atomically in safetensors.
 
 ## Stable surface
 
-The 19 stable nodes divide into:
+The 20 stable nodes divide into:
 
 ```text
 3  continuation
-4  temporal inpainting
+5  temporal inpainting
 10 motion maps
 2  persistence
 --
-19
+20
 ```
 
 Official model loaders, FL2VA/Ref2VA conditioning, guide application, samplers,
@@ -105,6 +105,10 @@ VAE encode/decode, and video saving remain official ComfyUI nodes.
 Native H3 per-row denoise masks are an official ComfyUI runtime capability.
 CAUCE owns only the temporal/spatial support geometry and the construction of a
 valid nested AV mask; it does not patch the H3 model.
+
+Continuous temporal envelopes are constructed in H3 visual-token space. Native
+Comfy mask nodes own spatial creation and multiplication; CAUCE only translates
+the resulting `MASK[T,H,W]` into the H3 AV-latent contract.
 
 ## Research surface
 

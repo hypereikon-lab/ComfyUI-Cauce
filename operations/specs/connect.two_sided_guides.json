@@ -1,0 +1,61 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "connect.two_sided_guides",
+  "version": 1,
+  "title": "Connect decoded sources with two-sided H3 guides",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3-with-cauce-primitives",
+  "summary": "Generate a fresh center conditioned by a decoded tail and head, retain the explicit generated center, and assemble it between the complete sources.",
+  "inputs": [
+    { "name": "left_source_frames", "type": "IMAGE", "required": true, "cardinality": "one 24 fps frame batch" },
+    { "name": "right_source_frames", "type": "IMAGE", "required": true, "cardinality": "one matching 24 fps frame batch" },
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "guide_frames", "type": "INT", "required": true },
+    { "name": "target_frames", "type": "INT", "required": true },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "accepted_generated_center", "type": "IMAGE", "required": true, "cardinality": "decoded target range [guide_frames, target_frames-guide_frames)" },
+    { "name": "assembled_frames", "type": "IMAGE", "required": true, "cardinality": "complete left source plus generated center plus complete right source" },
+    { "name": "sampled_native_av_latent", "type": "LATENT", "required": true, "cardinality": "fresh complete sampled H3 target" }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "default_target_frames": 124,
+    "default_guide_frames": 22,
+    "valid_guide_lengths": [5, 22, 39, 56, 73, 90, 107],
+    "target_must_exceed_two_guides": true,
+    "matching_source_geometry": true,
+    "fixed_soundtrack_conditioning": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "select the exact left tail range" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "select the exact right head range" },
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning and a fresh target" },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "place the selected left tail at frame zero" },
+    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "place the selected right head at target_frames-guide_frames" },
+    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample and decode the complete fresh target" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "retain exactly the decoded generated center" },
+    { "order": 9, "owner": "vanilla-comfy", "node_type": "ImageBatch", "role": "concatenate complete left source and generated center" },
+    { "order": 10, "owner": "vanilla-comfy", "node_type": "ImageBatch", "role": "append complete right source" }
+  ],
+  "variants": [
+    { "id": "default", "guide_frames": 22, "target_frames": 124, "accepted_generated_frames": 80 },
+    { "id": "guide-length-ablation", "change_one_variable": "guide_frames" },
+    { "id": "target-length-ablation", "change_one_variable": "target_frames" }
+  ],
+  "artifacts": {
+    "state": "contract-only",
+    "ui_graph": null,
+    "api_template": null,
+    "ui_graph_hash": null,
+    "api_template_hash": null
+  },
+  "evidence": {
+    "level": "defined",
+    "visual_verdict": "unassessed",
+    "summary": "The graph is expressible from current official and CAUCE primitives; no paired retained graph or current-system execution exists."
+  }
+}

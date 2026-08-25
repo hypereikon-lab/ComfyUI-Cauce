@@ -1,6 +1,6 @@
 # Operations guide
 
-## Build a native AV continuation graph
+## Compose `continue.native_av`
 
 1. Keep the completed packed H3 AV latent before decoding.
 2. Inspect it with `CauceH3InspectAVLatent`.
@@ -20,7 +20,7 @@
 Keep prompt, model, resolution, sigma shifts, seed, sampler, scheduler, steps,
 overlap, extension, and output prefix explicit in the workflow/run receipt.
 
-## Build a two-sided decoded guide graph
+## Compose `connect.two_sided_guides`
 
 1. Normalize A and B to matching geometry and 24 fps.
 2. Select A's tail and B's head with `CauceAcceptDecodedRange`.

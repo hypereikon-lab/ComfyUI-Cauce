@@ -1,0 +1,50 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "generate.with_guides",
+  "version": 1,
+  "title": "Generate with guides at exact frame indices",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3",
+  "summary": "Generate one H3 target with one or more decoded guide frames or clips placed at explicit pixel-frame indices.",
+  "inputs": [
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "guides", "type": "CAUCE_DECODED_GUIDE_SET", "required": true, "cardinality": "one or more media/index pairs" },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "required": true, "cardinality": "target frame count" },
+    { "name": "native_av_latent", "type": "LATENT", "required": true, "cardinality": "one packed H3 AV latent" }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "preferred_frame_count_range": [124, 362],
+    "valid_multi_frame_guide_lengths": [5, 22, 39, 56, 73, 90, 107],
+    "guide_fit_rule": "resolved_frame_idx + guide_frames <= target_frames",
+    "guide_audio_inputs": false,
+    "fixed_soundtrack_conditioning": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create base prompt conditioning and a fresh packed AV latent" },
+    { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "append one decoded guide at its exact pixel-frame index", "repeatable": true },
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample and decode with explicit parameters while retaining the sampled packed AV latent" }
+  ],
+  "variants": [
+    { "id": "single-anchor", "guide_count": 1 },
+    { "id": "multi-anchor", "guide_count": "two or more" },
+    { "id": "guide-clip", "guide_length_rule": "17k+5" }
+  ],
+  "artifacts": {
+    "state": "contract-only",
+    "ui_graph": null,
+    "api_template": null,
+    "ui_graph_hash": null,
+    "api_template_hash": null
+  },
+  "evidence": {
+    "level": "defined",
+    "visual_verdict": "unassessed",
+    "summary": "The operation chains documented official H3 guide nodes; no paired retained graph has been validated."
+  }
+}

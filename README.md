@@ -8,6 +8,11 @@ Nodes expose low-level operations. Workflow graphs assign them production
 meaning. CAUCE does not own H3 model loading, prompts, conditioning from decoded
 media, sampling, decoding, scheduling, or a second interface.
 
+CAUCE also defines named, typed operations composed from those primitives and
+official/vanilla ComfyUI nodes. An operation is a reusable graph contract, not
+a monolithic custom node and not a claim that CAUCE implemented every model
+capability present in the graph.
+
 ## Node surface
 
 The package registers 19 nodes:
@@ -39,6 +44,24 @@ The layout keeps video at H3's `17k+5` frame grid and structural audio at its
 40 Hz token grid against absolute 24 fps frame boundaries. The sampler remains
 an ordinary official ComfyUI sampler.
 
+## Operation surface
+
+The current semantic catalog is open-ended and contains:
+
+```text
+generate.keyframed
+generate.from_references
+generate.with_guides
+continue.native_av
+connect.two_sided_guides
+reference.transform
+frames.assemble
+```
+
+Each operation records typed inputs/outputs, graph-stage ownership, constraints,
+artifact state, and evidence. None currently ships as a reusable UI/API graph
+pair; materialization requires live paired validation first.
+
 ## Install
 
 Install this repository as a ComfyUI custom node and restart the ComfyUI Python
@@ -53,6 +76,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Documentation index](docs/INDEX.md)
 - [Architecture and boundaries](docs/ARCHITECTURE.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
+- [Semantic operations](docs/OPERATIONS.md)
 - [Node catalog](docs/NODE_CATALOG.md)
 - [Motion-reference maps](docs/MOTION_MAPS.md)
 - [Validation protocol](docs/VALIDATION.md)

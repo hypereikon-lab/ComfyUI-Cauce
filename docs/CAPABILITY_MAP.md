@@ -9,28 +9,30 @@
 | H3 AV window layout | absolute 24 fps range mapped to visual and 40 Hz audio tokens | unit-validated |
 | H3 AV window allocation | fresh zero target matching layout and prior geometry | unit-validated |
 | H3 AV span extraction | synchronized visual/audio slice plus absolute range | unit-validated |
-| H3 AV span guide metadata | compatible span inserted at an explicit target frame | unit-validated; schema-validated; executes in W4 smoke |
+| H3 AV span guide metadata | compatible span inserted at an explicit target frame | unit-validated; schema-validated; executes in `continue.native_av` smoke |
 | H3 AV append | globally contiguous span concatenation with drift rejection | unit-validated |
 | affine/analytic/perspective/displacement maps | inverse coordinate field | unit-validated |
 | vector-field advection | Euler/RK2/RK4 map integration | unit-validated |
 | depth camera reprojection | map plus disocclusion validity | unit-validated |
 | map modulation/composition | one resampling-ready map | unit-validated |
 | image warp | decoded reference-media generation | unit-validated |
-| H3 AV persistence | atomic visual+structural-audio save/load | unit-validated; save/load executes in W4 smoke verification |
+| H3 AV persistence | atomic visual+structural-audio save/load | unit-validated; save/load executes in `continue.native_av` smoke verification |
 
-## Workflow-level compositions
+## Named graph-level operations
 
 | Operation | Composition |
 | --- | --- |
-| first/last-frame generation | official FL2VA graph |
-| reference-conditioned generation | official Ref2VA graph |
-| decoded temporal guides | official `MiniMaxH3AddGuide` chain |
-| native latent-tail continuation | CAUCE AV plan/allocate/extract/guide/append around official sampling |
-| two-sided decoded guide window | exact decoded ranges + two official AddGuide nodes + vanilla ImageBatch |
-| procedural motion reference | CAUCE image warp -> official Ref2VA/AddGuide |
+| `generate.keyframed` | official FL2VA graph |
+| `generate.from_references` | official Ref2VA graph |
+| `generate.with_guides` | official `MiniMaxH3AddGuide` chain |
+| `continue.native_av` | CAUCE AV plan/allocate/extract/guide/append around official sampling |
+| `connect.two_sided_guides` | exact decoded ranges + two official AddGuide nodes + vanilla ImageBatch |
+| `reference.transform` | CAUCE decoded-media coordinate maps and image warp |
+| `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
 
-“Composed” means the mechanism can be expressed as a graph. It does not mean a
-source/prompt pair is visually accepted.
+All seven currently remain `contract-only`: no paired reusable UI/API graph is
+shipped. “Composed” means the mechanism can be expressed as a graph. It does not
+mean a source/prompt pair is visually accepted.
 
 ## Current evidence boundary
 

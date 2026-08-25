@@ -6,8 +6,14 @@ instructions remain authoritative.
 
 ## 1. Mission
 
-CAUCE owns only operations for which it adds an explicit mathematical,
-reproducibility, or safety contract:
+CAUCE has two deliberately separate surfaces:
+
+1. low-level custom nodes for operations that add an explicit mathematical,
+   reproducibility, or safety contract;
+2. named operation contracts and, once paired live validation exists, reusable
+   UI/API graph templates composed from CAUCE, official H3, and vanilla nodes.
+
+The low-level surface owns:
 
 - deterministic decoded-media range selection;
 - absolute H3 AV frame/video-token/audio-token layouts;
@@ -20,6 +26,11 @@ sampling, and decoding. CAUCE may create or structurally transform a packed AV
 target only when the operation has an explicit clock/layout contract. Compose
 all operations explicitly in workflows.
 
+A named CAUCE operation is a typed graph-level function over media or H3 state.
+It does not imply that CAUCE owns every node in the graph. Operation contracts
+must declare node ownership and artifact/evidence state explicitly. Never wrap
+an official graph in a monolithic custom node merely to claim it as CAUCE.
+
 CAUCE does not own a second UI, production scheduling, remote authentication,
 model management, semantic image descriptions, generative audio, training,
 LoRAs, acceleration, or streaming. The production soundtrack is fixed and
@@ -31,7 +42,7 @@ Use this order:
 
 1. `git status --short`, current branch, and recent commits;
 2. this file;
-3. `README.md` and `docs/INDEX.md`;
+3. `README.md`, `docs/INDEX.md`, and `operations/catalog.json`;
 4. architecture, workflow, node, and validation documents;
 5. code and tests;
 6. live `/object_info` and actual outputs for live-runtime claims.
@@ -69,8 +80,9 @@ production project. Bindings must remain thin. The package version in
 `pyproject.toml` and `cauce.__version__` must match.
 
 CAUCE ships no executable workflow JSON until both the browser graph and API
-prompt have been validated against live node schemas. Documentation may state a
-graph recipe without pretending it is an import-tested artifact.
+prompt have been paired, validated against live node schemas, and recorded in
+the operation contract. A contract or evidence record may describe an exact
+graph without masquerading as an importable template.
 
 Preserve dirty-worktree changes. Do not use destructive checkout, reset, broad
 cleanup, or force-push.

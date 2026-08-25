@@ -1,0 +1,53 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "generate.from_references",
+  "version": 1,
+  "title": "Generate from ordered references",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3",
+  "summary": "Generate one H3 target from a prompt and ordered reference images or 24 fps reference clips.",
+  "inputs": [
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "reference_images", "type": "IMAGE", "required": false, "cardinality": "zero to nine images" },
+    { "name": "reference_clips", "type": "IMAGE", "required": false, "cardinality": "zero to three 24 fps frame batches" },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "required": true, "cardinality": "target frame count" },
+    { "name": "native_av_latent", "type": "LATENT", "required": true, "cardinality": "one packed H3 AV latent" }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "preferred_frame_count_range": [124, 362],
+    "reference_clip_count_range": [0, 3],
+    "reference_image_count_range": [0, 9],
+    "reference_clip_min_frames": 5,
+    "audio_reference_inputs": false,
+    "fixed_soundtrack_conditioning": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "vanilla-comfy", "node_type": null, "role": "load the selected Ref2VA model and required model components" },
+    { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3ReferenceToVideo", "role": "encode ordered image and clip references and create a fresh packed AV latent" },
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
+    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
+  ],
+  "variants": [
+    { "id": "image-reference-match", "ref_image_size": "match" },
+    { "id": "image-reference-max", "ref_image_size": "max" },
+    { "id": "video-reference", "reference_clips": true }
+  ],
+  "artifacts": {
+    "state": "contract-only",
+    "ui_graph": null,
+    "api_template": null,
+    "ui_graph_hash": null,
+    "api_template_hash": null
+  },
+  "evidence": {
+    "level": "defined",
+    "visual_verdict": "unassessed",
+    "summary": "The operation maps directly to documented official Ref2VA and vanilla ComfyUI nodes; no paired retained graph has been validated."
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hypereikon.online/schemas/cauce-operation-1.json",
+  "title": "CAUCE semantic operation",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "title",
+    "kind",
+    "implementation_class",
+    "summary",
+    "inputs",
+    "outputs",
+    "constraints",
+    "graph_contract",
+    "artifacts",
+    "evidence"
+  ],
+  "properties": {
+    "schema": { "const": "cauce.operation/1" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "kind": { "enum": ["h3-inference", "decoded-media-transform"] },
+    "implementation_class": {
+      "enum": [
+        "official-h3",
+        "official-h3-with-cauce-primitives",
+        "cauce-preprocess-to-official-h3",
+        "cauce-and-vanilla-deterministic"
+      ]
+    },
+    "summary": { "type": "string", "minLength": 1 },
+    "inputs": { "type": "array", "items": { "$ref": "#/$defs/port" } },
+    "outputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/port" } },
+    "constraints": { "type": "object" },
+    "graph_contract": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["order", "owner", "role"],
+        "properties": {
+          "order": { "type": "integer", "minimum": 1 },
+          "owner": { "enum": ["official-comfy", "vanilla-comfy", "cauce"] },
+          "node_type": { "type": ["string", "null"] },
+          "role": { "type": "string", "minLength": 1 },
+          "repeatable": { "type": "boolean" },
+          "optional": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "variants": { "type": "array", "items": { "type": "object" } },
+    "artifacts": {
+      "type": "object",
+      "required": ["state", "ui_graph", "api_template", "ui_graph_hash", "api_template_hash"],
+      "properties": {
+        "state": { "enum": ["contract-only", "paired-graphs"] },
+        "ui_graph": { "type": ["string", "null"] },
+        "api_template": { "type": ["string", "null"] },
+        "ui_graph_hash": { "type": ["string", "null"] },
+        "api_template_hash": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["level", "visual_verdict", "summary"],
+      "properties": {
+        "level": {
+          "enum": [
+            "defined",
+            "unit-validated",
+            "schema-validated",
+            "executes",
+            "visually-characterized"
+          ]
+        },
+        "visual_verdict": { "enum": ["unassessed", "accepted", "rejected", "mixed"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "records": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "port": {
+      "type": "object",
+      "required": ["name", "type", "required"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" },
+        "cardinality": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

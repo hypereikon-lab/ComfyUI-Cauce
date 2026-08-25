@@ -1,0 +1,12 @@
+{
+  "schema": "cauce.operation-catalog/1",
+  "operations": [
+    { "id": "connect.two_sided_guides", "version": 1, "spec": "specs/connect.two_sided_guides.json" },
+    { "id": "continue.native_av", "version": 1, "spec": "specs/continue.native_av.json" },
+    { "id": "frames.assemble", "version": 1, "spec": "specs/frames.assemble.json" },
+    { "id": "generate.from_references", "version": 1, "spec": "specs/generate.from_references.json" },
+    { "id": "generate.keyframed", "version": 1, "spec": "specs/generate.keyframed.json" },
+    { "id": "generate.with_guides", "version": 1, "spec": "specs/generate.with_guides.json" },
+    { "id": "reference.transform", "version": 1, "spec": "specs/reference.transform.json" }
+  ]
+}

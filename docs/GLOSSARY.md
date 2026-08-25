@@ -17,7 +17,8 @@ Use terms that identify observable data or a documented operation.
 | frame range | half-open interval `[start, end)` |
 | timeslot | editorial interval expressed as exact frame bounds at a known frame rate |
 | native AV latent | H3's packed visual and structural-audio latent streams |
-| workflow spec | versioned, declarative intent independent of browser state |
+| operation contract | typed reusable graph function with explicit node ownership and evidence state |
+| operation invocation | project data binding one operation version to concrete media and parameters |
 | UI graph | ComfyUI graph including layout and widget state |
 | API graph | server-executable prompt graph produced from a UI graph |
 | run receipt | immutable record of inputs, graph, runtime, queue result, and artifacts |

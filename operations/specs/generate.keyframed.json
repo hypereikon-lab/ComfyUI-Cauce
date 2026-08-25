@@ -1,0 +1,51 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "generate.keyframed",
+  "version": 1,
+  "title": "Generate with optional endpoint frames",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3",
+  "summary": "Generate one H3 target from a prompt with optional first and last anchor frames.",
+  "inputs": [
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "first_frame", "type": "IMAGE", "required": false, "cardinality": "one frame" },
+    { "name": "last_frame", "type": "IMAGE", "required": false, "cardinality": "one frame" },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "required": true, "cardinality": "target frame count" },
+    { "name": "native_av_latent", "type": "LATENT", "required": true, "cardinality": "one packed H3 AV latent" }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "preferred_frame_count_range": [124, 362],
+    "geometry_multiple": 32,
+    "fixed_soundtrack_conditioning": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "vanilla-comfy", "node_type": null, "role": "load the selected FL2VA model, text encoder, video VAE, and structural-audio VAE" },
+    { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create conditioning and a fresh packed AV latent from prompt and optional endpoint frames" },
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
+    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
+  ],
+  "variants": [
+    { "id": "text-only", "first_frame": false, "last_frame": false },
+    { "id": "first-frame", "first_frame": true, "last_frame": false },
+    { "id": "last-frame", "first_frame": false, "last_frame": true },
+    { "id": "first-last", "first_frame": true, "last_frame": true }
+  ],
+  "artifacts": {
+    "state": "contract-only",
+    "ui_graph": null,
+    "api_template": null,
+    "ui_graph_hash": null,
+    "api_template_hash": null
+  },
+  "evidence": {
+    "level": "defined",
+    "visual_verdict": "unassessed",
+    "summary": "The operation maps directly to documented official H3 and vanilla ComfyUI nodes; no paired retained graph has been validated."
+  }
+}

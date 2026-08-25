@@ -4,6 +4,10 @@ CAUCE is a thin native ComfyUI package. It exposes deterministic operations;
 ComfyUI graphs provide orchestration and official MiniMax nodes provide model
 conditioning and inference.
 
+The repository also owns semantic operation contracts. They describe typed
+graph-level functions and node ownership without turning a complete workflow
+into a custom node.
+
 ```text
 decoded media ---------------- exact ranges / reference maps ------ CAUCE
 packed H3 AV latent ----------- layout / span / guide / append ---- CAUCE
@@ -13,6 +17,13 @@ official H3 conditioning -> official guider/sampler -> official decode
                                       |
                                       v
 decoded range selection / native AV persistence ------------------ CAUCE
+```
+
+```text
+operation contract
+  -> explicit official / vanilla / CAUCE graph stages
+      -> paired UI/API artifacts, once live-validated
+          -> project bindings and run receipts outside this repository
 ```
 
 ## Modules
@@ -32,6 +43,12 @@ cauce_nodes/
   av_latent.py     six H3 AV bindings
   motion.py        ten reference-map bindings
   persistence.py   two persistence bindings
+
+operations/
+  catalog.json     open semantic operation catalog
+  schema.json      operation data contract
+  specs/           typed graph-level operation definitions
+  evidence/        structured evidence that is not an importable graph
 ```
 
 ## H3 AV contracts

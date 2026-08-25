@@ -10,9 +10,10 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-Tests cover decoded ranges, absolute 24→40 Hz token boundaries, window layout,
-allocation, synchronized span extraction, latent-guide metadata, drift-safe
-append, motion-map algebra, persistence paths, and the 19-node registry.
+Tests cover operation catalog/schema/ownership/artifact invariants, decoded
+ranges, absolute 24→40 Hz token boundaries, window layout, allocation,
+synchronized span extraction, latent-guide metadata, drift-safe append,
+motion-map algebra, persistence paths, and the 19-node registry.
 
 ## Gate 2 — live schema
 
@@ -32,7 +33,7 @@ Validate official H3 nodes against the same `/object_info` snapshot.
 
 ## Gate 3 — execution
 
-Queue a minimal synthetic continuation graph. Confirm:
+Queue a minimal `continue.native_av` graph. Confirm:
 
 - input latent reports the expected packed AV geometry;
 - `22 + 119` resolves to a 141-frame target;

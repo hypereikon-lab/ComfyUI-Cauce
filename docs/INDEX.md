@@ -7,6 +7,8 @@
 - [Node catalog](NODE_CATALOG.md): all 19 registered nodes.
 - [Native H3 workflows](NATIVE_H3_WORKFLOWS.md): graph recipes using official
   conditioning/sampling nodes.
+- [Semantic operations](OPERATIONS.md): typed, composable graph-level functions
+  and their present artifact/evidence state.
 - [Motion maps](MOTION_MAPS.md): reference-media coordinate algebra.
 - [Operations guide](OPERATIONS_GUIDE.md): practical build/run sequence.
 - [Validation](VALIDATION.md): deterministic, schema, execution, and visual gates.

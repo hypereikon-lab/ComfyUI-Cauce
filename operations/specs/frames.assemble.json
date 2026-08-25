@@ -1,0 +1,43 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "frames.assemble",
+  "version": 1,
+  "title": "Assemble exact decoded frame ranges",
+  "kind": "decoded-media-transform",
+  "implementation_class": "cauce-and-vanilla-deterministic",
+  "summary": "Select half-open decoded ranges and concatenate them in explicit order without model inference or resampling.",
+  "inputs": [
+    { "name": "sources", "type": "CAUCE_FRAME_RANGE_SET", "required": true, "cardinality": "one or more frame-batch/range pairs" }
+  ],
+  "outputs": [
+    { "name": "assembled_frames", "type": "IMAGE", "required": true, "cardinality": "sum of all accepted range lengths" },
+    { "name": "assembly_report", "type": "JSON", "required": true }
+  ],
+  "constraints": {
+    "half_open_ranges": true,
+    "matching_geometry": true,
+    "generation": false,
+    "resampling": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "select each exact half-open decoded range", "repeatable": true },
+    { "order": 2, "owner": "vanilla-comfy", "node_type": "ImageBatch", "role": "concatenate selected IMAGE batches in declared order", "repeatable": true },
+    { "order": 3, "owner": "vanilla-comfy", "node_type": null, "role": "encode or save the assembled visual result", "optional": true }
+  ],
+  "variants": [
+    { "id": "single-range", "range_count": 1 },
+    { "id": "ordered-concatenation", "range_count": "two or more" }
+  ],
+  "artifacts": {
+    "state": "contract-only",
+    "ui_graph": null,
+    "api_template": null,
+    "ui_graph_hash": null,
+    "api_template_hash": null
+  },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Exact decoded range selection is unit-validated; no paired retained assembly graph exists."
+  }
+}

@@ -248,7 +248,9 @@ documentation.
 Before deployment:
 
 - user authorization covers the update;
-- intended changes are committed and pushed;
+- intended changes are committed and pushed to the repository branch followed
+  by the installed clone; Manager installations normally follow the repository
+  default branch, so verify that branch contains the intended commit;
 - the Comfy queue is idle;
 - the authenticated browser tab is on the laboratory origin;
 - no unrelated core/runtime update is required.

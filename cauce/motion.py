@@ -1,4 +1,4 @@
-"""Coordinate-map algebra and native MiniMax H3 latent motion.
+"""Coordinate-map algebra and deterministic image-space motion.
 
 The public map contract is deliberately semantic-free.  A map stores an
 inverse sampling grid (target -> source), validity, and an exact temporal
@@ -6,8 +6,8 @@ domain.  Affines, analytic maps, advection, depth reprojection, optical flow,
 and future simulations can therefore be composed before media is sampled.
 
 Map construction uses NumPy so its mathematics remains testable outside a
-ComfyUI/PyTorch runtime.  Actual IMAGE and H3 latent sampling is lazy-imported
-and stays on the tensor's device.
+ComfyUI/PyTorch runtime.  IMAGE sampling is lazy-imported and stays on the
+tensor's device.  H3 conditioning and sampling deliberately remain upstream.
 """
 
 from __future__ import annotations
@@ -18,9 +18,6 @@ import math
 from typing import Any
 
 import numpy as np
-
-from .timebase import H3_FPS, visual_span_for_tokens, visual_token_spans
-
 
 MOTION_MAP_SCHEMA = "cauce.motion-map/1"
 VECTOR_FIELD_SCHEMA = "cauce.vector-field/1"
@@ -928,171 +925,3 @@ def warp_images(images: Any, value: dict[str, Any], *, padding_mode: str = "bord
         align_corners=False,
     ).permute(0, 2, 3, 1)
     return warped, validity
-
-
-def _streams(samples: Any) -> list[Any]:
-    if getattr(samples, "is_nested", False):
-        return list(samples.unbind())
-    if isinstance(samples, (list, tuple)):
-        return list(samples)
-    raise ValueError("expected a nested MiniMax H3 audiovisual latent")
-
-
-def _nested(streams: tuple[Any, Any], original: Any):
-    if getattr(original, "is_nested", False):
-        try:
-            import comfy.nested_tensor  # type: ignore
-        except ImportError as exc:  # pragma: no cover - inside ComfyUI
-            raise RuntimeError("nested H3 latents require ComfyUI") from exc
-        return comfy.nested_tensor.NestedTensor(streams)
-    return streams
-
-
-def _h3_positions(video_tokens: int) -> np.ndarray:
-    spans = visual_token_spans(video_tokens)
-    visible_frames = visual_span_for_tokens(video_tokens)
-    if visible_frames <= 1:
-        return np.zeros(video_tokens, dtype=np.float32)
-    return np.asarray(
-        [((start + end - 1) * 0.5) / (visible_frames - 1) for start, end in spans],
-        dtype=np.float32,
-    )
-
-
-def warp_h3_latent(
-    latent: dict[str, Any],
-    value: dict[str, Any],
-    *,
-    padding_mode: str = "border",
-    mask_mode: str = "holes",
-):
-    import torch
-    import torch.nn.functional as functional
-
-    validate_motion_map(value)
-    if padding_mode not in PADDING_MODES:
-        raise ValueError(f"padding mode must be one of {', '.join(PADDING_MODES)}")
-    if mask_mode not in {"none", "holes", "all"}:
-        raise ValueError("mask_mode must be none, holes, or all")
-    samples = latent.get("samples")
-    streams = _streams(samples)
-    if len(streams) < 2:
-        raise ValueError("H3 latent must contain video and audio streams")
-    video, audio = streams[:2]
-    if video.ndim != 5 or audio.ndim != 4:
-        raise ValueError("unexpected H3 audiovisual latent geometry")
-    batch, channels, tokens, height, width = map(int, video.shape)
-    positions = _h3_positions(tokens)
-    grid, validity = _torch_grid(
-        value, tokens, height, width, video.device, video.dtype, positions=positions
-    )
-    source = video.permute(0, 2, 1, 3, 4).reshape(batch * tokens, channels, height, width)
-    repeated_grid = grid.unsqueeze(0).expand(batch, -1, -1, -1, -1).reshape(batch * tokens, height, width, 2)
-    warped = functional.grid_sample(
-        source,
-        repeated_grid,
-        mode="bilinear",
-        padding_mode=padding_mode,
-        align_corners=False,
-    ).reshape(batch, tokens, channels, height, width).permute(0, 2, 1, 3, 4)
-    out = dict(latent)
-    out["samples"] = _nested((warped, audio.clone()), samples)
-    if mask_mode == "none":
-        out.pop("noise_mask", None)
-        video_mask = torch.zeros((batch, 1, tokens, height, width), device=video.device, dtype=torch.float32)
-    elif mask_mode == "all":
-        video_mask = torch.ones((batch, 1, tokens, height, width), device=video.device, dtype=torch.float32)
-    else:
-        video_mask = (validity < 0.999).to(torch.float32).view(1, 1, tokens, height, width).expand(batch, -1, -1, -1, -1).clone()
-    if mask_mode != "none":
-        audio_mask = torch.zeros(
-            (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[-1])),
-            device=audio.device,
-            dtype=torch.float32,
-        )
-        out["noise_mask"] = _nested((video_mask, audio_mask), samples)
-    report = {
-        "schema": "cauce.h3-latent-warp-report/1",
-        "map_hash": value["tensor_hash"],
-        "video_shape": list(video.shape),
-        "visible_frames": visual_span_for_tokens(tokens),
-        "padding_mode": padding_mode,
-        "mask_mode": mask_mode,
-        "valid_fraction": float(validity.mean().item()),
-        "audio_policy": "copied_and_frozen",
-    }
-    return out, validity, report
-
-
-class WarpedH3Noise:
-    """Comfy custom-sampler NOISE source with motion-correlated visual noise."""
-
-    def __init__(
-        self,
-        seed: int,
-        motion_map: dict[str, Any],
-        padding_mode: str = "reflection",
-        temporal_correlation: float = 0.05,
-    ):
-        self.seed = int(seed)
-        self.motion_map = motion_map
-        if padding_mode not in PADDING_MODES:
-            raise ValueError(f"padding mode must be one of {', '.join(PADDING_MODES)}")
-        self.padding_mode = padding_mode
-        if not 0.0 <= float(temporal_correlation) <= 1.0:
-            raise ValueError("temporal noise correlation must lie in [0,1]")
-        self.temporal_correlation = float(temporal_correlation)
-
-    def generate_noise(self, input_latent: dict[str, Any]):
-        import torch
-        import torch.nn.functional as functional
-        import comfy.sample  # type: ignore
-
-        latent_samples = input_latent["samples"]
-        batch_inds = input_latent.get("batch_index")
-        noise = comfy.sample.prepare_noise(latent_samples, self.seed, batch_inds)
-        streams = _streams(noise)
-        independent, audio = streams[:2]
-        batch, channels, tokens, height, width = map(int, independent.shape)
-        positions = _h3_positions(tokens)
-        grid, validity = _torch_grid(
-            self.motion_map,
-            tokens,
-            height,
-            width,
-            independent.device,
-            independent.dtype,
-            positions=positions,
-        )
-        # Transport one shared Gaussian anchor through time. Warping independent
-        # token noise would alter its spatial layout without creating temporal
-        # correlation, defeating the purpose of warped-noise motion control.
-        source = (
-            independent[:, :, :1]
-            .expand(-1, -1, tokens, -1, -1)
-            .permute(0, 2, 1, 3, 4)
-            .reshape(batch * tokens, channels, height, width)
-        )
-        repeated = (
-            grid.unsqueeze(0)
-            .expand(batch, -1, -1, -1, -1)
-            .reshape(batch * tokens, height, width, 2)
-        )
-        warped = functional.grid_sample(
-            source,
-            repeated,
-            mode="bilinear",
-            padding_mode=self.padding_mode,
-            align_corners=False,
-        ).reshape(batch, tokens, channels, height, width).permute(0, 2, 1, 3, 4)
-        valid = validity.view(1, 1, tokens, height, width).to(warped)
-        warped = warped * valid + independent.to(warped) * (1.0 - valid)
-        correlation = self.temporal_correlation
-        warped = (
-            math.sqrt(correlation) * warped
-            + math.sqrt(1.0 - correlation) * independent.to(warped)
-        )
-        source_std = independent.float().std(dim=(-2, -1), keepdim=True).clamp_min(1e-6)
-        warped_std = warped.float().std(dim=(-2, -1), keepdim=True).clamp_min(1e-6)
-        warped = (warped.float() * (source_std / warped_std)).to(independent.dtype)
-        return _nested((warped, audio), noise)

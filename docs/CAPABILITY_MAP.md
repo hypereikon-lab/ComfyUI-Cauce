@@ -1,55 +1,29 @@
 # Capability map
 
-This map identifies who owns each operation. CAUCE code is justified only when
-the operation is not already expressed faithfully by an official node.
+## Implemented in CAUCE
 
-| Capability | Owner | CAUCE role |
+| Operation | Deterministic contract | Result status |
 | --- | --- | --- |
-| H3 model loading | official ComfyUI | none |
-| first/last-frame conditioning | official H3 node | none |
-| ordered image/video references | official H3 node | none |
-| guide application | official `MiniMaxH3AddGuide` | seam plan reports exact ranges |
-| sampling and scheduling | official ComfyUI | none for stable surface |
-| VAE encode/decode | official ComfyUI | validate compatible H3 geometry |
-| phase-aware continuation | CAUCE adapter | copy protected visual tail, freeze structural audio |
-| decoded frame acceptance | CAUCE operation | exact local slicing |
-| temporal edit planning | CAUCE operation | legal H3 window, mask and splice geometry |
-| per-row H3 denoise mask | CAUCE H3 adapter | binary or continuous visual strength, frozen structural audio |
-| animated spatial-mask composition | official ComfyUI mask nodes | accept the resulting standard `MASK` only |
-| decoded seam splice | CAUCE operation | opacity feather + duration preservation |
-| coordinate-map construction | CAUCE operation | reusable inverse pullbacks |
-| motion-map composition | CAUCE operation | one final resample |
-| image warp | CAUCE operation | grid sampling + validity |
-| H3 AV latent persistence | CAUCE operation | bounded atomic safetensors |
-| native-latent seam | CAUCE Research | experimental |
-| H3 latent warp | CAUCE Research | experimental |
-| warped H3 noise | CAUCE Research | experimental |
-| sigma transport | CAUCE Research | experimental |
-| H3 clean-estimate latent injection | CAUCE Research | experimental deterministic-Euler sampler adapter |
-| H3 reference-key RoPE modulation | external mature node pack | compose with CAUCE; do not duplicate |
-| H3 Fun ControlNet | upstream ComfyUI + external weights | evaluate after upstream support matures; no CAUCE wrapper |
-| remote access and deployment | laboratory runtime | documented separately |
+| exact decoded range | `[start, start + count)` | unit-validated |
+| H3 guide bridge plan | two guide clips, two frame indices, accepted center | unit-validated; visual result pending per run |
+| guide bridge assembly | `A + generated center + B` | unit-validated |
+| affine/analytic/perspective/displacement maps | inverse coordinate field | unit-validated |
+| vector-field advection | Euler/RK2/RK4 map integration | unit-validated |
+| depth camera reprojection | map plus disocclusion validity | unit-validated |
+| map modulation/composition | one resampling-ready map | unit-validated |
+| image warp | reference-media generation | unit-validated |
+| H3 AV latent persistence | atomic visual+structural-audio save/load | unit-validated at file/path layer; live tensor path requires ComfyUI |
 
-## Arbitrary media
+## Composed from existing nodes
 
-CAUCE never requires an inferred semantic record. An input image, video,
-displacement field, depth map, or latent is treated according to its tensor and
-socket contract only.
+| Operation | Composition |
+| --- | --- |
+| image-to-video and first/last-frame video | official FL2VA graph |
+| reference-video motion transfer | official Ref2VA graph |
+| arbitrary temporal guides | official `MiniMaxH3AddGuide` chain |
+| native tail continuation | validated external continuation nodes plus official H3 graph |
+| bridge between two videos | CAUCE guide selection + two official AddGuide nodes + CAUCE assembly |
+| primitive/simulation motion conditioning | CAUCE image warp -> video reference -> official Ref2VA/AddGuide |
 
-A video used as an H3 reference may carry filmed movement, a geometric grid,
-simulation output, depth rendering, optical-flow visualization, or any other
-motion signal. That interpretation belongs to graph composition and prompting,
-not a CAUCE entity type.
-
-## Extension rule
-
-Before adding a node, answer:
-
-1. Can official ComfyUI express it directly?
-2. Can a graph composition express it without hidden semantics?
-3. Does it own reusable mathematics or an H3 translation?
-4. What matched test proves the operation?
-5. Does it belong in stable or Research?
-
-If the answer to the first or second question is yes and no unique contract is
-added, do not create a wrapper.
+“Composed” means the mechanism exists and the graph can be constructed. It is
+not a guarantee that a particular prompt/source pair will be visually accepted.

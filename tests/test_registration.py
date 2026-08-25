@@ -20,7 +20,7 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 26)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 15)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
@@ -28,22 +28,17 @@ class RegistrationTests(unittest.TestCase):
             self.assertTrue(
                 all(name.startswith("Cauce") for name in module.NODE_CLASS_MAPPINGS)
             )
-            research = {
-                name
-                for name, node in module.NODE_CLASS_MAPPINGS.items()
-                if node.CATEGORY == "CAUCE/Research"
-            }
             self.assertEqual(
-                research,
+                {node.CATEGORY for node in module.NODE_CLASS_MAPPINGS.values()},
                 {
-                    "CauceBuildNativeLatentSeam",
-                    "CaucePrepareH3NativeLatentInpaint",
-                    "CauceWarpH3Latent",
-                    "CauceWarpedH3Noise",
-                    "CauceSigmaMotionSampler",
-                    "CauceH3FlowLatentInjectionSampler",
+                    "CAUCE/Assembly",
+                    "CAUCE/Native H3",
+                    "CAUCE/Motion Maps",
+                    "CAUCE/Persistence",
                 },
             )
+            self.assertIn("CauceBuildH3GuideBridge", module.NODE_CLASS_MAPPINGS)
+            self.assertIn("CauceApplyH3GuideBridge", module.NODE_CLASS_MAPPINGS)
         finally:
             for key in list(sys.modules):
                 if key == name or key.startswith(name + "."):

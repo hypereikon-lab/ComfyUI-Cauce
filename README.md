@@ -1,66 +1,65 @@
 # CAUCE
 
-CAUCE is a native ComfyUI operation pack for visual continuity, localized
-temporal inpainting, motion-field construction, and H3 audiovisual-latent
-persistence.
+CAUCE is a small native ComfyUI node pack for deterministic media preparation,
+H3 guide-bridge assembly, reusable motion-reference construction, and packed H3
+audiovisual-latent persistence.
 
-It provides operations, not a production application. CAUCE has no separate UI,
-project model, timeline, workflow suite, remote client, model installer, or
-semantic image ontology. Model loading and conditioning use official ComfyUI
-nodes directly.
+It deliberately leaves MiniMax H3 conditioning and sampling to the official
+ComfyUI nodes. CAUCE does not wrap a sampler, modify H3 latents, or claim that a
+completed queue item is a successful visual result.
 
-## Surface
+## Node surface
 
-The installed package registers 26 nodes:
+The package registers 15 nodes:
 
-- 20 stable nodes under `CAUCE/Continuity`, `CAUCE/Temporal Inpainting`,
-  `CAUCE/Motion Maps`, and `CAUCE/Persistence`;
-- 6 experimental nodes under `CAUCE/Research`.
+- 10 coordinate-map and image-warp nodes under `CAUCE/Motion Maps`;
+- 2 bridge preparation/assembly nodes under `CAUCE/Native H3`;
+- 2 packed audiovisual-latent save/load nodes under `CAUCE/Persistence`;
+- 1 exact decoded-range node under `CAUCE/Assembly`.
 
-Stable operations:
+## Native H3 guide bridge
 
-- phase-aware H3 continuation and exact decoded-range acceptance;
-- duration-preserving temporal inpainting across a video cut;
-- token-aligned continuous temporal denoise fields, composable with native
-  animated masks;
-- affine, projective, analytic, displacement, depth-camera, and advected motion
-  maps;
-- motion-map modulation, composition, and decoded image warping;
-- atomic save/load of nested H3 visual and structural-audio latents.
+`CauceBuildH3GuideBridge` extracts the final guide clip from source A and the
+initial guide clip from source B. The graph supplies them to two official
+`MiniMaxH3AddGuide` nodes on a fresh H3 target. After normal official sampling
+and decoding, `CauceApplyH3GuideBridge` discards both guide intervals, accepts
+only the generated center, and assembles:
 
-Research operations:
+```text
+complete A + generated center + complete B
+```
 
-- native-latent bidirectional seam preparation;
-- direct H3 latent warping;
-- motion-correlated H3 noise;
-- sigma-conditioned latent transport;
-- one-shot H3 visual clean-estimate injection during deterministic Euler flow
-  sampling.
+The default geometry is:
 
-Research nodes execute real tensor paths but do not carry a production-quality
-or motion-obedience guarantee.
+```text
+target                         124 frames at 24 fps
+A tail guide                    22 frames at frame_idx 0
+B head guide                    22 frames at frame_idx 102
+accepted generated center       80 frames [22, 102)
+```
 
-## Principles
+This is a deterministic graph contract around an official conditioning
+mechanism. Its visual quality remains an empirical result that must be checked
+for every source pair.
 
-- Inputs remain opaque media. CAUCE does not infer subjects, actions, or shot
-  descriptions.
-- Motion maps are inverse pullbacks in normalized PyTorch
-  `align_corners=False` coordinates.
-- Temporal denoise strength and decoded opacity blending are distinct fields.
-- Independent H3 latents are never treated as safely concatenable by default.
-- H3 structural audio is preserved or frozen; it is not production audio.
-- Official ComfyUI/H3 nodes are used whenever they already own the operation.
+## Install
 
-## Installation
-
-Install with ComfyUI Manager from:
+Install the repository as a ComfyUI custom node and restart the ComfyUI Python
+process. No additional Python package is declared by CAUCE.
 
 ```text
 https://github.com/hypereikon-lab/ComfyUI-Cauce
 ```
 
-Restart ComfyUI after installation or update. CAUCE relies on the NumPy,
-PyTorch, and safetensors runtime already supplied by ComfyUI.
+## Documentation
+
+- [Documentation index](docs/INDEX.md)
+- [Architecture and boundaries](docs/ARCHITECTURE.md)
+- [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
+- [Node catalog](docs/NODE_CATALOG.md)
+- [Motion-reference maps](docs/MOTION_MAPS.md)
+- [Validation protocol](docs/VALIDATION.md)
+- [Remote ComfyUI runtime](docs/REMOTE_COMFY_RUNTIME.md)
 
 ## Local verification
 
@@ -69,23 +68,3 @@ python3 -m compileall -q cauce cauce_nodes
 python3 -m unittest discover -s tests -v
 git diff --check
 ```
-
-Tensor tests are skipped when the developer Python lacks NumPy or PyTorch; the
-ComfyUI runtime supplies those dependencies.
-
-## Documentation
-
-- [Documentation index](docs/INDEX.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Node catalog](docs/NODE_CATALOG.md)
-- [Operations guide](docs/OPERATIONS_GUIDE.md)
-- [Bidirectional temporal inpainting](docs/TEMPORAL_INPAINTING.md)
-- [Workflow contracts](docs/WORKFLOW_CONTRACTS.md)
-- [Motion-map mathematics](docs/MOTION_MAPS.md)
-- [H3 flow latent injection](docs/H3_FLOW_LATENT_INJECTION.md)
-- [Validation](docs/VALIDATION.md)
-- [Remote ComfyUI runtime](docs/REMOTE_COMFY_RUNTIME.md)
-
-## License
-
-MIT. See [LICENSE](LICENSE).

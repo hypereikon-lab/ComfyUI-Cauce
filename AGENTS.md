@@ -6,39 +6,21 @@ instructions remain authoritative.
 
 ## 1. Mission
 
-CAUCE is a native ComfyUI operation pack. It owns reusable visual mathematics,
-thin ComfyUI bindings, explicit H3 latent adapters, and bounded persistence.
+CAUCE owns only operations for which it adds an explicit mathematical,
+reproducibility, or safety contract:
 
-The stable surface contains:
+- deterministic decoded-media selection and assembly;
+- preparation of decoded guide clips for official H3 conditioning nodes;
+- generic image-space coordinate maps and reference-media warps;
+- bounded persistence of packed H3 audiovisual latents.
 
-- phase-aware H3 continuation;
-- exact decoded-range acceptance;
-- localized temporal inpainting and duration-preserving splice mathematics;
-- generic coordinate-map and vector-field operations;
-- H3 audiovisual-latent save/load.
+Official ComfyUI/MiniMax nodes own H3 conditioning, latent construction,
+sampling, and decoding. Compose those nodes directly in workflows.
 
-Six nodes live under `CAUCE/Research`. They are executable hypotheses, not
-production presets:
-
-- native-latent bidirectional seam preparation;
-- direct H3 latent warp;
-- motion-correlated H3 noise;
-- sigma-conditioned latent transport;
-- one-shot H3 visual clean-estimate injection during deterministic Euler flow
-  sampling.
-
-CAUCE does not own:
-
-- a second UI or dashboard;
-- production scheduling or editorial state;
-- remote administration, authentication, or browser automation;
-- model installation or runtime upgrades;
-- semantic descriptions of images;
-- generative sound, training, LoRAs, acceleration, or streaming.
-
-The production soundtrack is fixed and remains outside H3 conditioning. H3's
-packed structural-audio stream is still required by the model and must be
-copied, frozen, or persisted correctly.
+CAUCE does not own a second UI, production scheduling, remote authentication,
+model management, semantic image descriptions, generative audio, training,
+LoRAs, acceleration, or streaming. The production soundtrack is fixed and
+stays outside H3 conditioning.
 
 ## 2. Sources of truth
 
@@ -46,47 +28,49 @@ Use this order:
 
 1. `git status --short`, current branch, and recent commits;
 2. this file;
-3. `README.md`;
-4. `docs/INDEX.md`;
-5. `docs/ARCHITECTURE.md` and `docs/SYSTEM_BOUNDARIES.md`;
-6. `docs/NODE_CATALOG.md` and `docs/CAPABILITY_MAP.md`;
-7. the relevant mathematics or validation document;
-8. code and tests;
-9. the live ComfyUI runtime for live claims.
+3. `README.md` and `docs/INDEX.md`;
+4. architecture, workflow, node, and validation documents;
+5. code and tests;
+6. live `/object_info` and actual outputs for live-runtime claims.
 
-Do not reconstruct state from conversational memory alone. If the user points
-to a Codex JSONL, search it narrowly for exact tool calls, commit hashes,
-workflow signatures, Manager routes, and outputs. Never print authentication
-cookies, Cloudflare credentials, or unrelated conversation content.
+Do not reconstruct state from conversational memory. When a user supplies a
+Codex JSONL, search it narrowly for exact tool calls, commit hashes, routes,
+workflow signatures, and outputs. Never print cookies, Cloudflare credentials,
+or unrelated conversation content.
 
-Prefer an official node plus graph composition over a CAUCE wrapper that only
-renames an upstream operation or supplies defaults. Add a custom node only when
-it owns mathematics, model translation, a safety boundary, or a reproducibility
-guarantee.
+Prefer an official node plus graph composition over a wrapper that merely
+renames an upstream operation or provides defaults.
 
-## 3. Repository practice
+## 3. Repository invariants
 
-Discover the root with `git rev-parse --show-toplevel`. Preserve dirty-worktree
-changes. Do not use destructive checkout, reset, broad cleanup, or force-push.
-
-The node registry is assembled only from:
+Dependency direction:
 
 ```text
-cauce_nodes/continuity.py
-cauce_nodes/seams.py
-cauce_nodes/motion.py
-cauce_nodes/persistence.py
-cauce_nodes/research.py
+ComfyUI graph
+  -> cauce_nodes bindings
+      -> cauce operations
+          -> NumPy/PyTorch or narrow official runtime adapters
 ```
 
-Stable nodes must not import project state or remote-runtime concerns. Research
-nodes must use `CATEGORY = "CAUCE/Research"` and state their experimental status
-in `DESCRIPTION`.
+The registry is assembled from:
 
-CAUCE intentionally ships no ComfyUI workflow JSON. New graphs are designed
-after their operation contracts are understood. If reproducible graphs are
-added later, treat browser-format JSON and API prompt JSON as different
-artifacts and test them against live `/object_info` schemas.
+```text
+cauce_nodes/assembly.py
+cauce_nodes/bridge.py
+cauce_nodes/motion.py
+cauce_nodes/persistence.py
+```
+
+Core operations must not know about browser tabs, Cloudflare, Manager, or a
+production project. Bindings must remain thin. The package version in
+`pyproject.toml` and `cauce.__version__` must match.
+
+CAUCE ships no executable workflow JSON until both the browser graph and API
+prompt have been validated against live node schemas. Documentation may state a
+graph recipe without pretending it is an import-tested artifact.
+
+Preserve dirty-worktree changes. Do not use destructive checkout, reset, broad
+cleanup, or force-push.
 
 Local verification:
 
@@ -96,125 +80,66 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-Developer Python may lack NumPy or PyTorch. Do not install or upgrade global
-GPU packages to satisfy local tests. Pure-Python tests must pass; tensor tests
-may be run with a suitable isolated runtime or inside ComfyUI.
+Do not install or upgrade global GPU packages to satisfy tests.
 
-## 4. Architecture invariants
-
-Dependency direction:
-
-```text
-ComfyUI graph
-  -> cauce_nodes bindings
-      -> cauce operations
-          -> NumPy/PyTorch and official ComfyUI runtime hooks
-```
-
-Do not reverse this direction. Core operations must not know about browser tabs,
-Cloudflare, Manager, queue routes, or a production project.
-
-Node sockets should use local, explicit data:
-
-- frames and frame counts;
-- images, masks, latents, motion maps, and vector fields;
-- sampler parameters;
-- small serialized operation plans and reports.
-
-Avoid global orchestration objects. If two nodes must share state, define the
-smallest contract that represents the mathematical operation.
-
-The package version lives in both `pyproject.toml` and `cauce.__version__`; keep
-them equal.
-
-## 5. H3 invariants
+## 4. H3-native rules
 
 - Production video is 24 fps.
-- Legal H3 visible-frame counts follow `17k + 5`.
-- `124` visible frames represent about `5.1667` seconds and 37 visual latent
-  tokens.
-- The packed H3 state contains visual and structural-audio streams.
-- Visual operations must not silently drop, regenerate, or spatially transform
-  the structural-audio stream.
-- Independent H3 latents do not automatically share causal phase.
-- Use `cauce/timebase.py` for H3 frame/token arithmetic.
+- Legal H3 frame counts follow `17k + 5`.
+- Prefer trained-range targets from 124 through 362 frames.
+- H3 state contains visual and structural-audio streams.
+- Use `cauce/timebase.py` for frame/token arithmetic.
+- Use official `MiniMaxH3ImageToVideo`, `MiniMaxH3AddGuide`, Ref2VA/FL2VA
+  conditioning, guider, sampler, and decoder nodes directly.
+- Treat upstream implementations as dependencies or graph components; do not
+  copy their internals into CAUCE without a separate reason and validation.
 
-### Continuation
+A CAUCE bridge plan selects guide media and accepted output ranges. It never
+claims to determine the model's internal transition. Every bridge report must
+retain `quality_status = requires_visual_validation`.
 
-Continuation copies a phase-aligned visual tail into a target latent, sets that
-context to preserved in the visual denoise mask, and freezes structural audio.
-Official conditioning nodes remain outside CAUCE.
+## 5. Evidence language
 
-The parent latent must end at a visible-frame boundary on the H3 grid. Decoded
-acceptance uses explicit `start_frame` and `frame_count` values.
+Use these states precisely:
 
-### Temporal inpainting
+- `unit-validated`: deterministic code passed local tests;
+- `schema-validated`: a graph matches current live `/object_info`;
+- `executes`: ComfyUI completed it without runtime error;
+- `visually accepted`: the requested behavior was inspected and accepted;
+- `rejected`: it executed but did not satisfy the visual objective;
+- `blocked`: an external layer prevents the next check.
 
-The characterized operation is:
+Never promote an idea because it changed pixels or completed the queue. A
+metric must measure the requested property. A failed visual result is not a
+capability and should not appear in current-state documentation.
 
-```text
-two decoded 24 fps clips
--> tail/head working batch
--> encoded source video latent
--> binary or explicit continuous H3 per-row denoise support
--> official guide nodes wired outside CAUCE
--> sample masked interval
--> decode
--> decoded opacity feather
--> duration-preserving splice
-```
+## 6. Workflow construction
 
-For the measured 124-frame configuration:
+Before creating a graph, inspect live schemas for every nontrivial node. Keep
+browser-format workflow JSON and API prompt JSON distinct. Record:
 
 ```text
-repair interval: [26, 98) = 72 frames
-incoming guide:  [4, 26)  = 22 frames
-outgoing guide:  [98, 120) = 22 frames
+workflow label
+source filenames and ordering
+resolution, fps, frame count
+official H3 nodes and model variant
+prompt, seed, sampler, scheduler, steps
+CAUCE plan hash
+output prefix
 ```
 
-A soft decoded opacity feather is not a continuous denoise mask. Binary support
-remains the default production control. An explicitly connected continuous
-field may assign fractional denoise strength per H3 visual row; its temporal
-values must be compiled on the H3 token grid. Do not conflate either sampling
-mode with decoded compositing.
+For the native guide bridge:
 
-### Motion maps
+1. normalize both sources to matching geometry and 24 fps;
+2. run `CauceBuildH3GuideBridge`;
+3. create a fresh official H3 target of the returned length;
+4. chain two official `MiniMaxH3AddGuide` nodes using returned clips and frame
+   indices;
+5. sample and decode with the normal official graph;
+6. run `CauceApplyH3GuideBridge`;
+7. inspect the complete result and the isolated generated center.
 
-Motion maps are inverse pullbacks. At output coordinate `x`, the map stores the
-source coordinate to sample. Composition therefore follows function
-composition, and images should normally be sampled once after maps are
-composed.
-
-Use normalized PyTorch `align_corners=False` coordinates. Preserve validity and
-disocclusion fields throughout composition and resizing.
-
-## 6. Research discipline
-
-Research nodes stay experimental until they pass matched controls and an
-operation-specific quality gate.
-
-Required sequence:
-
-1. official baseline;
-2. CAUCE path with identity or zero strength;
-3. prove identity or explain the residual;
-4. activate one small intervention;
-5. inspect decode integrity;
-6. measure the requested effect;
-7. increase magnitude only after the previous gate passes.
-
-Current safe starting points:
-
-```text
-warped-noise temporal correlation: 0.05
-motion-map envelope:               0.15
-sigma transport strength:          0.10
-sigma padding:                      border
-```
-
-A clean decode proves tensor compatibility, not motion obedience. Pixel
-difference proves influence, not direction. Use optical flow, registration,
-endpoint drift, or another measurement tied to the requested field.
+Do not describe this graph as successful before step 7.
 
 ## 7. Laboratory topology
 
@@ -234,30 +159,28 @@ Cloudflare Tunnel -> http://localhost:8188
 Cloudflare Access in front of the hostname
 ```
 
-The tunnel exposes the ComfyUI HTTP origin. It is not remote desktop, SSH,
-PowerShell, CMD, or an arbitrary filesystem shell.
+The tunnel exposes the ComfyUI HTTP origin. It is not SSH, PowerShell, CMD,
+RDP, arbitrary filesystem access, or a power controller. The hostname works
+only while the tower, network, tunnel service, and ComfyUI process are healthy.
 
-The hostname works only while the tower, network, tunnel service, and ComfyUI
-process are all healthy. Manager can perform only the HTTP operations it
-implements.
-
-Use the user's authenticated in-app browser session for live operations. Do not
-extract cookies or place credentials in shell commands, code, graph JSON, or
-documentation.
+Use the authenticated in-app browser for live operations. Do not extract
+cookies or embed credentials in commands, code, graphs, or documents.
 
 ## 8. Targeted deployment
 
+Installing/updating custom code or restarting ComfyUI is a consequential live
+action. Confirm it with the user at action time even when the code work itself
+was already authorized.
+
 Before deployment:
 
-- user authorization covers the update;
-- intended changes are committed and pushed to the repository branch followed
-  by the installed clone; Manager installations normally follow the repository
-  default branch, so verify that branch contains the intended commit;
-- the Comfy queue is idle;
-- the authenticated browser tab is on the laboratory origin;
-- no unrelated core/runtime update is required.
+- intended changes are committed and pushed to the branch the installed clone
+  follows;
+- the queue is idle;
+- the authenticated browser is on the laboratory origin;
+- no core/runtime/model update is included.
 
-Targeted Manager sequence:
+Manager sequence:
 
 ```text
 POST /manager/queue/reset
@@ -267,125 +190,62 @@ GET  /manager/queue/status
 GET  /customnode/installed
 ```
 
-Payload:
-
-```json
-{
-  "id": "ComfyUI-Cauce",
-  "ui_id": "ComfyUI-Cauce",
-  "version": "unknown",
-  "files": ["https://github.com/hypereikon-lab/ComfyUI-Cauce"]
-}
-```
-
-Poll until Manager is idle and verify the reported CAUCE commit. Python changes
-require:
+Target only `ComfyUI-Cauce`. Python changes then require:
 
 ```text
 POST /manager/reboot
 ```
 
-An immediate Cloudflare 502 is expected while ComfyUI restarts. Wait, reload,
-then verify:
+A brief 502 is expected while ComfyUI restarts. Afterwards verify:
 
 ```text
 GET /customnode/installed
-GET /object_info/CauceBuildSeamWindow
+GET /object_info/CauceBuildH3GuideBridge
 GET /queue
 ```
 
-Do not update CUDA, PyTorch, drivers, models, ComfyUI core, or unrelated custom
-nodes as part of a CAUCE deployment. Do not reboot the physical tower.
+Do not update CUDA, PyTorch, drivers, models, ComfyUI core, or unrelated nodes.
+Do not reboot the physical tower.
 
-## 9. Browser and workflow-tab hygiene
+## 9. Workflow-tab hygiene
 
-Distinguish:
-
-1. browser page tab;
-2. Comfy workflow tab inside the frontend;
-3. automation handle controlling one browser page.
-
-One browser page can contain many workflow tabs. Before live work, record:
+Distinguish the browser page tab, the workflow tabs inside ComfyUI, and the
+automation handle controlling the page. Before live work, keep a ledger:
 
 ```text
-label | owner | purpose | identifying signature | output prefix | state
+label | owner | purpose | signature | output prefix | state
 ```
 
-Every pre-existing or unidentified workflow is user-owned. Close only workflows
-created by the current agent or whose provenance is exact.
+Pre-existing or unidentified workflows are user-owned. Close only workflows
+created by the current agent or explicitly identified by the user. Use at most
+one active graph and one matched comparison. Pasting JSON can open a new
+workflow instead of replacing the canvas; reconcile the ledger immediately.
 
-Use at most one active experiment and one comparison graph. Pasting JSON can
-open another workflow tab instead of replacing the current canvas; reconcile
-the ledger immediately.
+Before queueing, verify the active workflow, source files, parameters, output
+prefix, validation errors, and queue state. After completion, resolve exact
+outputs from `/history` and authenticated `/view` routes.
 
-Before Run verify:
-
-- active workflow label and unique signature;
-- source filenames;
-- model, sampler, scheduler, steps, seed, and denoise;
-- output prefix;
-- zero validation errors;
-- idle queue.
-
-After completion:
-
-- enumerate exact outputs through `/history`;
-- preserve reproducible graph state when required;
-- close only agent-owned temporary tabs;
-- leave no blank staging graph or stale experiment active.
-
-The Assets sidebar is an index, not filesystem authority. Confirm outputs with
-`/history` and authenticated `/view` requests.
-
-## 10. Live experiment protocol
-
-Change one independent variable at a time. A matched comparison holds fixed:
-
-- source media and ordering;
-- prompt;
-- seed and noise source;
-- model and quantization;
-- resolution and frame count;
-- sampler, scheduler, steps, and denoise;
-- decode and save path.
-
-Use these states:
-
-- `graph validated`;
-- `executes`;
-- `executes but rejected`;
-- `verified`;
-- `blocked`.
-
-Never call an inference successful only because the queue completed. For
-temporal edits inspect the target interval, both patch edges, unchanged regions,
-frame count, fps, and duration.
-
-For long jobs, poll every 20–40 seconds, communicate at least once per minute,
-and do not submit a second job because an aggregate percentage appears stalled.
-
-## 11. Recovery
+## 10. Recovery
 
 | Observation | Interpretation | Action |
 | --- | --- | --- |
-| brief 502 after Manager reboot | ComfyUI process is restarting | wait and reload |
-| origin remains 502 | tunnel may be alive while ComfyUI is down | wait once, then request operator start |
-| hostname remains unreachable | tower, network, or tunnel may be down | request smallest physical check |
-| node absent from `/object_info` | import or dependency failure | inspect logs; do not mutate GPU stack blindly |
-| Manager reports old commit | update did not reach installed clone | verify remote ref and rerun targeted update |
-| queue unexpectedly busy | active or stalled GPU job | inspect queue/history before restart |
+| brief 502 after Manager reboot | Python process restarting | wait and reload |
+| persistent 502 | origin reachable but ComfyUI may be down | retry once, then request operator start |
+| hostname unreachable | tower/network/tunnel layer | request smallest physical check |
+| node absent from `/object_info` | import or dependency failure | inspect logs; do not mutate GPU stack |
+| Manager reports old commit | installed clone/update mismatch | verify remote ref, then targeted update |
+| queue unexpectedly busy | active or stalled job | inspect queue/history before restart |
 
-Retry only the narrow safe operation. Report the precise failed layer.
+Retry only the narrow failed layer. For long inferences poll every 20–40
+seconds, communicate at least once per minute, and do not duplicate a job based
+on an ambiguous progress display.
 
-## 12. Finish checklist
+## 11. Finish checklist
 
-- Code, registry, documentation, and tests agree.
-- Pure-Python tests pass; skipped tensor dependencies are reported.
-- `git diff --check` passes.
-- Package versions match.
-- No removed or unregistered node is referenced.
-- No secret or authentication state entered the repository.
-- For deployment, installed commit and representative `/object_info` agree.
-- For live inference, history and visual/measurement gates were inspected.
-- Agent-owned workflow tabs were cleaned up without touching user-owned tabs.
-- No unrelated runtime component changed.
+- registry imports without ComfyUI;
+- all local tests pass;
+- `git diff --check` passes;
+- documentation matches the current registry;
+- no output is called successful without visual inspection;
+- live deployment, if requested and confirmed, reports the intended commit and
+  exposes `CauceBuildH3GuideBridge` through `/object_info`.

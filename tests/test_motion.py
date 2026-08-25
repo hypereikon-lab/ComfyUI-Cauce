@@ -8,7 +8,6 @@ except ImportError:
 if np is not None:
     from cauce.motion import (
         _sample_numpy,
-        WarpedH3Noise,
         affine_motion_map,
         analytic_motion_map,
         compose_motion_maps,
@@ -173,16 +172,6 @@ class MotionMapTests(unittest.TestCase):
         self.assertEqual(first["tensor_hash"], second["tensor_hash"])
         with self.assertRaises(ValueError):
             depth_camera_motion_map(np.ones((4, 4)), 2, 4, 4, near=10.0, far=1.0)
-
-    def test_warped_noise_rejects_invalid_temporal_correlation(self):
-        motion = affine_motion_map(5, 4, 6)
-        self.assertEqual(WarpedH3Noise(7, motion, temporal_correlation=0.85).seed, 7)
-        self.assertEqual(WarpedH3Noise(7, motion).temporal_correlation, 0.05)
-        with self.assertRaises(ValueError):
-            WarpedH3Noise(7, motion, temporal_correlation=1.01)
-        with self.assertRaises(ValueError):
-            WarpedH3Noise(7, motion, padding_mode="wrap")
-
 
 if __name__ == "__main__":
     unittest.main()

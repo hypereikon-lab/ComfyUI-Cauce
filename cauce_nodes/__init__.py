@@ -1,9 +1,9 @@
-"""Aggregate the stable and research CAUCE node mappings."""
+"""Aggregate CAUCE's deterministic node mappings."""
 
-from . import continuity, motion, persistence, research, seams
+from . import assembly, bridge, motion, persistence
 
 
-MODULES = (continuity, seams, motion, persistence, research)
+MODULES = (assembly, bridge, motion, persistence)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

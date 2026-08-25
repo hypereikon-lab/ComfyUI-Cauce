@@ -7,7 +7,7 @@ import json
 from typing import Any
 
 
-SEAM_SCHEMA = "cauce.seam/1"
+BRIDGE_SCHEMA = "cauce.h3-native-guide-bridge/1"
 
 
 def canonical_json(value: Any) -> str:

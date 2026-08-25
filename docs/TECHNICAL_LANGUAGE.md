@@ -1,45 +1,28 @@
 # Technical language
 
-Use operation names that describe the actual transformation.
+Use names that describe the actual operation.
 
-Preferred terms:
+| Preferred term | Meaning |
+| --- | --- |
+| native H3 guide bridge | fresh H3 target conditioned by two official temporal guides |
+| guide clip | decoded IMAGE batch supplied to `MiniMaxH3AddGuide` |
+| accepted generated center | decoded interval between the two guide spans |
+| native tail continuation | extension using a prior native H3 tail through supported guide conditioning |
+| motion-reference media | images/video geometrically prepared before official H3 conditioning |
+| coordinate pullback | target-to-source sampling map |
+| structural-audio stream | packed H3 internal stream, distinct from the fixed production soundtrack |
 
-- continuation;
-- first/last-frame conditioning;
-- ordered reference conditioning;
-- temporal inpainting;
-- binary per-token denoise mask;
-- continuous per-row denoise strength;
-- animated spatiotemporal denoise field;
-- decoded opacity feather;
-- duration-preserving splice;
-- affine or projective pullback;
-- displacement field;
-- vector-field advection;
-- depth-camera reprojection;
-- motion-map composition;
-- image warp;
-- native-latent seam;
-- warped noise;
-- sigma-conditioned latent transport.
+Evidence labels:
 
-Avoid metaphorical algorithm names in code, graphs, filenames, and reports.
+```text
+unit-validated
+schema-validated
+executes
+visually accepted
+rejected
+blocked
+```
 
-## Evidence states
-
-- `graph validated`: sockets resolve and the graph has no validation errors;
-- `executes`: inference completed and artifacts exist;
-- `executes but rejected`: tensor/runtime path worked but quality failed;
-- `verified`: structural, measured, and perceptual gates passed;
-- `blocked`: a named capability or external condition is missing.
-
-## Required distinctions
-
-- sampling support is not output opacity;
-- fractional denoise strength is not linear pixel opacity;
-- nonzero pixel difference is not directional motion fidelity;
-- clean decode is not production quality;
-- H3 structural audio is not the production soundtrack;
-- ComfyUI restart is not a physical tower reboot;
-- Cloudflare Tunnel is not remote desktop or a shell;
-- a node pack is not the complete graph or project.
+Avoid metaphorical feature names when a precise operation name exists. Do not
+use “works,” “fixed,” “seamless,” or “production-ready” without naming the gate
+that supports the claim.

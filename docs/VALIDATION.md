@@ -1,10 +1,8 @@
 # Validation
 
-Validation is layered. Local unit tests establish deterministic contracts;
-live H3 runs establish runtime compatibility; visual and measured gates establish
-whether an operation works for its intended purpose.
+Validation has four independent gates.
 
-## Gate 1 — package
+## Gate 1 — deterministic code
 
 ```bash
 python3 -m compileall -q cauce cauce_nodes
@@ -12,111 +10,49 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-Confirm 26 registered nodes, matching display mappings, 20 stable nodes,
-and exactly six `CAUCE/Research` nodes.
+Tests cover exact ranges, bridge geometry and hashing, source extraction,
+center-only assembly, motion-map algebra, H3 timebase math, persistence paths,
+and the 15-node registry.
 
-## Gate 2 — H3 runtime
+Passing this gate does not evaluate H3 output quality.
 
-Verify:
+## Gate 2 — live schema
 
-- current CAUCE commit is installed;
-- representative `/object_info` requests return the expected schemas;
-- official H3 model nodes are available;
-- native H3 denoise-mask hooks from ComfyUI PR `#15375` pass the CAUCE
-  capability probe, including clean-latent reinjection and model forward mask
-  arguments;
-- fractional mask values reach per-row H3 timestep labels; current core
-  quantizes strength upward to `1/256` increments and max-pools every `2×2`
-  visual-latent patch;
-- queue is idle before test submission.
+After a targeted install/restart:
 
-## Gate 3 — temporal geometry
+```text
+GET /object_info/CauceBuildH3GuideBridge
+GET /object_info/CauceApplyH3GuideBridge
+GET /queue
+```
 
-Unit-test:
+Validate every official H3 node/socket against live `/object_info`. Browser
+workflow JSON and API prompt JSON are separate schemas.
 
-- legal `17k+5` working lengths;
-- token-aligned repair boundaries;
-- guide ranges outside the generated interval;
-- binary sampling-mask values for the production baseline;
-- continuous shoulders remain constant inside each H3 temporal token and
-  contain no values outside the declared sampling interval;
-- `mean` and `maximum` visible-frame projections have their declared ordering;
-- exact duration-preserving splice ranges;
-- unchanged frames outside the patch.
+## Gate 3 — execution
 
-Run the matched W0/W1/W2 comparison. W1 isolates native masked sampling; W2
-adds only the two official guide clips. Do not accept W2 without proving an
-improvement over W1.
+Queue one graph. Confirm:
 
-Then compare W2 with W3, changing only binary versus continuous denoise
-strength. Inspect both token boundaries and the complete accepted interval. A
-completed generation is not evidence that fractional shoulders improved the
-seam.
+- no validation or import errors;
+- expected target frame count and resolution;
+- two guide clips placed at the planned indices;
+- isolated generated center has the planned count;
+- joined output equals `len(A) + len(center) + len(B)`;
+- output routes resolve through `/history` and `/view`.
 
-## Gate 4 — continuation
+This gate earns only `executes`.
 
-Confirm:
+## Gate 4 — visual objective
 
-- source latent is a complete H3 run;
-- selected tail begins on the correct token-cycle phase;
-- source and target latent geometry match;
-- copied context is zero-masked;
-- structural audio is zero-masked;
-- resolved parent endpoint is phase-safe;
-- decoded accepted range is exact.
+Inspect:
 
-## Gate 5 — motion maps
+- outgoing motion from A into the generated interval;
+- incoming motion from the generated interval into B;
+- identity, geometry, and texture stability;
+- duplicate or frozen guide frames;
+- discontinuity at both accepted-center boundaries;
+- normal-speed rhythm against the fixed soundtrack timeslot.
 
-Pure mathematics:
-
-- identity is exact;
-- translation direction matches pullback convention;
-- loop envelopes close;
-- composition matches sequential coordinate sampling;
-- depth reprojection begins at identity and marks disocclusion;
-- hashes are deterministic.
-
-Live visual checks:
-
-- output follows the requested field direction;
-- validity behaves at boundaries;
-- map composition avoids unnecessary repeated sampling.
-
-## Gate 6 — persistence
-
-Confirm:
-
-- path remains inside ComfyUI output;
-- write is atomic;
-- safetensors metadata contains the exact current format marker;
-- visual and structural-audio tensors round-trip with identical shapes and
-  values;
-- indexed/latest resolution is deterministic.
-
-## Gate 7 — Research
-
-Every active Research run includes:
-
-1. official baseline;
-2. identity or zero control;
-3. one small active intervention;
-4. identical seed, source, prompt, model, sampler, and decode;
-5. structural checks;
-6. operation-specific measurement;
-7. visual inspection.
-
-For latent motion, measure optical flow or registration tied to the requested
-direction. Do not promote based only on output divergence.
-
-For H3 flow latent injection, run native Euler, a `strength = 0` control, and
-one small active intervention with the same graph and seed. The zero control
-must be visually and numerically identical to native Euler. Confirm exactly one
-injection, identical packed-audio output at the intervention, and at least one
-later model evaluation. Measure both intended guide pull and unintended motion
-or appearance collapse.
-
-## Gate 8 — resource envelope
-
-Record resolution, frame count, model variant, steps, peak VRAM when available,
-system-memory pressure, runtime, and storage impact. Do not infer that a clean
-short run generalizes to a longer working domain.
+Record prompt, seed, model, quantization, resolution, frame count, guide length,
+sampler, scheduler, steps, plan hash, and exact output path. Only an inspected
+result can be called `visually accepted`.

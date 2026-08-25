@@ -1,134 +1,54 @@
 # Architecture
 
-CAUCE is a small native ComfyUI operation pack. It does not own creative
-project state or the laboratory runtime.
-
-## Dependency direction
+CAUCE is a thin native ComfyUI package. It supplies deterministic data
+operations; the official ComfyUI graph remains the orchestration layer.
 
 ```text
-ComfyUI graph
-  -> cauce_nodes: socket definitions and JSON reports
-      -> cauce: mathematical operations and H3 adapters
-          -> NumPy, PyTorch, safetensors, official ComfyUI runtime hooks
+source media
+  |-- exact range/guide selection ----------- CAUCE
+  |-- coordinate maps -> warped references -- CAUCE
+  v
+official H3 conditioning -> sampler -> decode ComfyUI/MiniMax
+  v
+range acceptance / bridge assembly ---------- CAUCE
+  v
+normal ComfyUI save nodes
 ```
-
-Bindings may translate ComfyUI values into function arguments, but mathematics
-must live in `cauce/`. Core modules must not import browser, tunnel, Manager, or
-queue concerns.
 
 ## Modules
 
 ```text
 cauce/
-  contracts.py         deterministic hashing + seam schema
-  timebase.py          H3 frame/token geometry
-  h3.py                AV stream validation + mask capability probe
-  continuity.py        causal continuation and decoded range slicing
-  seams.py             temporal inpaint planning, masks, and splice
-  motion.py            coordinate maps, fields, and sampling
-  persistence.py       atomic H3 AV latent save/load
-  sigma_transport.py   experimental sampler transport
-  latent_injection.py  experimental H3 flow clean-estimate injection
+  assembly.py      exact decoded-frame selection
+  bridge.py        native AddGuide bridge plan, extraction, assembly
+  contracts.py     canonical JSON and content hashes
+  h3.py            packed audiovisual-latent validation
+  motion.py        coordinate maps, fields, image-space sampling
+  persistence.py   atomic packed audiovisual-latent save/load
+  timebase.py      exact H3 frame/token arithmetic
 
 cauce_nodes/
-  continuity.py
-  seams.py
-  motion.py
-  persistence.py
-  research.py
+  assembly.py      one ComfyUI binding
+  bridge.py        two ComfyUI bindings
+  motion.py        ten ComfyUI bindings
+  persistence.py   two ComfyUI bindings
 ```
 
-## Stable contracts
+## Contracts
 
-### `CAUCE_MAP`
+The native bridge plan is serializable and content-addressed. It records source
+ranges, guide placement, accepted generated range, and ownership. It contains
+no prompt semantics and no hidden process state.
 
-A motion map is a versioned dictionary containing:
+Motion maps use inverse pullback coordinates (`target -> source`) normalized for
+PyTorch `grid_sample(..., align_corners=False)`. Maps carry validity and hashes
+and can be composed before a single image sample.
 
-```text
-grid       [T,H,W,2] inverse source coordinates
-validity   [T,H,W]   sampling confidence/support
-fps
-operation
-parameters
-tensor_hash
-```
+Packed H3 persistence saves the visual and structural-audio tensors atomically
+as `safetensors`. It does not reinterpret either stream.
 
-Coordinates use PyTorch normalized `align_corners=False` space. Maps are
-resized and composed before final sampling whenever possible.
+## Dependency policy
 
-### `CAUCE_VECTOR_FIELD`
-
-A vector field contains time-varying velocities plus explicit fps, duration,
-geometry, and parameters. Integration produces a `CAUCE_MAP`.
-
-### `CAUCE_SEAM`
-
-A seam plan contains only the geometry required for one temporal edit:
-
-- source frame counts;
-- working frame count;
-- cut and repair ranges;
-- H3 sampling range;
-- incoming/outgoing guide ranges;
-- accepted/splice range;
-- deterministic content hash.
-
-It is not global project state. Its inputs remain opaque frames.
-
-### H3 AV latent
-
-H3 samples contain two nested tensors:
-
-```text
-visual stream             [B,C,Tv,H,W]
-structural-audio stream   [B,C,Ta,F]
-```
-
-Visual operations preserve or freeze the second stream. Persistence stores both
-tensors atomically in safetensors.
-
-## Stable surface
-
-The 20 stable nodes divide into:
-
-```text
-3  continuation
-5  temporal inpainting
-10 motion maps
-2  persistence
---
-20
-```
-
-Official model loaders, FL2VA/Ref2VA conditioning, guide application, samplers,
-VAE encode/decode, and video saving remain official ComfyUI nodes.
-
-Native H3 per-row denoise masks are an official ComfyUI runtime capability.
-CAUCE owns only the temporal/spatial support geometry and the construction of a
-valid nested AV mask; it does not patch the H3 model.
-
-Continuous temporal envelopes are constructed in H3 visual-token space. Native
-Comfy mask nodes own spatial creation and multiplication; CAUCE only translates
-the resulting `MASK[T,H,W]` into the H3 AV-latent contract.
-
-## Research surface
-
-Six nodes are registered under `CAUCE/Research`. Their code paths are kept
-callable so experiments remain reproducible, but they are not dependencies of
-the stable operations.
-
-Promotion requires:
-
-1. identity control;
-2. small active intervention;
-3. decode integrity;
-4. measured causal effect;
-5. repeated success across representative material;
-6. documented resource envelope.
-
-## No shipped graph suite
-
-CAUCE currently ships operations and documentation only. Graphs are composed
-from official nodes and CAUCE primitives after the required experiment or
-production contract is specified. This keeps the package independent of one
-prompt, model filename, resolution, or editorial structure.
+Core mathematics remains importable without ComfyUI. PyTorch and ComfyUI are
+lazy-imported only at tensor/runtime boundaries. The package adds no pip
+dependencies and never owns the GPU software stack.

@@ -287,7 +287,9 @@ class CauceComposeMotionMaps:
     RETURN_NAMES = ("motion_map", "validity", "report_json")
     FUNCTION = "compose"
     CATEGORY = MAP_CATEGORY
-    DESCRIPTION = "Compose pullbacks as first(second(x)); sample the image or latent only once downstream."
+    DESCRIPTION = (
+        "Compose pullbacks as first(second(x)); sample the reference media only once downstream."
+    )
 
     def compose(self, first, second):
         value = compose_motion_maps(first, second)

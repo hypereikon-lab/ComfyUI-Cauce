@@ -17,13 +17,15 @@ The stable surface contains:
 - generic coordinate-map and vector-field operations;
 - H3 audiovisual-latent save/load.
 
-Five nodes live under `CAUCE/Research`. They are executable hypotheses, not
+Six nodes live under `CAUCE/Research`. They are executable hypotheses, not
 production presets:
 
 - native-latent bidirectional seam preparation;
 - direct H3 latent warp;
 - motion-correlated H3 noise;
-- sigma-conditioned latent transport.
+- sigma-conditioned latent transport;
+- one-shot H3 visual clean-estimate injection during deterministic Euler flow
+  sampling.
 
 CAUCE does not own:
 

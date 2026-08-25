@@ -11,11 +11,11 @@ nodes directly.
 
 ## Surface
 
-The installed package registers 25 nodes:
+The installed package registers 26 nodes:
 
 - 20 stable nodes under `CAUCE/Continuity`, `CAUCE/Temporal Inpainting`,
   `CAUCE/Motion Maps`, and `CAUCE/Persistence`;
-- 5 experimental nodes under `CAUCE/Research`.
+- 6 experimental nodes under `CAUCE/Research`.
 
 Stable operations:
 
@@ -33,7 +33,9 @@ Research operations:
 - native-latent bidirectional seam preparation;
 - direct H3 latent warping;
 - motion-correlated H3 noise;
-- sigma-conditioned latent transport.
+- sigma-conditioned latent transport;
+- one-shot H3 visual clean-estimate injection during deterministic Euler flow
+  sampling.
 
 Research nodes execute real tensor paths but do not carry a production-quality
 or motion-obedience guarantee.
@@ -80,6 +82,7 @@ ComfyUI runtime supplies those dependencies.
 - [Bidirectional temporal inpainting](docs/TEMPORAL_INPAINTING.md)
 - [Workflow contracts](docs/WORKFLOW_CONTRACTS.md)
 - [Motion-map mathematics](docs/MOTION_MAPS.md)
+- [H3 flow latent injection](docs/H3_FLOW_LATENT_INJECTION.md)
 - [Validation](docs/VALIDATION.md)
 - [Remote ComfyUI runtime](docs/REMOTE_COMFY_RUNTIME.md)
 

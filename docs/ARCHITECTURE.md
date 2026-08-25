@@ -28,6 +28,7 @@ cauce/
   motion.py            coordinate maps, fields, and sampling
   persistence.py       atomic H3 AV latent save/load
   sigma_transport.py   experimental sampler transport
+  latent_injection.py  experimental H3 flow clean-estimate injection
 
 cauce_nodes/
   continuity.py
@@ -112,7 +113,7 @@ the resulting `MASK[T,H,W]` into the H3 AV-latent contract.
 
 ## Research surface
 
-Five nodes are registered under `CAUCE/Research`. Their code paths are kept
+Six nodes are registered under `CAUCE/Research`. Their code paths are kept
 callable so experiments remain reproducible, but they are not dependencies of
 the stable operations.
 

@@ -12,8 +12,8 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-Confirm 25 registered nodes, matching display mappings, 20 stable nodes,
-and exactly five `CAUCE/Research` nodes.
+Confirm 26 registered nodes, matching display mappings, 20 stable nodes,
+and exactly six `CAUCE/Research` nodes.
 
 ## Gate 2 — H3 runtime
 
@@ -107,6 +107,13 @@ Every active Research run includes:
 
 For latent motion, measure optical flow or registration tied to the requested
 direction. Do not promote based only on output divergence.
+
+For H3 flow latent injection, run native Euler, a `strength = 0` control, and
+one small active intervention with the same graph and seed. The zero control
+must be visually and numerically identical to native Euler. Confirm exactly one
+injection, identical packed-audio output at the intervention, and at least one
+later model evaluation. Measure both intended guide pull and unintended motion
+or appearance collapse.
 
 ## Gate 8 — resource envelope
 

@@ -10,6 +10,11 @@ from ..cauce.motion import (
     motion_map_report,
     warp_h3_latent,
 )
+from ..cauce.latent_injection import (
+    H3FlowLatentInjectionSampler,
+    MASK_PROJECTIONS,
+    flow_injection_report_json,
+)
 from ..cauce.seams import (
     NATIVE_SEAM_CONTEXT_FRAMES,
     NATIVE_SEAM_WORKING_FRAMES,
@@ -241,12 +246,66 @@ class CauceSigmaMotionSampler:
         return sampler, sigma_transport_report_json(sampler)
 
 
+class CauceH3FlowLatentInjectionSampler:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base_sampler": ("SAMPLER",),
+                "guide_latent": ("LATENT",),
+                "inject_percent": (
+                    "FLOAT",
+                    {"default": 0.45, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "strength": (
+                    "FLOAT",
+                    {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "mask_projection": (
+                    list(MASK_PROJECTIONS),
+                    {"default": "mean"},
+                ),
+            },
+            "optional": {"mask": ("MASK",)},
+        }
+
+    RETURN_TYPES = ("SAMPLER", "STRING")
+    RETURN_NAMES = ("sampler", "report_json")
+    FUNCTION = "build"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Research: once during deterministic Euler flow sampling, partially "
+        "substitute a same-geometry H3 visual clean estimate while retaining "
+        "the current flow residual and leaving structural audio unchanged."
+    )
+
+    def build(
+        self,
+        base_sampler,
+        guide_latent,
+        inject_percent,
+        strength,
+        mask_projection,
+        mask=None,
+    ):
+        sampler = H3FlowLatentInjectionSampler(
+            base_sampler,
+            guide_latent,
+            inject_percent=inject_percent,
+            strength=strength,
+            mask=mask,
+            mask_projection=mask_projection,
+        )
+        return sampler, flow_injection_report_json(sampler)
+
+
 NODE_CLASS_MAPPINGS = {
     "CauceBuildNativeLatentSeam": CauceBuildNativeLatentSeam,
     "CaucePrepareH3NativeLatentInpaint": CaucePrepareH3NativeLatentInpaint,
     "CauceWarpH3Latent": CauceWarpH3Latent,
     "CauceWarpedH3Noise": CauceWarpedH3Noise,
     "CauceSigmaMotionSampler": CauceSigmaMotionSampler,
+    "CauceH3FlowLatentInjectionSampler": CauceH3FlowLatentInjectionSampler,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -255,4 +314,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceWarpH3Latent": "CAUCE Research · Warp H3 Latent",
     "CauceWarpedH3Noise": "CAUCE Research · Warped H3 Noise",
     "CauceSigmaMotionSampler": "CAUCE Research · Sigma Motion Sampler",
+    "CauceH3FlowLatentInjectionSampler": (
+        "CAUCE Research · H3 Flow Latent Injection Sampler"
+    ),
 }

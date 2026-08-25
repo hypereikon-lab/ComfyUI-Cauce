@@ -25,6 +25,9 @@ the operation is not already expressed faithfully by an official node.
 | H3 latent warp | CAUCE Research | experimental |
 | warped H3 noise | CAUCE Research | experimental |
 | sigma transport | CAUCE Research | experimental |
+| H3 clean-estimate latent injection | CAUCE Research | experimental deterministic-Euler sampler adapter |
+| H3 reference-key RoPE modulation | external mature node pack | compose with CAUCE; do not duplicate |
+| H3 Fun ControlNet | upstream ComfyUI + external weights | evaluate after upstream support matures; no CAUCE wrapper |
 | remote access and deployment | laboratory runtime | documented separately |
 
 ## Arbitrary media

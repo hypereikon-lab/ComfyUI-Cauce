@@ -79,6 +79,37 @@ right H3 AV latent ─┘
 Purpose: test whether source-native latent context improves continuity. This is
 not a production dependency and must be compared with W2 at matched settings.
 
+## W5 — H3 flow latent-injection ablation
+
+W5 evaluates direct visual-latent intervention without changing H3 references,
+guides, prompt, scheduler, target geometry, or structural audio.
+
+```text
+same-geometry guide video ─ H3 VAE encode ─ guide LATENT ─┐
+                                                          ├─ CauceH3FlowLatentInjectionSampler
+official KSamplerSelect(euler) ───────────────────────────┘
+
+official H3 target + conditioning ─ SamplerCustomAdvanced ─ decode ─ save
+```
+
+Run three matched cases:
+
+```text
+W5-A  official Euler sampler, no CAUCE sampler adapter
+W5-B  CAUCE adapter, strength = 0.00
+W5-C  CAUCE adapter, strength = 0.05, then 0.10 only if W5-B is exact
+```
+
+Start with `inject_percent = 0.45`, full mask, and `mask_projection = mean`.
+W5-A and W5-B must match exactly. W5-C must record the direction and magnitude
+of its visual effect, not merely that its output differs. Keep at least one H3
+model evaluation after the injection; the node enforces this structurally.
+
+After the full-mask ablation, connect one standard animated Comfy mask to test
+localized injection. The mask is projected to H3's causal visual-token spans;
+fractional values remain fractional. The guide latent must have the exact target
+`[B,C,T,H,W]` geometry. This experiment supports deterministic Euler only.
+
 ## Shared starting configuration
 
 ```text
@@ -104,6 +135,7 @@ cauce/temporal/W1_mask/<case>_<seed>
 cauce/temporal/W2_guides/<case>_<seed>
 cauce/temporal/W3_continuous/<case>_<seed>
 cauce/temporal/W4_native/<case>_<seed>
+cauce/research/W5_flow_injection/<case>_<seed>
 ```
 
 The browser workflow JSON and API prompt JSON are separate artifacts. Build the

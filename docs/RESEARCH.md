@@ -67,6 +67,79 @@ Consequences for CAUCE:
    compile fields into it rather than patching the model or wrapping the
    sampler.
 
+## AnimateDiff-to-H3 sampler audit — 2026-08-24
+
+Source snapshots:
+
+- ComfyUI `5f0c4e18cb7e98f0e7c46c2c7ce928d641351e67`;
+- MiniMax H3 `d21241f0a4b3acbb34c97dae47fa417b7065e438`;
+- H3 Context Noise `7e5531233b42dadd19c40d86770521a36508c358`;
+- H3 Context Loop `0e6109ba956625f22dd18ab779fdd1d490b11d8c`;
+- H3 Motion Context MultiRef
+  `87de57ba619297503fa49c9594c0c021d5b0c261`;
+- Untwisting RoPE `299d4c56a3f057a97b3140d2136189bcd1e7d6bb`.
+
+AnimateDiff Evolved established a useful experimental vocabulary: sliding
+context windows, scheduled context policies, FreeNoise, FreeInit, image
+injection during sampling, advanced ControlNet scheduling, and strict neutral
+controls. Its implementation assumptions do not transfer literally. AnimateDiff
+puts video time in the batch of a 2D latent diffusion model plus a temporal
+module. H3 uses a causal `f16t4d24` visual VAE, a separate structural-audio
+latent, rectified-flow sampling, and a 33B packed single-stream transformer with
+3D MM-RoPE.
+
+Current H3-relevant mechanisms divide cleanly:
+
+1. Official H3 references and `MiniMaxH3AddGuide` already own image, video, and
+   audio anchors. CAUCE must not duplicate them.
+2. H3 Motion Context and Context Loop carry a previous visual latent or decoded
+   tail into continuation. Context Noise adds tapered corruption to reduce
+   copied chroma/texture residue. These are continuation interventions.
+3. Untwisting RoPE scales selected frequency channels of selected native
+   reference keys after H3's Q/K normalization and rotary embedding. It leaves
+   target rows, Q, V, audio, guides, and the 32 unrotated head channels native.
+   This is a mature MIT external pack and should be composed, not copied.
+4. ComfyUI's generic context-window implementation understands packed
+   multimodal latents only when the model maps primary-window indices to every
+   modality. At the audited commit `MiniMaxH3` does not implement that mapping;
+   therefore an H3 wrapper would fail rather than provide an AnimateDiff-style
+   long-context path. CAUCE does not add one speculatively.
+5. MiniMax-H3-Fun-ControlNet-Union support exists as draft ComfyUI PR `#15860`
+   with separate trained weights. It is the proper future path for learned
+   pose/depth/canny-style residual control, not a reason to create a CAUCE
+   ControlNet wrapper.
+
+The missing, bounded hypothesis is state-space injection. CAUCE implements one
+visual clean-estimate substitution after an Euler flow transition:
+
+```text
+x' = x + a * M * (1 - sigma) * (guide - x0_hat)
+```
+
+It preserves the current implied flow residual, copies structural audio, and
+requires a later H3 evaluation. This is analogous in purpose to AnimateDiff
+image injection, but derived from H3's actual rectified-flow and packed-AV
+contracts. See `H3_FLOW_LATENT_INJECTION.md`.
+
+Primary and implementation references:
+
+- AnimateDiff Evolved:
+  <https://github.com/Kosinkadink/ComfyUI-AnimateDiff-Evolved>
+- FreeInit: <https://arxiv.org/abs/2312.07537>
+- Untwisting RoPE paper: <https://arxiv.org/abs/2602.05013>
+- H3 Untwisting implementation:
+  <https://github.com/xmarre/ComfyUI-Untwisting-RoPE>
+- H3 Context Noise:
+  <https://github.com/beijinren/ComfyUI-H3-Context-Noise>
+- H3 Context Loop:
+  <https://github.com/ethanfel/ComfyUI-MiniMaxH3-Contex-Loop>
+- draft H3 Fun ControlNet support:
+  <https://github.com/Comfy-Org/ComfyUI/pull/15860>
+- rectified-flow feature injection/editing reference, FREE-Edit:
+  <https://arxiv.org/abs/2603.01164>
+- rectified-flow inversion and feature sharing, RF-Edit:
+  <https://arxiv.org/abs/2411.04746>
+
 ## Current research questions
 
 ### Continuous spatiotemporal denoise fields

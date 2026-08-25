@@ -125,7 +125,7 @@ visual clean-estimate substitution after an Euler flow transition:
 x' = x + a * M * (1 - sigma) * (guide - x0_hat)
 ```
 
-It preserves the current implied flow residual, copies structural audio, and
+It preserves the current implied noise endpoint, copies structural audio, and
 requires a later H3 evaluation. This is analogous in purpose to AnimateDiff
 image injection, but derived from H3's actual rectified-flow and packed-AV
 contracts. See `H3_FLOW_LATENT_INJECTION.md`.

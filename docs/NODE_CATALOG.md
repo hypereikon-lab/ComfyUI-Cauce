@@ -107,7 +107,7 @@ All nodes in this section use `CATEGORY = CAUCE/Research`.
 | `CauceWarpH3Latent` | impose a coordinate pullback before repair sampling |
 | `CauceWarpedH3Noise` | bias motion through weak temporal noise correlation |
 | `CauceSigmaMotionSampler` | transport visual latent state during deterministic sampling |
-| `CauceH3FlowLatentInjectionSampler` | partially replace one visual clean estimate during deterministic Euler sampling while preserving the current flow residual and structural audio |
+| `CauceH3FlowLatentInjectionSampler` | partially replace one visual clean estimate during deterministic Euler sampling while preserving the implied noise endpoint and structural audio |
 
 These nodes require matched baselines and measured validation for every claimed
 effect.

@@ -15,20 +15,29 @@ if torch is not None:
 
 
 class H3FlowLatentInjectionContractTests(unittest.TestCase):
-    def test_step_resolution_always_leaves_a_model_evaluation(self):
-        self.assertEqual(resolve_injection_step(20, 0.0), 0)
-        self.assertEqual(resolve_injection_step(20, 1.0), 18)
-        self.assertLess(resolve_injection_step(20, 0.45), 19)
+    def test_step_resolution_uses_flow_coordinate_and_leaves_an_evaluation(self):
+        sigmas = [1.0, 0.95, 0.80, 0.55, 0.20, 0.0]
+        self.assertEqual(resolve_injection_step(sigmas, 0.0), 0)
+        self.assertEqual(resolve_injection_step(sigmas, 0.45), 2)
+        self.assertEqual(resolve_injection_step(sigmas, 1.0), 3)
         with self.assertRaises(ValueError):
-            resolve_injection_step(1, 0.5)
+            resolve_injection_step([1.0, 0.0], 0.5)
+
+    def test_h3_shifted_simple_schedule_does_not_treat_mid_step_as_mid_flow(self):
+        sigmas = [
+            12.0 * (1.0 - 0.05 * i) / (1.0 + 11.0 * (1.0 - 0.05 * i))
+            for i in range(20)
+        ] + [0.0]
+        self.assertEqual(resolve_injection_step(sigmas, 0.45), 17)
+        self.assertAlmostEqual(1.0 - sigmas[18], 3.0 / 7.0)
 
     def test_percent_and_strength_are_bounded(self):
         validate_flow_injection(0.0, 0.0)
         validate_flow_injection(1.0, 1.0)
-        for percent, strength in ((-0.1, 0.0), (1.1, 0.0), (0.5, -0.1), (0.5, 1.1)):
-            with self.subTest(percent=percent, strength=strength):
+        for progress, strength in ((-0.1, 0.0), (1.1, 0.0), (0.5, -0.1), (0.5, 1.1)):
+            with self.subTest(progress=progress, strength=strength):
                 with self.assertRaises(ValueError):
-                    validate_flow_injection(percent, strength)
+                    validate_flow_injection(progress, strength)
 
 
 @unittest.skipIf(torch is None, "PyTorch is supplied by ComfyUI, not CAUCE")
@@ -43,7 +52,7 @@ class H3FlowLatentInjectionTests(unittest.TestCase):
         )
         self.assertIs(result, current)
 
-    def test_full_injection_preserves_the_implied_flow_residual(self):
+    def test_full_injection_preserves_the_implied_noise_endpoint(self):
         clean = torch.randn(1, 2, 3, 4, 5)
         guide = torch.randn_like(clean)
         noise = torch.randn_like(clean)

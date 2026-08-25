@@ -128,6 +128,88 @@ gate is a coordinate-warped same-geometry guide with a known displacement,
 measured by registration or optical flow against both native Euler and the
 zero-strength control.
 
+### W5 scheduler audit and causal zoom guide
+
+The perceptual review of the first matrix correctly found no useful motion
+difference. A source audit of ComfyUI's `CONST` flow parameterization, Euler
+solver, simple scheduler, and H3 shift exposed a parameterization defect in the
+experiment: `inject_percent` selected a linear step index instead of an actual
+flow coordinate.
+
+With video shift 12 and 20 simple-scheduler steps, the old
+`inject_percent = 0.45` selected transition 9:
+
+```text
+sigma_before              0.936170
+sigma_after               0.923077
+clean weight 1-sigma      0.076923
+guide-delta weight        strength * 0.076923
+```
+
+The old `strength = 0.05` and `0.10` therefore moved the state by only
+`0.003846` and `0.007692` times the clean-guide difference. Calling those
+values five and ten percent of the sampled state was incorrect. The repaired
+node resolves the requested percentage against `1-sigma_next` in the supplied
+schedule and reports the actual transition and effective guide-delta weight.
+
+At the time of this report, that scheduler correction exists in the local
+source and test suite but has not yet been installed in the lab runtime. The
+matrices below deliberately used the already-deployed node with explicit step
+choices so the mathematical diagnosis could be tested before updating ComfyUI.
+
+Two stronger matrices were rendered on the still-deployed implementation to
+separate raw operator activity from useful motion control:
+
+```text
+early static guide    inject step 9,  sigma_after 0.923077
+strengths             0.25 / 0.50 / 1.00
+
+late static guide     inject step 18, sigma_after 0.387097
+strengths             0.05 / 0.10 / 0.25
+```
+
+Early strengths `0.25`, `0.50`, and `1.00` produced decoded SSIM versus native
+of `0.899710`, `0.643155`, and `0.427400`. Late strengths `0.05`, `0.10`, and
+`0.25` produced `0.937697`, `0.930297`, and `0.867784`. The hook therefore has
+a clear dose response; the original small settings were simply below a useful
+perceptual range.
+
+The causal guide replaced the repeated still with an exact centered affine
+zoom from scale `1.00` to `1.35` over 124 frames. Everything else remained
+fixed. Injection used transition 18 and strengths `0.10`, `0.25`, and `0.50`.
+A center-scale registration against each result's first frame produced:
+
+| case | frame 36 | frame 72 | frame 120 | correlation at frame 120 |
+| --- | ---: | ---: | ---: | ---: |
+| static guide, `0.25` | `1.09` | `1.01` | `1.035` | `0.6312` |
+| zoom guide, `0.25` | `1.09` | `1.14` | `1.32` | `0.6006` |
+| zoom guide, `0.50` | `1.09` | `1.185` | `1.33` | `0.8302` |
+
+This is the first direction-specific positive W5 result: the output followed
+the guide's known monotonic zoom and approached its `1.35` endpoint, while the
+matched static guide did not. It does not establish a general camera-control
+system. Stronger attraction also reduced VMAF Motion from native `3.728` to
+`2.109` at zoom-guide strength `0.50`, showing that the operation trades free
+model motion for guide locking.
+
+Live jobs:
+
+```text
+strong early static matrix   db6f115f-f78c-4490-8582-256c92b0156b
+strong early decode          b62a3346-6835-4deb-9d68-f0609facacb3
+late static matrix           ebe94336-e8da-419b-87b4-96a2a69ddeff
+late static decode           62dd5978-5e16-4ce4-9c85-be9582cd60cc
+causal zoom matrix           0cf12f28-91cc-44ad-8102-99a046cb6667
+causal zoom decode           66dc4b70-2db9-4fef-85d8-d14605bb6d4a
+```
+
+Current conclusion: one-shot clean-estimate substitution is a real,
+direction-sensitive trajectory bias when supplied a time-varying guide. The
+promotable control surface is the actual flow coordinate plus the effective
+guide-delta weight; linear step-index scheduling is retired. Remaining gates are
+translation/rotation controls, multiple seeds and scenes, temporal smoothness,
+and comparison with native `MiniMaxH3AddGuide` clip conditioning.
+
 ## Promotion rule
 
 No Research operation is promoted by clean decode alone. Promotion requires a

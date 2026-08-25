@@ -86,8 +86,8 @@ guides, prompt, scheduler, target geometry, or structural audio.
 
 ```text
 same-geometry guide video ─ H3 VAE encode ─ guide LATENT ─┐
-                                                          ├─ CauceH3FlowLatentInjectionSampler
-official KSamplerSelect(euler) ───────────────────────────┘
+official BasicScheduler ───────────────────────────────────┼─ CauceH3FlowLatentInjectionSampler
+official KSamplerSelect(euler) ────────────────────────────┘
 
 official H3 target + conditioning ─ SamplerCustomAdvanced ─ decode ─ save
 ```
@@ -100,7 +100,10 @@ W5-B  CAUCE adapter, strength = 0.00
 W5-C  CAUCE adapter, strength = 0.05, then 0.10 only if W5-B is exact
 ```
 
-Start with `inject_percent = 0.45`, full mask, and `mask_projection = mean`.
+Start with `flow_progress = 0.45`, full mask, and `mask_projection = mean`.
+The percentage targets actual clean weight `1-sigma_next`, not a normalized
+step index; connect the same `SIGMAS` to both the CAUCE adapter and
+`SamplerCustomAdvanced`.
 W5-A and W5-B must match exactly. W5-C must record the direction and magnitude
 of its visual effect, not merely that its output differs. Keep at least one H3
 model evaluation after the injection; the node enforces this structurally.

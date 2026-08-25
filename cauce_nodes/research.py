@@ -252,10 +252,17 @@ class CauceH3FlowLatentInjectionSampler:
         return {
             "required": {
                 "base_sampler": ("SAMPLER",),
+                "sigmas": ("SIGMAS",),
                 "guide_latent": ("LATENT",),
-                "inject_percent": (
+                "flow_progress": (
                     "FLOAT",
-                    {"default": 0.45, "min": 0.0, "max": 1.0, "step": 0.01},
+                    {
+                        "default": 0.45,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.01,
+                        "tooltip": "Target clean weight 1-sigma_next, not a linear step index.",
+                    },
                 ),
                 "strength": (
                     "FLOAT",
@@ -275,23 +282,25 @@ class CauceH3FlowLatentInjectionSampler:
     CATEGORY = CATEGORY
     DESCRIPTION = (
         "Research: once during deterministic Euler flow sampling, partially "
-        "substitute a same-geometry H3 visual clean estimate while retaining "
-        "the current flow residual and leaving structural audio unchanged."
+        "substitute a same-geometry H3 visual clean estimate while preserving "
+        "the implied noise endpoint and leaving structural audio unchanged."
     )
 
     def build(
         self,
         base_sampler,
+        sigmas,
         guide_latent,
-        inject_percent,
+        flow_progress,
         strength,
         mask_projection,
         mask=None,
     ):
         sampler = H3FlowLatentInjectionSampler(
             base_sampler,
+            sigmas,
             guide_latent,
-            inject_percent=inject_percent,
+            flow_progress=flow_progress,
             strength=strength,
             mask=mask,
             mask_projection=mask_projection,

@@ -43,7 +43,8 @@ where:
 - `guide` is a VAE-space visual latent with the exact target geometry.
 
 At `a*M = 1`, this substitutes the guide for the current clean estimate while
-preserving the Euler step's implied flow residual. Smaller values interpolate.
+preserving the Euler step's implied noise endpoint. The local Euler derivative
+changes, as it must when the clean endpoint changes. Smaller values interpolate.
 The node always leaves at least one later model evaluation so H3 can repair the
 intervention toward its learned audiovisual manifold.
 
@@ -53,8 +54,9 @@ Inputs:
 
 ```text
 base_sampler       official deterministic Euler SAMPLER
+sigmas             the exact SIGMAS also connected to SamplerCustomAdvanced
 guide_latent       same-geometry H3 visual LATENT
-inject_percent     Euler transition index in normalized schedule space
+flow_progress      target clean weight 1-sigma_next in H3 flow space
 strength           clean-estimate substitution fraction
 mask_projection    mean | maximum
 mask               optional visible-frame MASK[T,H,W]
@@ -71,6 +73,7 @@ The adapter fails closed when:
 
 - the base sampler is not deterministic Euler;
 - the runtime does not expose packed H3 AV geometry;
+- runtime sigmas differ from the schedule used to configure the adapter;
 - guide and target video geometry differ;
 - mask frame count is neither one nor the exact H3 decoded span;
 - fewer than two sampler transitions remain.
@@ -78,6 +81,13 @@ The adapter fails closed when:
 The first version intentionally excludes RES and other multistep solvers. Their
 history stores prior derivatives or clean estimates; changing only the current
 state would make the intervention internally inconsistent.
+
+`flow_progress` is deliberately not a linear step index. With H3's default
+video shift of 12, step 10 of a 20-step simple schedule lands at approximately
+`sigma = 0.923`, so its clean weight is only `0.077`. The adapter searches the
+actual supplied schedule for the transition whose `1-sigma_next` is closest to
+the requested value and reports the selected step, both sigmas, and the
+effective guide-delta weight `strength * (1-sigma_next)`.
 
 ## Mask geometry
 
@@ -123,7 +133,7 @@ steps, target geometry, and decode. Record:
 Then vary only one axis:
 
 ```text
-inject_percent: 0.30, 0.45, 0.60
+flow_progress: 0.20, 0.45, 0.60
 mask: full, temporal band, localized animated field
 guide: source latent, coordinate-warped source latent, alternative native latent
 ```
@@ -132,6 +142,11 @@ An acceptable result requires more than divergence from baseline. Inspect
 motion continuity, guide-direction obedience, texture locking, temporal reset,
 spatial tearing, audio-stream integrity, runtime, and memory. Failed settings
 belong in `LAB_RESULTS.md`.
+
+A repeated still is only a structural-attraction control. It cannot establish
+motion obedience. A causal motion test must encode a same-geometry sequence
+whose transform is known analytically, then measure the generated trajectory
+against both that guide and a matched static-guide branch.
 
 ## Adjacent mechanisms kept separate
 

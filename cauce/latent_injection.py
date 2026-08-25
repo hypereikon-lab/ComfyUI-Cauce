@@ -2,8 +2,8 @@
 
 The operation is deliberately narrower than a generic image-injection system.
 It accepts a same-geometry H3 visual latent and replaces part of the current
-clean-video estimate once during deterministic Euler sampling.  The current
-flow residual is retained, and the packed structural-audio stream is copied
+clean-video estimate once during deterministic Euler sampling.  The implied
+noise endpoint is retained, and the packed structural-audio stream is copied
 without modification.
 
 For H3's rectified-flow state
@@ -15,7 +15,7 @@ the corrected state at the same sigma is
 ``x'_sigma = x_sigma + a * M * (1 - sigma) * (guide - x0_hat)``.
 
 At ``a*M = 1`` this substitutes the guide for the current clean estimate while
-preserving the implied noise residual.  Fractional masks and strengths perform
+preserving the implied noise endpoint.  Fractional masks and strengths perform
 a local interpolation.  A later model evaluation is always required so H3 can
 project the intervention back toward its learned audiovisual manifold.
 """
@@ -33,28 +33,56 @@ SUPPORTED_INJECTION_SAMPLERS = ("sample_euler",)
 MASK_PROJECTIONS = ("mean", "maximum")
 
 
-def validate_flow_injection(inject_percent: float, strength: float) -> None:
-    percent = float(inject_percent)
+def validate_flow_injection(flow_progress: float, strength: float) -> None:
+    percent = float(flow_progress)
     amount = float(strength)
     if not math.isfinite(percent) or not 0.0 <= percent <= 1.0:
-        raise ValueError("inject_percent must lie in [0,1]")
+        raise ValueError("flow_progress must lie in [0,1]")
     if not math.isfinite(amount) or not 0.0 <= amount <= 1.0:
         raise ValueError("injection strength must lie in [0,1]")
 
 
-def resolve_injection_step(total_steps: int, inject_percent: float) -> int:
-    """Resolve the one Euler transition after which injection occurs.
+def _sigma_values(sigmas: Any) -> tuple[float, ...]:
+    """Return a validated, descending H3 flow schedule as Python floats."""
 
-    The final transition is excluded because an intervention at sigma zero
-    would have no subsequent H3 evaluation to repair it.
+    value = sigmas
+    if hasattr(value, "detach"):
+        value = value.detach().cpu()
+    if hasattr(value, "flatten"):
+        value = value.flatten()
+    if hasattr(value, "tolist"):
+        value = value.tolist()
+    try:
+        result = tuple(float(item) for item in value)
+    except TypeError as exc:
+        raise TypeError("H3 injection sigmas must be a one-dimensional schedule") from exc
+    if len(result) < 3:
+        raise ValueError("H3 latent injection requires at least two sampler steps")
+    if any(not math.isfinite(item) for item in result):
+        raise ValueError("H3 injection sigma schedule contains non-finite values")
+    if any(item < -1e-6 or item > 1.0 + 1e-6 for item in result):
+        raise ValueError("H3 flow sigmas must lie in [0,1]")
+    if any(left + 1e-7 < right for left, right in zip(result, result[1:])):
+        raise ValueError("H3 injection sigma schedule must be non-increasing")
+    return result
+
+
+def resolve_injection_step(sigmas: Any, flow_progress: float) -> int:
+    """Resolve an Euler transition in the actual H3 flow coordinate.
+
+    ``flow_progress`` targets clean weight ``1 - sigma_next`` rather than a
+    linear sampler-step index.  This distinction is material for H3's default
+    flow shift of 12: the middle step of a 20-step simple schedule is still at
+    approximately sigma 0.923.  The final transition to sigma zero is excluded
+    because an intervention there would have no later H3 evaluation to repair
+    it.
     """
 
-    validate_flow_injection(inject_percent, 0.0)
-    count = int(total_steps)
-    if count < 2:
-        raise ValueError("H3 latent injection requires at least two sampler steps")
-    requested = int(round(float(inject_percent) * float(count - 1)))
-    return min(count - 2, max(0, requested))
+    validate_flow_injection(flow_progress, 0.0)
+    values = _sigma_values(sigmas)
+    target = float(flow_progress)
+    candidates = range(len(values) - 2)
+    return min(candidates, key=lambda index: abs((1.0 - values[index + 1]) - target))
 
 
 def _video_samples(latent: dict[str, Any]):
@@ -138,7 +166,7 @@ def flow_preserving_video_injection(
     sigma: float,
     strength: float,
 ):
-    """Replace a clean estimate while retaining its rectified-flow residual."""
+    """Replace a clean estimate while retaining its implied noise endpoint."""
 
     import torch
 
@@ -176,14 +204,15 @@ class H3FlowLatentInjectionSampler:
     def __init__(
         self,
         base_sampler: Any,
+        sigmas: Any,
         guide_latent: dict[str, Any],
         *,
-        inject_percent: float = 0.45,
+        flow_progress: float = 0.45,
         strength: float = 0.15,
         mask: Any = None,
         mask_projection: str = "mean",
     ):
-        validate_flow_injection(inject_percent, strength)
+        validate_flow_injection(flow_progress, strength)
         if mask_projection not in MASK_PROJECTIONS:
             raise ValueError(
                 f"mask projection must be one of {', '.join(MASK_PROJECTIONS)}"
@@ -195,8 +224,9 @@ class H3FlowLatentInjectionSampler:
                 "H3 latent injection currently supports deterministic Euler only"
             )
         self.base_sampler = base_sampler
+        self._scheduled_sigmas = _sigma_values(sigmas)
         self.guide_video = _video_samples(guide_latent)
-        self.inject_percent = float(inject_percent)
+        self.flow_progress = float(flow_progress)
         self.strength = float(strength)
         self.mask = mask
         self.mask_projection = mask_projection
@@ -204,7 +234,9 @@ class H3FlowLatentInjectionSampler:
         self._latent_shapes: list[tuple[int, ...]] = []
         self._guide_internal = None
         self._mask_internal = None
-        self._injection_step = -1
+        self._injection_step = resolve_injection_step(
+            self._scheduled_sigmas, self.flow_progress
+        )
         self._observed_injections = 0
 
     def report(self) -> dict[str, Any]:
@@ -214,7 +246,15 @@ class H3FlowLatentInjectionSampler:
             "solver": self.sampler_name,
             "operator": "one_shot_clean_estimate_substitution",
             "equation": "x'=x+a*M*(1-sigma)*(guide-x0_hat)",
-            "inject_percent": self.inject_percent,
+            "inject_coordinate": "target_clean_weight=1-sigma_next",
+            "flow_progress": self.flow_progress,
+            "injection_step": self._injection_step,
+            "sigma_before": self._scheduled_sigmas[self._injection_step],
+            "sigma_after": self._scheduled_sigmas[self._injection_step + 1],
+            "actual_clean_weight": 1.0
+            - self._scheduled_sigmas[self._injection_step + 1],
+            "effective_guide_delta_weight": self.strength
+            * (1.0 - self._scheduled_sigmas[self._injection_step + 1]),
             "strength": self.strength,
             "mask_projection": self.mask_projection,
             "mask": "connected" if self.mask is not None else "full_visual_stream",
@@ -223,8 +263,18 @@ class H3FlowLatentInjectionSampler:
             "post_injection_requirement": "at_least_one_model_evaluation",
         }
 
-    def _prepare_runtime(self, model_wrap: Any, total_steps: int) -> None:
+    def _prepare_runtime(self, model_wrap: Any, sigmas: Any) -> None:
         import torch
+
+        runtime_sigmas = _sigma_values(sigmas)
+        if len(runtime_sigmas) != len(self._scheduled_sigmas) or any(
+            abs(left - right) > 1e-6
+            for left, right in zip(runtime_sigmas, self._scheduled_sigmas)
+        ):
+            raise RuntimeError(
+                "H3 latent injection received a different runtime sigma schedule "
+                "than the one used to configure the sampler"
+            )
 
         shapes = getattr(model_wrap.inner_model, "latent_shapes", None)
         if not shapes or len(shapes) < 2:
@@ -260,7 +310,6 @@ class H3FlowLatentInjectionSampler:
                 width=target_shape[4],
                 projection=self.mask_projection,
             ).detach()
-        self._injection_step = resolve_injection_step(total_steps, self.inject_percent)
         self._observed_injections = 0
 
     def _inject_packed(self, current: Any, denoised: Any, sigma: float):
@@ -373,8 +422,7 @@ class H3FlowLatentInjectionSampler:
         denoise_mask=None,
         disable_pbar=False,
     ):
-        total_steps = int(len(sigmas) - 1)
-        self._prepare_runtime(model_wrap, total_steps)
+        self._prepare_runtime(model_wrap, sigmas)
         import comfy.samplers  # type: ignore
 
         integrated = comfy.samplers.KSAMPLER(

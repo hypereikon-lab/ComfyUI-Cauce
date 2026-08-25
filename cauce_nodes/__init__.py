@@ -1,9 +1,9 @@
 """Aggregate CAUCE's deterministic node mappings."""
 
-from . import assembly, bridge, motion, persistence
+from . import assembly, motion, persistence, two_sided_window
 
 
-MODULES = (assembly, bridge, motion, persistence)
+MODULES = (assembly, motion, persistence, two_sided_window)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

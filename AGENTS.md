@@ -56,7 +56,7 @@ The registry is assembled from:
 
 ```text
 cauce_nodes/assembly.py
-cauce_nodes/bridge.py
+cauce_nodes/two_sided_window.py
 cauce_nodes/motion.py
 cauce_nodes/persistence.py
 ```
@@ -94,8 +94,8 @@ Do not install or upgrade global GPU packages to satisfy tests.
 - Treat upstream implementations as dependencies or graph components; do not
   copy their internals into CAUCE without a separate reason and validation.
 
-A CAUCE bridge plan selects guide media and accepted output ranges. It never
-claims to determine the model's internal transition. Every bridge report must
+A CAUCE two-sided window plan selects guide media and accepted output ranges. It never
+claims to determine the model's internal transition. Every window report must
 retain `quality_status = requires_visual_validation`.
 
 ## 5. Evidence language
@@ -128,16 +128,16 @@ CAUCE plan hash
 output prefix
 ```
 
-For the native guide bridge:
+For the H3 two-sided guide window:
 
 1. normalize both sources to matching geometry and 24 fps;
-2. run `CauceBuildH3GuideBridge`;
+2. run `CaucePrepareH3TwoSidedGuideWindow`;
 3. create a fresh official H3 target of the returned length;
 4. chain two official `MiniMaxH3AddGuide` nodes using returned clips and frame
    indices;
 5. sample and decode with the normal official graph;
-6. run `CauceApplyH3GuideBridge`;
-7. inspect the complete result and the isolated generated center.
+6. run `CauceAssembleH3TwoSidedGuideWindow`;
+7. inspect the complete result and the isolated accepted generated range.
 
 Do not describe this graph as successful before step 7.
 
@@ -200,7 +200,8 @@ A brief 502 is expected while ComfyUI restarts. Afterwards verify:
 
 ```text
 GET /customnode/installed
-GET /object_info/CauceBuildH3GuideBridge
+GET /object_info/CaucePrepareH3TwoSidedGuideWindow
+GET /object_info/CauceAssembleH3TwoSidedGuideWindow
 GET /queue
 ```
 
@@ -248,4 +249,4 @@ on an ambiguous progress display.
 - documentation matches the current registry;
 - no output is called successful without visual inspection;
 - live deployment, if requested and confirmed, reports the intended commit and
-  exposes `CauceBuildH3GuideBridge` through `/object_info`.
+  exposes both H3 two-sided guide-window nodes through `/object_info`.

@@ -1,8 +1,8 @@
 # CAUCE
 
 CAUCE is a small native ComfyUI node pack for deterministic media preparation,
-H3 guide-bridge assembly, reusable motion-reference construction, and packed H3
-audiovisual-latent persistence.
+H3 two-sided guide-window assembly, reusable motion-reference construction, and
+packed H3 audiovisual-latent persistence.
 
 It deliberately leaves MiniMax H3 conditioning and sampling to the official
 ComfyUI nodes. CAUCE does not wrap a sampler, modify H3 latents, or claim that a
@@ -13,16 +13,16 @@ completed queue item is a successful visual result.
 The package registers 15 nodes:
 
 - 10 coordinate-map and image-warp nodes under `CAUCE/Motion Maps`;
-- 2 bridge preparation/assembly nodes under `CAUCE/Native H3`;
+- 2 two-sided guide-window nodes under `CAUCE/Native H3`;
 - 2 packed audiovisual-latent save/load nodes under `CAUCE/Persistence`;
 - 1 exact decoded-range node under `CAUCE/Assembly`.
 
-## Native H3 guide bridge
+## H3 two-sided guide window
 
-`CauceBuildH3GuideBridge` extracts the final guide clip from source A and the
+`CaucePrepareH3TwoSidedGuideWindow` extracts the final guide clip from source A and the
 initial guide clip from source B. The graph supplies them to two official
 `MiniMaxH3AddGuide` nodes on a fresh H3 target. After normal official sampling
-and decoding, `CauceApplyH3GuideBridge` discards both guide intervals, accepts
+and decoding, `CauceAssembleH3TwoSidedGuideWindow` discards both guide intervals, accepts
 only the generated center, and assembles:
 
 ```text

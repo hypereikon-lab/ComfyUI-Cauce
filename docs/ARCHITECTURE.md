@@ -10,7 +10,7 @@ source media
   v
 official H3 conditioning -> sampler -> decode ComfyUI/MiniMax
   v
-range acceptance / bridge assembly ---------- CAUCE
+range acceptance / exact assembly ----------- CAUCE
   v
 normal ComfyUI save nodes
 ```
@@ -20,7 +20,7 @@ normal ComfyUI save nodes
 ```text
 cauce/
   assembly.py      exact decoded-frame selection
-  bridge.py        native AddGuide bridge plan, extraction, assembly
+  two_sided_window.py  AddGuide window plan, extraction, assembly
   contracts.py     canonical JSON and content hashes
   h3.py            packed audiovisual-latent validation
   motion.py        coordinate maps, fields, image-space sampling
@@ -29,14 +29,14 @@ cauce/
 
 cauce_nodes/
   assembly.py      one ComfyUI binding
-  bridge.py        two ComfyUI bindings
+  two_sided_window.py  two ComfyUI bindings
   motion.py        ten ComfyUI bindings
   persistence.py   two ComfyUI bindings
 ```
 
 ## Contracts
 
-The native bridge plan is serializable and content-addressed. It records source
+The two-sided window plan is serializable and content-addressed. It records source
 ranges, guide placement, accepted generated range, and ownership. It contains
 no prompt semantics and no hidden process state.
 

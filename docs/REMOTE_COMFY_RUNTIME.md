@@ -887,7 +887,7 @@ over early domain nouns such as:
 timeline engine
 shot ontology
 music-aware state
-semantic plate entity
+semantic media entity
 universal creative controller
 ```
 

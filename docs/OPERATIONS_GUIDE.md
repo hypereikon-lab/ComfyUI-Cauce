@@ -1,10 +1,10 @@
 # Operations guide
 
-## Prepare a native bridge
+## Prepare an H3 two-sided guide window
 
 1. Load source A and B as IMAGE batches.
 2. Normalize both to the same width, height, channels, and 24 fps.
-3. Add `CauceBuildH3GuideBridge`.
+3. Add `CaucePrepareH3TwoSidedGuideWindow`.
 4. Start with `guide_frames = 22` and `target_frames = 124`.
 5. Record the returned plan hash and inspect both guide batches.
 
@@ -21,8 +21,8 @@
 ## Assemble and review
 
 1. Feed the decoded target, both original sources, and plan to
-   `CauceApplyH3GuideBridge`.
-2. Save both `generated_bridge` and `joined_images` with distinct prefixes.
+   `CauceAssembleH3TwoSidedGuideWindow`.
+2. Save both `accepted_generated_range` and `joined_images` with distinct prefixes.
 3. Verify frame count and fps.
 4. Watch the A-to-center and center-to-B boundaries at normal speed and frame by
    frame.

@@ -37,8 +37,12 @@ class RegistrationTests(unittest.TestCase):
                     "CAUCE/Persistence",
                 },
             )
-            self.assertIn("CauceBuildH3GuideBridge", module.NODE_CLASS_MAPPINGS)
-            self.assertIn("CauceApplyH3GuideBridge", module.NODE_CLASS_MAPPINGS)
+            self.assertIn(
+                "CaucePrepareH3TwoSidedGuideWindow", module.NODE_CLASS_MAPPINGS
+            )
+            self.assertIn(
+                "CauceAssembleH3TwoSidedGuideWindow", module.NODE_CLASS_MAPPINGS
+            )
         finally:
             for key in list(sys.modules):
                 if key == name or key.startswith(name + "."):

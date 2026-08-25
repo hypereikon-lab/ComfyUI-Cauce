@@ -4,9 +4,9 @@ Use names that describe the actual operation.
 
 | Preferred term | Meaning |
 | --- | --- |
-| native H3 guide bridge | fresh H3 target conditioned by two official temporal guides |
+| H3 two-sided guide window | fresh H3 target conditioned by two official temporal guides |
 | guide clip | decoded IMAGE batch supplied to `MiniMaxH3AddGuide` |
-| accepted generated center | decoded interval between the two guide spans |
+| accepted generated range | decoded interval between the two guide spans |
 | native tail continuation | extension using a prior native H3 tail through supported guide conditioning |
 | motion-reference media | images/video geometrically prepared before official H3 conditioning |
 | coordinate pullback | target-to-source sampling map |

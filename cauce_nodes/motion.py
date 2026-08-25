@@ -270,7 +270,7 @@ class CauceDepthCameraMotionMap:
     RETURN_NAMES = ("motion_map", "validity", "report_json")
     FUNCTION = "build"
     CATEGORY = MAP_CATEGORY
-    DESCRIPTION = "Forward-splat a scalar depth plate into a camera pullback map with an explicit disocclusion mask."
+    DESCRIPTION = "Forward-splat a scalar depth image into a camera pullback map with an explicit disocclusion mask."
 
     def build(self, depth, frames, map_height, map_width, fps, **parameters):
         scalar = depth[0].detach().float().mean(dim=-1).cpu().numpy()

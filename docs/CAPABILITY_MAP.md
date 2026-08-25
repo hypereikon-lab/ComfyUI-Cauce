@@ -5,8 +5,8 @@
 | Operation | Deterministic contract | Result status |
 | --- | --- | --- |
 | exact decoded range | `[start, start + count)` | unit-validated |
-| H3 guide bridge plan | two guide clips, two frame indices, accepted center | unit-validated; visual result pending per run |
-| guide bridge assembly | `A + generated center + B` | unit-validated |
+| H3 two-sided guide-window plan | two guide clips, two frame indices, accepted generated range | unit-validated; visual result pending per run |
+| two-sided guide-window assembly | `A + accepted generated range + B` | unit-validated |
 | affine/analytic/perspective/displacement maps | inverse coordinate field | unit-validated |
 | vector-field advection | Euler/RK2/RK4 map integration | unit-validated |
 | depth camera reprojection | map plus disocclusion validity | unit-validated |
@@ -22,7 +22,7 @@
 | reference-video motion transfer | official Ref2VA graph |
 | arbitrary temporal guides | official `MiniMaxH3AddGuide` chain |
 | native tail continuation | validated external continuation nodes plus official H3 graph |
-| bridge between two videos | CAUCE guide selection + two official AddGuide nodes + CAUCE assembly |
+| generate a range between two source clips | CAUCE guide selection + two official AddGuide nodes + CAUCE assembly |
 | primitive/simulation motion conditioning | CAUCE image warp -> video reference -> official Ref2VA/AddGuide |
 
 “Composed” means the mechanism exists and the graph can be constructed. It is

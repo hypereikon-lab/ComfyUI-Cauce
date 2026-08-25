@@ -10,8 +10,8 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-Tests cover exact ranges, bridge geometry and hashing, source extraction,
-center-only assembly, motion-map algebra, H3 timebase math, persistence paths,
+Tests cover exact ranges, guide-window geometry and hashing, source extraction,
+accepted-range assembly, motion-map algebra, H3 timebase math, persistence paths,
 and the 15-node registry.
 
 Passing this gate does not evaluate H3 output quality.
@@ -21,8 +21,8 @@ Passing this gate does not evaluate H3 output quality.
 After a targeted install/restart:
 
 ```text
-GET /object_info/CauceBuildH3GuideBridge
-GET /object_info/CauceApplyH3GuideBridge
+GET /object_info/CaucePrepareH3TwoSidedGuideWindow
+GET /object_info/CauceAssembleH3TwoSidedGuideWindow
 GET /queue
 ```
 
@@ -36,8 +36,8 @@ Queue one graph. Confirm:
 - no validation or import errors;
 - expected target frame count and resolution;
 - two guide clips placed at the planned indices;
-- isolated generated center has the planned count;
-- joined output equals `len(A) + len(center) + len(B)`;
+- isolated accepted generated range has the planned count;
+- joined output equals `len(A) + len(accepted) + len(B)`;
 - output routes resolve through `/history` and `/view`.
 
 This gate earns only `executes`.
@@ -50,7 +50,7 @@ Inspect:
 - incoming motion from the generated interval into B;
 - identity, geometry, and texture stability;
 - duplicate or frozen guide frames;
-- discontinuity at both accepted-center boundaries;
+- discontinuity at both accepted-range boundaries;
 - normal-speed rhythm against the fixed soundtrack timeslot.
 
 Record prompt, seed, model, quantization, resolution, frame count, guide length,

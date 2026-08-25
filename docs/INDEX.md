@@ -11,5 +11,7 @@
 - [Operations guide](OPERATIONS_GUIDE.md): practical build/run sequence.
 - [Validation](VALIDATION.md): deterministic, schema, execution, and visual gates.
 - [Technical language](TECHNICAL_LANGUAGE.md): preferred terms and evidence labels.
+- [Working vocabulary](GLOSSARY.md): canonical names for frames, ranges, graphs,
+  latents, and receipts.
 - [Remote ComfyUI runtime](REMOTE_COMFY_RUNTIME.md): tunnel, APIs, Manager, tabs,
   deployment, and recovery.

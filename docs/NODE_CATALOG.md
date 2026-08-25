@@ -9,17 +9,17 @@ count.
 
 ## CAUCE/Native H3
 
-### `CauceBuildH3GuideBridge`
+### `CaucePrepareH3TwoSidedGuideWindow`
 
 Inputs two matching 24 fps IMAGE batches. Returns the left tail guide, right
-head guide, a hashed bridge plan, target frame count, right-guide frame index,
+head guide, a hashed window plan, target frame count, right-guide frame index,
 and JSON report. Defaults: 22-frame guides in a 124-frame target.
 
-### `CauceApplyH3GuideBridge`
+### `CauceAssembleH3TwoSidedGuideWindow`
 
-Consumes the original sources, decoded H3 target, and bridge plan. Discards the
+Consumes the original sources, decoded H3 target, and window plan. Discards the
 two conditioning intervals, returns the complete joined video and isolated
-generated center, and reports exact accepted ranges.
+accepted generated range, and reports exact ranges.
 
 ## CAUCE/Motion Maps
 

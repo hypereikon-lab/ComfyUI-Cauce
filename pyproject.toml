@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-cauce"
-version = "2.0.0"
-description = "Reference-media, native-guide bridge, and H3 AV persistence operations for ComfyUI"
+version = "2.1.0"
+description = "Deterministic reference-media, H3 guide-window, assembly, and AV persistence nodes"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

@@ -4,14 +4,14 @@ These are graph contracts, not bundled workflow JSON. Resolve exact sockets
 from the live `/object_info` registry before materializing a browser graph or
 API prompt.
 
-## 1. Bidirectional guide bridge
+## 1. Two-sided guide window
 
 Purpose: generate a new interval conditioned by the outgoing gesture of video A
 and incoming gesture of video B.
 
 ```text
 A IMAGE batch ─┐
-               ├─ CauceBuildH3GuideBridge
+               ├─ CaucePrepareH3TwoSidedGuideWindow
 B IMAGE batch ─┘       | left_guide, frame_idx = 0
                        | right_guide, frame_idx = returned value
                        | target_frames
@@ -20,7 +20,7 @@ official MiniMaxH3ImageToVideo (fresh target, no first/last image)
   -> official MiniMaxH3AddGuide(left_guide, 0)
   -> official MiniMaxH3AddGuide(right_guide, right_guide_frame_idx)
   -> official guider / sampler / H3 decode
-  -> CauceApplyH3GuideBridge(original A, original B, decoded target, plan)
+  -> CauceAssembleH3TwoSidedGuideWindow(original A, original B, decoded target, plan)
   -> Save Video
 ```
 
@@ -36,8 +36,8 @@ Default frame geometry:
                                               accepted: [22, 102)
 ```
 
-The graph uses a documented official H3 conditioning operation, but the bridge
-it produces remains subject to visual evaluation. Start with 22-frame guides;
+The graph uses a documented official H3 conditioning operation, but the
+generated range remains subject to visual evaluation. Start with 22-frame guides;
 compare only one variable at a time when testing 39 or 56 frames.
 
 Prompting should describe the intended transition motion without narrating the
@@ -61,7 +61,7 @@ useful to the production graph.
 CAUCE motion maps act before H3:
 
 ```text
-plate or primitive IMAGE
+source IMAGE batch or generated primitive frames
   -> one or more CAUCE map builders
   -> CauceComposeMotionMaps
   -> CauceWarpImage
@@ -76,7 +76,7 @@ H3's internal state.
 ## 4. Fixed soundtrack alignment
 
 Keep the final soundtrack as the editorial clock. Convert its time slots into
-24 fps frame ranges, generate or bridge the required visual intervals, and mux
+24 fps frame ranges, generate the required visual intervals, and mux
 the unchanged soundtrack only after the visual edit is assembled. Do not add
 audio conditioning unless a specific H3 workflow genuinely needs it.
 

@@ -13,7 +13,8 @@ git diff --check
 Tests cover operation catalog/schema/ownership/artifact invariants, decoded
 ranges, absolute 24→40 Hz token boundaries, window layout, allocation,
 synchronized span extraction, latent-guide metadata, drift-safe append,
-motion-map algebra, persistence paths, and the 19-node registry.
+motion-map algebra, persistence paths, the 19-node registry, complete offline
+topology coverage, and every topology port that touches a CAUCE node.
 
 ## Gate 2 — live schema
 

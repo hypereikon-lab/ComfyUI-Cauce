@@ -23,17 +23,19 @@ cauce            deterministic range, AV-state, map, or persistence primitive
 
 | Operation | Principal data function | Implementation | Artifact state | Evidence |
 | --- | --- | --- | --- | --- |
-| `generate.keyframed` | generate from prompt and optional endpoint frames | official H3 / vanilla | contract only | defined |
-| `generate.from_references` | generate from ordered reference images or clips | official H3 / vanilla | contract only | defined |
-| `generate.with_guides` | place decoded guides at exact target-frame indices | official H3 / vanilla | contract only | defined |
-| `continue.native_av` | extend synchronized packed H3 AV state | official H3 + CAUCE AV primitives | contract only | executes synthetically |
-| `connect.two_sided_guides` | generate a center conditioned by both decoded sides | official H3 + CAUCE ranges + vanilla assembly | contract only | defined |
-| `reference.transform` | construct decoded reference media from coordinate maps | CAUCE maps, optionally followed by official H3 | contract only | deterministic layer unit-validated |
-| `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract only | deterministic layer unit-validated |
+| `generate.keyframed` | generate from prompt and optional endpoint frames | official H3 / vanilla | contract + offline topology | defined |
+| `generate.from_references` | generate from ordered reference images or clips | official H3 / vanilla | contract + offline topology | defined |
+| `generate.with_guides` | place decoded guides at exact target-frame indices | official H3 / vanilla | contract + offline topology | defined |
+| `continue.native_av` | extend synchronized packed H3 AV state | official H3 + CAUCE AV primitives | contract + offline topology | executes synthetically |
+| `connect.two_sided_guides` | generate a center conditioned by both decoded sides | official H3 + CAUCE ranges + vanilla assembly | contract + offline topology | defined |
+| `reference.transform` | construct decoded reference media from coordinate maps | CAUCE maps, optionally followed by official H3 | contract + offline topology | deterministic layer unit-validated |
+| `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
 
 “Contract only” means no paired, import-tested UI graph and executable API
 template are shipped yet. It does not prevent the graph from being composed;
 it prevents the repository from claiming a reusable materialized artifact.
+The offline topology is a checked design dossier, not an additional artifact
+state and not an executable workflow. See [Topology drafts](TOPOLOGY_DRAFTS.md).
 
 ## Composability
 

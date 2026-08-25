@@ -9,6 +9,8 @@
   conditioning/sampling nodes.
 - [Semantic operations](OPERATIONS.md): typed, composable graph-level functions
   and their present artifact/evidence state.
+- [Operation topology dossiers](TOPOLOGY_DRAFTS.md): offline node/edge/binding
+  designs and the gates between design and executable graph artifacts.
 - [Operation data contracts](DATA_CONTRACTS.md): media/output references,
   generation bindings, guide sets, frame ranges, and native AV state.
 - [Motion maps](MOTION_MAPS.md): reference-media coordinate algebra.

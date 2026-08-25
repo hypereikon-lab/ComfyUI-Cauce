@@ -1,0 +1,64 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.with_guides",
+  "operation_version": 1,
+  "variant": "multi-anchor",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" }
+  ],
+  "nodes": [
+    { "key": "guide_a", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load the first decoded guide" },
+    { "key": "guide_b", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load the second decoded guide" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load the H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load the H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create the base prompt conditioning and fresh target" },
+    { "key": "add_guide_a", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "place the first guide at an exact frame" },
+    { "key": "add_guide_b", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "place the second guide on the active conditioning edge" },
+    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch explicit flow shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind final guided conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode visual frames" }
+  ],
+  "edges": [
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "add_guide_a", "port": "positive" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "add_guide_a", "port": "latent" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "add_guide_a", "port": "vae" } },
+    { "from": { "node": "guide_a", "port": "IMAGE" }, "to": { "node": "add_guide_a", "port": "image" } },
+    { "from": { "node": "add_guide_a", "port": "positive" }, "to": { "node": "add_guide_b", "port": "positive" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "add_guide_b", "port": "latent" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "add_guide_b", "port": "vae" } },
+    { "from": { "node": "guide_b", "port": "IMAGE" }, "to": { "node": "add_guide_b", "port": "image" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "add_guide_b", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "guide_a_filename", "type": "STRING", "target": { "node": "guide_a", "input": "image" }, "required": true },
+    { "name": "guide_b_filename", "type": "STRING", "target": { "node": "guide_b", "input": "image" }, "required": true },
+    { "name": "guide_a_frame", "type": "INT", "target": { "node": "add_guide_a", "input": "frame_idx" }, "required": true },
+    { "name": "guide_b_frame", "type": "INT", "target": { "node": "add_guide_b", "input": "frame_idx" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "noise", "input": "noise_seed" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": ["confirm AddGuide schema and negative-index resolution", "validate both guide ranges fit the target", "export the exact two-guide topology", "execute and inspect guide reconstruction and surrounding motion"]
+}

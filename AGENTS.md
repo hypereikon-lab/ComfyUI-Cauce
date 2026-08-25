@@ -84,6 +84,12 @@ prompt have been paired, validated against live node schemas, and recorded in
 the operation contract. A contract or evidence record may describe an exact
 graph without masquerading as an importable template.
 
+`operations/topologies/` contains non-executable offline design dossiers. Keep
+them symbolic and in `offline-draft` state. Validate all CAUCE-owned ports
+against the actual registry locally; validate official/vanilla ports against a
+fresh live `/object_info` capture during materialization. Never promote a
+topology file by renaming it into workflow JSON.
+
 Preserve dirty-worktree changes. Do not use destructive checkout, reset, broad
 cleanup, or force-push.
 

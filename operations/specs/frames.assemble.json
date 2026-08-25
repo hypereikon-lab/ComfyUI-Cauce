@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "frames.assemble",
-  "version": 1,
+  "version": 2,
   "title": "Assemble exact decoded frame ranges",
   "kind": "decoded-media-transform",
   "implementation_class": "cauce-and-vanilla-deterministic",
@@ -11,7 +11,7 @@
   ],
   "outputs": [
     { "name": "assembled_frames", "type": "IMAGE", "required": true, "cardinality": "sum of all accepted range lengths" },
-    { "name": "assembly_report", "type": "JSON", "required": true }
+    { "name": "accepted_frame_counts", "type": "INT", "required": true, "cardinality": "one count per accepted range" }
   ],
   "constraints": {
     "half_open_ranges": true,

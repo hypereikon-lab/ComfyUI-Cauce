@@ -59,8 +59,9 @@ frames.assemble
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. None currently ships as a reusable UI/API graph
-pair; materialization requires live paired validation first.
+artifact state, and evidence. Every current operation also has a validated
+non-executable topology dossier. None currently ships as a reusable UI/API
+graph pair; materialization requires live paired validation first.
 
 ## Install
 
@@ -77,6 +78,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Architecture and boundaries](docs/ARCHITECTURE.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Semantic operations](docs/OPERATIONS.md)
+- [Operation topology dossiers](docs/TOPOLOGY_DRAFTS.md)
 - [Operation data contracts](docs/DATA_CONTRACTS.md)
 - [Node catalog](docs/NODE_CATALOG.md)
 - [Motion-reference maps](docs/MOTION_MAPS.md)

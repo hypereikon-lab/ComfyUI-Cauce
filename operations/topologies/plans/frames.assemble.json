@@ -1,0 +1,36 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "frames.assemble",
+  "operation_version": 2,
+  "variant": "ordered-concatenation",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "ComfyUI-Cauce", "path": "docs/OPERATIONS_GUIDE.md", "commit": "5a7aab534e1cfec307d1ee7662029d2c0471e43f" }
+  ],
+  "nodes": [
+    { "key": "source_a", "owner": "vanilla-comfy", "class_type": null, "role": "load the first decoded frame batch" },
+    { "key": "source_b", "owner": "vanilla-comfy", "class_type": null, "role": "load the second decoded frame batch" },
+    { "key": "range_a", "owner": "cauce", "class_type": "CauceAcceptDecodedRange", "role": "select the first exact half-open range" },
+    { "key": "range_b", "owner": "cauce", "class_type": "CauceAcceptDecodedRange", "role": "select the second exact half-open range" },
+    { "key": "assemble", "owner": "vanilla-comfy", "class_type": "ImageBatch", "role": "concatenate both selected ranges in declared order" }
+  ],
+  "edges": [
+    { "from": { "node": "source_a", "port": "IMAGE" }, "to": { "node": "range_a", "port": "images" } },
+    { "from": { "node": "source_b", "port": "IMAGE" }, "to": { "node": "range_b", "port": "images" } },
+    { "from": { "node": "range_a", "port": "images" }, "to": { "node": "assemble", "port": "image1" } },
+    { "from": { "node": "range_b", "port": "images" }, "to": { "node": "assemble", "port": "image2" } }
+  ],
+  "bindings": [
+    { "name": "source_a_filename", "type": "STRING", "target": { "node": "source_a", "input": "media" }, "required": true },
+    { "name": "source_b_filename", "type": "STRING", "target": { "node": "source_b", "input": "media" }, "required": true },
+    { "name": "source_a_start", "type": "INT", "target": { "node": "range_a", "input": "start_frame" }, "required": true },
+    { "name": "source_a_count", "type": "INT", "target": { "node": "range_a", "input": "frame_count" }, "required": true },
+    { "name": "source_b_start", "type": "INT", "target": { "node": "range_b", "input": "start_frame" }, "required": true },
+    { "name": "source_b_count", "type": "INT", "target": { "node": "range_b", "input": "frame_count" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "assembled_frames", "type": "IMAGE", "source": { "node": "assemble", "port": "IMAGE" } },
+    { "name": "accepted_frame_counts", "type": "INT", "source": { "node": "range_b", "port": "accepted_frames" } }
+  ],
+  "live_gates": ["resolve exact media loaders", "confirm matching geometry and 24 fps interpretation", "validate source ranges before concatenation", "add encoding only as a downstream vanilla concern"]
+}

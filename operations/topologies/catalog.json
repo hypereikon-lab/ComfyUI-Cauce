@@ -1,0 +1,12 @@
+{
+  "schema": "cauce.operation-topology-catalog/1",
+  "topologies": [
+    { "operation": "connect.two_sided_guides", "path": "plans/connect.two_sided_guides.json" },
+    { "operation": "continue.native_av", "path": "plans/continue.native_av.json" },
+    { "operation": "frames.assemble", "path": "plans/frames.assemble.json" },
+    { "operation": "generate.from_references", "path": "plans/generate.from_references.json" },
+    { "operation": "generate.keyframed", "path": "plans/generate.keyframed.json" },
+    { "operation": "generate.with_guides", "path": "plans/generate.with_guides.json" },
+    { "operation": "reference.transform", "path": "plans/reference.transform.json" }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "reference.transform",
+  "operation_version": 1,
+  "variant": "affine",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "ComfyUI-Cauce", "path": "docs/MOTION_MAPS.md", "commit": "5a7aab534e1cfec307d1ee7662029d2c0471e43f" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load arbitrary decoded source media" },
+    { "key": "map", "owner": "cauce", "class_type": "CauceAffineMotionMap", "role": "construct one deterministic time-varying coordinate pullback" },
+    { "key": "warp", "owner": "cauce", "class_type": "CauceWarpImage", "role": "sample the decoded source once through the map" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "IMAGE" }, "to": { "node": "warp", "port": "image" } },
+    { "from": { "node": "map", "port": "motion_map" }, "to": { "node": "warp", "port": "motion_map" } }
+  ],
+  "bindings": [
+    { "name": "source_filename", "type": "STRING", "target": { "node": "source", "input": "image" }, "required": true },
+    { "name": "frame_count", "type": "INT", "target": { "node": "map", "input": "frames" }, "required": true },
+    { "name": "map_height", "type": "INT", "target": { "node": "map", "input": "map_height" }, "required": true },
+    { "name": "map_width", "type": "INT", "target": { "node": "map", "input": "map_width" }, "required": true },
+    { "name": "fps", "type": "FLOAT", "target": { "node": "map", "input": "fps" }, "required": true },
+    { "name": "translate_x_start", "type": "FLOAT", "target": { "node": "map", "input": "translate_x_start" }, "required": true },
+    { "name": "translate_x_end", "type": "FLOAT", "target": { "node": "map", "input": "translate_x_end" }, "required": true },
+    { "name": "translate_y_start", "type": "FLOAT", "target": { "node": "map", "input": "translate_y_start" }, "required": true },
+    { "name": "translate_y_end", "type": "FLOAT", "target": { "node": "map", "input": "translate_y_end" }, "required": true },
+    { "name": "scale_start", "type": "FLOAT", "target": { "node": "map", "input": "scale_start" }, "required": true },
+    { "name": "scale_end", "type": "FLOAT", "target": { "node": "map", "input": "scale_end" }, "required": true },
+    { "name": "rotation_start", "type": "FLOAT", "target": { "node": "map", "input": "rotation_start" }, "required": true },
+    { "name": "rotation_end", "type": "FLOAT", "target": { "node": "map", "input": "rotation_end" }, "required": true },
+    { "name": "pivot_x_percent", "type": "FLOAT", "target": { "node": "map", "input": "pivot_x_percent" }, "required": true },
+    { "name": "pivot_y_percent", "type": "FLOAT", "target": { "node": "map", "input": "pivot_y_percent" }, "required": true },
+    { "name": "easing", "type": "STRING", "target": { "node": "map", "input": "easing" }, "required": true },
+    { "name": "padding_mode", "type": "STRING", "target": { "node": "warp", "input": "padding_mode" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "reference_clip", "type": "IMAGE", "source": { "node": "warp", "port": "image" } },
+    { "name": "validity_mask", "type": "MASK", "source": { "node": "warp", "port": "validity" } }
+  ],
+  "live_gates": ["inspect the decoded reference clip before H3", "confirm exact live CAUCE socket names", "materialize other map families as separate variants", "treat H3 motion correspondence as unassessed until a controlled Ref2VA or guide run"]
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.keyframed",
+  "operation_version": 1,
+  "variant": "first-last",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" },
+    { "source": "Comfy-Org/workflow_templates", "path": "templates/video_minimax_h3_i2v.json", "commit": "66abae5205f7c5105281146fa109f7c12801d268" }
+  ],
+  "nodes": [
+    { "key": "first_frame", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load the first endpoint" },
+    { "key": "last_frame", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load the last endpoint" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load the H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load the H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load the FL2VA diffusion model" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create prompt, endpoint conditioning, and fresh packed AV target" },
+    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch the explicit video and structural-audio flow shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide the explicit seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind model and positive conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select the sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample the complete native AV target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode the sampled visual stream" }
+  ],
+  "edges": [
+    { "from": { "node": "first_frame", "port": "IMAGE" }, "to": { "node": "conditioning", "port": "first_frame" } },
+    { "from": { "node": "last_frame", "port": "IMAGE" }, "to": { "node": "conditioning", "port": "last_frame" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "first_frame_filename", "type": "STRING", "target": { "node": "first_frame", "input": "image" }, "required": true },
+    { "name": "last_frame_filename", "type": "STRING", "target": { "node": "last_frame", "input": "image" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
+    { "name": "height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "noise", "input": "noise_seed" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": ["resolve current loader combo values", "export UI and API from the same active graph", "validate API against the captured live object_info", "execute once and inspect endpoint fidelity and motion"]
+}

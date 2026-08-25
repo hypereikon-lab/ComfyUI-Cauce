@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hypereikon.online/schemas/cauce-operation-data-1.json",
+  "title": "CAUCE operation-level data contracts",
+  "$defs": {
+    "media_reference": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "$ref": "#/$defs/operation_output_reference" }
+      ]
+    },
+    "operation_output_reference": {
+      "type": "object",
+      "required": ["invocation", "output"],
+      "properties": {
+        "invocation": { "type": "string", "minLength": 1 },
+        "output": { "type": "string", "minLength": 1 },
+        "artifact_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "h3_generation_bindings": {
+      "type": "object",
+      "required": [
+        "model_files",
+        "width",
+        "height",
+        "target_frames",
+        "seed",
+        "sampler",
+        "scheduler",
+        "steps",
+        "denoise",
+        "shift_video",
+        "shift_audio",
+        "output_prefix"
+      ],
+      "properties": {
+        "model_files": { "type": "object", "minProperties": 1 },
+        "width": { "type": "integer", "minimum": 32, "multipleOf": 32 },
+        "height": { "type": "integer", "minimum": 32, "multipleOf": 32 },
+        "target_frames": { "type": "integer", "minimum": 5 },
+        "seed": { "type": "integer", "minimum": 0 },
+        "sampler": { "type": "string", "minLength": 1 },
+        "scheduler": { "type": "string", "minLength": 1 },
+        "steps": { "type": "integer", "minimum": 1 },
+        "denoise": { "type": "number", "minimum": 0, "maximum": 1 },
+        "shift_video": { "type": "number" },
+        "shift_audio": { "type": "number" },
+        "output_prefix": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "decoded_guide_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["media", "frame_index"],
+        "properties": {
+          "media": { "$ref": "#/$defs/media_reference" },
+          "frame_index": { "type": "integer" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "frame_range_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["media", "range"],
+        "properties": {
+          "media": { "$ref": "#/$defs/media_reference" },
+          "range": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "integer", "minimum": 1 }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

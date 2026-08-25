@@ -9,6 +9,8 @@
   conditioning/sampling nodes.
 - [Semantic operations](OPERATIONS.md): typed, composable graph-level functions
   and their present artifact/evidence state.
+- [Operation data contracts](DATA_CONTRACTS.md): media/output references,
+  generation bindings, guide sets, frame ranges, and native AV state.
 - [Motion maps](MOTION_MAPS.md): reference-media coordinate algebra.
 - [Operations guide](OPERATIONS_GUIDE.md): practical build/run sequence.
 - [Validation](VALIDATION.md): deterministic, schema, execution, and visual gates.

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class OperationContractTests(unittest.TestCase):
     def test_catalog_is_complete_and_semantic(self):
+        self.assertIsInstance(load_json(ROOT / "operations" / "data.schema.json"), dict)
         operations = load_operation_catalog(ROOT)
         self.assertEqual(
             set(operations),

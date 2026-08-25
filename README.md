@@ -77,6 +77,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Architecture and boundaries](docs/ARCHITECTURE.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Semantic operations](docs/OPERATIONS.md)
+- [Operation data contracts](docs/DATA_CONTRACTS.md)
 - [Node catalog](docs/NODE_CATALOG.md)
 - [Motion-reference maps](docs/MOTION_MAPS.md)
 - [Validation protocol](docs/VALIDATION.md)

@@ -10,7 +10,9 @@ into a custom node.
 
 ```text
 decoded media ---------------- exact ranges / reference maps ------ CAUCE
-packed H3 AV latent ----------- layout / span / guide / append ---- CAUCE
+H3 decoded inputs ------------- target / guide / reference plans -- CAUCE
+H3 conditioning --------------- read-only structural inspection --- CAUCE
+packed H3 AV latent ----------- layout / span / guide / split / append -- CAUCE
                                       |
                                       v
 official H3 conditioning -> official guider/sampler -> official decode
@@ -33,14 +35,17 @@ cauce/
   assembly.py      exact decoded-frame selection
   av_latent.py     absolute AV layouts, synchronized spans, guides, append
   contracts.py     canonical JSON, schemas, and content hashes
+  conditioning.py  read-only H3 conditioning metadata inspection
   h3.py            packed audiovisual-latent validation
+  h3_inputs.py     target, guide-clip, and reference-clip planning
   motion.py        coordinate maps, fields, image-space sampling
   persistence.py   atomic packed audiovisual-latent save/load
   timebase.py      exact H3 frame/video-token/audio-token arithmetic
 
 cauce_nodes/
   assembly.py      one decoded-range binding
-  av_latent.py     six H3 AV bindings
+  av_latent.py     seven H3 AV bindings
+  planning.py      four H3 input/conditioning planning bindings
   motion.py        ten reference-map bindings
   persistence.py   two persistence bindings
 
@@ -61,10 +66,11 @@ slices plus their absolute frame range. It intentionally is not exposed as a
 standalone `LATENT`: a subrange may inherit a nonzero timeline origin and must
 not silently reset its 40 Hz audio clock.
 
-The six operations remain orthogonal:
+The seven AV-state operations remain orthogonal:
 
 ```text
 inspect -> plan -> allocate -> extract -> add guide -> append
+                               split <-> append
 ```
 
 None loads a model, creates a prompt, selects a sampler, samples, decodes, or

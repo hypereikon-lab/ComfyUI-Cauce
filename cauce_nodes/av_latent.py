@@ -13,6 +13,7 @@ from ..cauce.av_latent import (
     extract_av_span,
     inspect_av_latent,
     plan_av_window,
+    split_av_latent,
 )
 
 
@@ -275,6 +276,49 @@ class CauceH3AppendAVSpan:
         )
 
 
+class CauceH3SplitAVLatent:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "cut_frame": (
+                    "INT",
+                    {"default": 124, "min": 5, "max": 10_000_000, "step": 17},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "CAUCE_H3_AV_SPAN", "INT", "INT", "STRING")
+    RETURN_NAMES = (
+        "prefix_latent",
+        "suffix_span",
+        "prefix_frames",
+        "suffix_frames",
+        "report_json",
+    )
+    FUNCTION = "split"
+    CATEGORY = CATEGORY
+    DESCRIPTION = "Split a complete H3 state into a valid prefix and contiguous suffix span."
+
+    def split(self, latent, cut_frame):
+        prefix, suffix, prefix_frames, suffix_frames = split_av_latent(
+            latent,
+            cut_frame=int(cut_frame),
+            nested_factory=_nested_factory,
+        )
+        report = {
+            "schema": "cauce.h3-av-split-report/1",
+            "timeline_origin_frame": 0,
+            "cut_frame": int(cut_frame),
+            "prefix_frames": prefix_frames,
+            "suffix_frames": suffix_frames,
+            "suffix_descriptor": suffix["descriptor"],
+            "suffix_descriptor_hash": suffix["descriptor_hash"],
+        }
+        return prefix, suffix, prefix_frames, suffix_frames, _json(report)
+
+
 NODE_CLASS_MAPPINGS = {
     "CauceH3InspectAVLatent": CauceH3InspectAVLatent,
     "CauceH3PlanAVWindow": CauceH3PlanAVWindow,
@@ -282,6 +326,7 @@ NODE_CLASS_MAPPINGS = {
     "CauceH3ExtractAVSpan": CauceH3ExtractAVSpan,
     "CauceH3AddAVSpanGuide": CauceH3AddAVSpanGuide,
     "CauceH3AppendAVSpan": CauceH3AppendAVSpan,
+    "CauceH3SplitAVLatent": CauceH3SplitAVLatent,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -291,4 +336,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceH3ExtractAVSpan": "CAUCE · Extract H3 AV Span",
     "CauceH3AddAVSpanGuide": "CAUCE · Add H3 AV Span Guide",
     "CauceH3AppendAVSpan": "CAUCE · Append H3 AV Span",
+    "CauceH3SplitAVLatent": "CAUCE · Split H3 AV Latent",
 }

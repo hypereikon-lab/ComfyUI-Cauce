@@ -19,6 +19,10 @@ vanilla-comfy    loaders, sampler, decode, batching, and file outputs
 cauce            deterministic range, AV-state, map, or persistence primitive
 ```
 
+The H3 planning and conditioning-inspection nodes are optional graph preflight
+primitives. They make official temporal rules and active metadata visible, but
+do not create a separate semantic operation or replace official H3 nodes.
+
 ## Current catalog
 
 | Operation | Principal data function | Implementation | Artifact state | Evidence |

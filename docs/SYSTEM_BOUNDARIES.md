@@ -5,8 +5,10 @@
 | H3 model loading, conditioning, sampling, decoding | official ComfyUI nodes |
 | arbitrary image/video guides at frame positions | `MiniMaxH3AddGuide` |
 | FL2VA and Ref2VA model behavior | MiniMax H3 / official integrations |
+| explicit target/guide/reference preprocessing plans | CAUCE |
+| read-only H3 conditioning structure inspection | CAUCE |
 | exact decoded frame-range selection | CAUCE |
-| absolute H3 AV window/span/append mathematics | CAUCE |
+| absolute H3 AV window/span/split/append mathematics | CAUCE |
 | insertion of a compatible native AV span into H3 conditioning | CAUCE |
 | coordinate-map mathematics and warped reference media | CAUCE |
 | packed H3 latent save/load | CAUCE |

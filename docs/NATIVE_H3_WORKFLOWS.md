@@ -3,6 +3,38 @@
 These are graph recipes, not bundled workflow JSON. Resolve exact official
 sockets against live `/object_info` before creating a UI graph or API prompt.
 
+## Visible H3 preflight
+
+The planning nodes expose official temporal preprocessing rules without
+replacing the official encoder or conditioning node:
+
+```text
+requested frames / dimensions
+  -> CauceH3ResolveTargetShape
+  -> resolved frame count ----------------> official H3 length
+
+decoded guide clip + official target latent
+  -> CauceH3PrepareGuideClip
+  -> accepted IMAGE + resolved frame index -> MiniMaxH3AddGuide
+
+decoded reference clip + requested target frames
+  -> CauceH3PrepareReferenceClip
+  -> accepted IMAGE -----------------------> MiniMaxH3ReferenceToVideo
+```
+
+Place `CauceH3InspectConditioning` on the active positive-conditioning edge
+immediately before the guider when a run needs structural evidence. Its
+`positive` output is the unmodified input.
+
+For cumulative native-state branching:
+
+```text
+cumulative origin-zero AV latent
+  -> CauceH3SplitAVLatent(cut=legal 17k+5 prefix)
+      -> prefix LATENT     -> alternate continuation
+      -> suffix AV SPAN    -> append to reconstruct the original state
+```
+
 ## Native AV tail continuation
 
 The operation is composed from low-level CAUCE data transformations and ordinary

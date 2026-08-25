@@ -16,8 +16,10 @@ CAUCE has two deliberately separate surfaces:
 The low-level surface owns:
 
 - deterministic decoded-media range selection;
+- visible H3 target, guide-clip, and reference-clip planning;
+- read-only inspection of active H3 conditioning structure;
 - absolute H3 AV frame/video-token/audio-token layouts;
-- synchronized packed-AV span extraction, native guide insertion, and append;
+- synchronized packed-AV span extraction, native guide insertion, split, and append;
 - generic image-space coordinate maps and reference-media warps;
 - bounded persistence of packed H3 audiovisual latents.
 
@@ -282,4 +284,5 @@ on an ambiguous progress display.
 - documentation matches the current registry;
 - no output is called successful without visual inspection;
 - live deployment, if requested and confirmed, reports the intended commit and
-  exposes all six H3 AV primitive nodes through `/object_info`.
+  exposes all seven H3 AV state nodes and four H3 planning nodes through
+  `/object_info`.

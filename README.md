@@ -15,10 +15,11 @@ capability present in the graph.
 
 ## Node surface
 
-The package registers 19 nodes:
+The package registers 24 nodes:
 
 - 1 exact decoded-range node under `CAUCE/Assembly`;
-- 6 packed H3 AV operations under `CAUCE/H3 AV Latent`;
+- 7 packed H3 AV operations under `CAUCE/H3 AV Latent`;
+- 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
 - 10 coordinate-map and image-warp nodes under `CAUCE/Motion Maps`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
 

@@ -53,6 +53,22 @@ An ordered list of decoded media references and exact pixel-frame indices:
 The materialized topology contains one official `MiniMaxH3AddGuide` node per
 item. A different guide count is a different static graph topology.
 
+Before the official node, `CauceH3PrepareGuideClip` can emit a
+`CAUCE_H3_GUIDE_PLAN`. The plan records the source frame count, accepted
+single-image or `17k+5` clip, discarded tail, resolved negative index, and
+half-open target range. It changes no conditioning.
+
+## H3 target and reference plans
+
+`CAUCE_H3_TARGET_PLAN` records the requested and resolved target frame counts,
+exact rational duration, target dimensions, visual/audio token counts, and
+whether the result lies inside the documented approximate trained range.
+
+`CAUCE_H3_REFERENCE_PLAN` records the source and resolved target counts, exact
+accepted `17k+5` prefix, discarded tail, and the frame indices/timestamps shown
+to Qwen at 2 fps. The accepted IMAGE batch remains decoded media and is passed
+to official Ref2VA conditioning.
+
 ## `CAUCE_FRAME_RANGE_SET`
 
 An ordered list of media/range pairs using half-open decoded frame intervals:
@@ -73,6 +89,12 @@ The graph contains one `CauceAcceptDecodedRange` per item and enough vanilla
 to H3's packed visual and structural-audio state. Cross-run references must
 retain the exact CAUCE save artifact and its hash. Decoded video is a different
 data product and cannot substitute for native state in `continue.native_av`.
+
+`CauceH3SplitAVLatent` operates only on an origin-zero cumulative state. It
+returns a complete prefix `LATENT` and a globally contiguous
+`CAUCE_H3_AV_SPAN`; immediately appending that span reconstructs the original
+state exactly. This supports rollback and branching without resetting a
+nonzero 40 Hz phase.
 
 ## Soundtrack boundary
 

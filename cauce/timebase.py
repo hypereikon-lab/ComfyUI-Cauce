@@ -100,6 +100,23 @@ def is_h3_frame_count(frames: int) -> bool:
     return frames >= H3_MIN_FRAMES and (frames - H3_FRAME_OFFSET) % H3_FRAME_STEP == 0
 
 
+def ceil_h3_frame_count(frames: int) -> int:
+    """Snap a requested target up exactly as the official H3 nodes do."""
+
+    value = max(H3_MIN_FRAMES, int(frames))
+    remainder = (value - H3_FRAME_OFFSET) % H3_FRAME_STEP
+    return value if remainder == 0 else value + H3_FRAME_STEP - remainder
+
+
+def floor_h3_frame_count(frames: int) -> int:
+    """Trim a clip down to the largest complete H3 17k+5 run."""
+
+    value = int(frames)
+    if value < H3_MIN_FRAMES:
+        raise ValueError("at least 5 frames are required for an H3 temporal clip")
+    return value - ((value - H3_FRAME_OFFSET) % H3_FRAME_STEP)
+
+
 def h3_visual_latent_frames(pixel_frames: int) -> int:
     if not is_h3_frame_count(pixel_frames):
         raise ValueError("H3 pixel frames must lie on the 17k+5 grid")

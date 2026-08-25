@@ -1,9 +1,9 @@
 """Aggregate CAUCE's deterministic node mappings."""
 
-from . import assembly, av_latent, motion, persistence
+from . import assembly, av_latent, motion, persistence, planning
 
 
-MODULES = (assembly, av_latent, motion, persistence)
+MODULES = (assembly, av_latent, motion, persistence, planning)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

@@ -12,6 +12,7 @@ from cauce.av_latent import (
     extract_av_span,
     inspect_av_latent,
     plan_av_window,
+    split_av_latent,
     validate_av_span,
     validate_av_window_layout,
 )
@@ -196,6 +197,28 @@ class AVLatentTests(unittest.TestCase):
         malformed["samples"] = (malformed["samples"][0], malformed["samples"][1][..., :-1])
         with self.assertRaisesRegex(ValueError, "audio temporal length"):
             inspect_av_latent(malformed)
+
+    def test_splits_a_cumulative_state_into_branchable_prefix_and_suffix(self):
+        prefix, suffix, prefix_frames, suffix_frames = split_av_latent(
+            self.previous,
+            cut_frame=124,
+        )
+        self.assertEqual(prefix_frames, 124)
+        self.assertEqual(suffix_frames, 119)
+        self.assertEqual(prefix["samples"][0].shape[2], 37)
+        self.assertEqual(prefix["samples"][1].shape[-1], 207)
+        _, _, descriptor = validate_av_span(suffix)
+        self.assertEqual(descriptor["global_start_frame"], 124)
+        self.assertEqual(descriptor["global_end_frame"], 243)
+
+        reconstructed, total = append_av_span(prefix, suffix)
+        self.assertEqual(total, 243)
+        np.testing.assert_array_equal(reconstructed["samples"][0], self.previous["samples"][0])
+        np.testing.assert_array_equal(reconstructed["samples"][1], self.previous["samples"][1])
+        with self.assertRaisesRegex(ValueError, r"17k\+5"):
+            split_av_latent(self.previous, cut_frame=123)
+        with self.assertRaisesRegex(ValueError, "non-empty suffix"):
+            split_av_latent(self.previous, cut_frame=243)
 
 
 if __name__ == "__main__":

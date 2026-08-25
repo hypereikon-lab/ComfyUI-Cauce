@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-cauce"
-version = "3.1.0"
+version = "3.2.0"
 description = "Deterministic ComfyUI primitives and semantic H3 operation contracts"
 readme = "README.md"
 requires-python = ">=3.10"

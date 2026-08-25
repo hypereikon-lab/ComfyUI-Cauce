@@ -9,6 +9,9 @@ from typing import Any
 
 AV_WINDOW_LAYOUT_SCHEMA = "cauce.h3-av-window-layout/1"
 AV_SPAN_SCHEMA = "cauce.h3-av-span/1"
+H3_TARGET_PLAN_SCHEMA = "cauce.h3-target-plan/1"
+H3_GUIDE_PLAN_SCHEMA = "cauce.h3-guide-plan/1"
+H3_REFERENCE_PLAN_SCHEMA = "cauce.h3-reference-plan/1"
 
 
 def canonical_json(value: Any) -> str:

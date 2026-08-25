@@ -493,3 +493,37 @@ def append_av_span(
     if validated_frames != total_frames:
         raise ValueError("appended AV latent length differs from the span timeline")
     return extended, total_frames
+
+
+def split_av_latent(
+    latent: Mapping[str, Any],
+    *,
+    cut_frame: int,
+    nested_factory: NestedFactory | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], int, int]:
+    """Split an origin-zero cumulative state into prefix latent and suffix span."""
+
+    cut = int(cut_frame)
+    video, audio, total_frames = validate_av_latent(latent)
+    if not is_h3_frame_count(cut):
+        raise ValueError("cut_frame must leave a complete 17k+5 H3 prefix")
+    if cut >= total_frames:
+        raise ValueError("cut_frame must leave a non-empty suffix")
+    video_end = visual_token_boundary(cut)
+    audio_end = h3_audio_token_boundary(cut)
+    prefix = _make_latent(
+        _clone(video[:, :, :video_end]),
+        _clone(audio[..., :audio_end]),
+        nested_factory,
+    )
+    _, _, prefix_frames = validate_av_latent(
+        prefix,
+        name="prefix_av_latent",
+    )
+    suffix_frames = total_frames - cut
+    suffix = extract_av_span(
+        latent,
+        start_frame=cut,
+        frame_count=suffix_frames,
+    )
+    return prefix, suffix, prefix_frames, suffix_frames

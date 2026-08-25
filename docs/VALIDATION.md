@@ -13,8 +13,10 @@ git diff --check
 Tests cover operation catalog/schema/ownership/artifact invariants, decoded
 ranges, absolute 24→40 Hz token boundaries, window layout, allocation,
 synchronized span extraction, latent-guide metadata, drift-safe append,
-motion-map algebra, persistence paths, the 19-node registry, complete offline
-topology coverage, and every topology port that touches a CAUCE node.
+reversible state split, official target/guide/reference preprocessing rules,
+conditioning inspection, motion-map algebra, persistence paths, the 24-node
+registry, complete offline topology coverage, and every topology port that
+touches a CAUCE node.
 
 ## Gate 2 — live schema
 
@@ -27,6 +29,11 @@ GET /object_info/CauceH3AllocateAVWindow
 GET /object_info/CauceH3ExtractAVSpan
 GET /object_info/CauceH3AddAVSpanGuide
 GET /object_info/CauceH3AppendAVSpan
+GET /object_info/CauceH3SplitAVLatent
+GET /object_info/CauceH3ResolveTargetShape
+GET /object_info/CauceH3PrepareGuideClip
+GET /object_info/CauceH3PrepareReferenceClip
+GET /object_info/CauceH3InspectConditioning
 GET /queue
 ```
 

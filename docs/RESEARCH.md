@@ -78,6 +78,8 @@ Source snapshots:
 - H3 Motion Context MultiRef
   `87de57ba619297503fa49c9594c0c021d5b0c261`;
 - Untwisting RoPE `299d4c56a3f057a97b3140d2136189bcd1e7d6bb`.
+- ComfyUI-MAINodes Motion Lab
+  `68a8cb68e569bf2770b6f84e7646c9324b23b538`.
 
 AnimateDiff Evolved established a useful experimental vocabulary: sliding
 context windows, scheduled context policies, FreeNoise, FreeInit, image
@@ -108,6 +110,13 @@ Current H3-relevant mechanisms divide cleanly:
    with separate trained weights. It is the proper future path for learned
    pose/depth/canny-style residual control, not a reason to create a CAUCE
    ControlNet wrapper.
+6. MAINodes Motion Lab retimes decoded frames, VAE-encodes that time-smear,
+   wraps it as an H3 V2V initialization, and runs a truncated schedule before
+   selecting the original clock back out. Its trajectory bank/load and paired
+   `x0` diagnostics are useful experimental infrastructure, but they are not
+   direct latent-coordinate motion operators. The project is GPL-3.0; CAUCE is
+   MIT and must compose with it or re-derive independent mathematics rather
+   than copy its implementation.
 
 The missing, bounded hypothesis is state-space injection. CAUCE implements one
 visual clean-estimate substitution after an Euler flow transition:
@@ -133,6 +142,8 @@ Primary and implementation references:
   <https://github.com/beijinren/ComfyUI-H3-Context-Noise>
 - H3 Context Loop:
   <https://github.com/ethanfel/ComfyUI-MiniMaxH3-Contex-Loop>
+- H3 Motion Lab, trajectory banking, and `x0` diagnostics:
+  <https://github.com/matlowai/ComfyUI-MAINodes>
 - draft H3 Fun ControlNet support:
   <https://github.com/Comfy-Org/ComfyUI/pull/15860>
 - rectified-flow feature injection/editing reference, FREE-Edit:

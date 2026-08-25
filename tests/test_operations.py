@@ -58,14 +58,40 @@ class OperationContractTests(unittest.TestCase):
         operations = load_operation_catalog(ROOT)
         for spec in operations.values():
             self.assertEqual(spec["artifacts"]["state"], "contract-only")
-            self.assertIsNone(spec["artifacts"]["ui_graph"])
-            self.assertIsNone(spec["artifacts"]["api_template"])
+            self.assertEqual(spec["artifacts"]["pairs"], [])
         graph_products = [
             path
             for path in (ROOT / "operations").rglob("*.json")
             if path.name.endswith(".ui.json") or ".api." in path.name
         ]
         self.assertEqual(graph_products, [])
+
+    def test_graph_pairs_are_scoped_to_declared_variants(self):
+        spec = copy.deepcopy(load_operation_catalog(ROOT)["generate.keyframed"])
+        spec["artifacts"] = {
+            "state": "paired-graphs",
+            "pairs": [
+                {
+                    "variant": "missing",
+                    "ui_graph": "artifacts/missing.ui.json",
+                    "api_template": "artifacts/missing.api.template.json",
+                    "ui_graph_hash": "0" * 64,
+                    "api_template_hash": "1" * 64,
+                }
+            ],
+        }
+        self.assertIn(
+            "graph artifact pair references unknown variant 'missing'",
+            validate_operation_spec(spec),
+        )
+
+    def test_paired_state_requires_a_pair(self):
+        spec = copy.deepcopy(load_operation_catalog(ROOT)["generate.keyframed"])
+        spec["artifacts"] = {"state": "paired-graphs", "pairs": []}
+        self.assertIn(
+            "paired-graphs operation requires at least one graph pair",
+            validate_operation_spec(spec),
+        )
 
     def test_visual_verdict_cannot_outrun_evidence(self):
         spec = copy.deepcopy(load_operation_catalog(ROOT)["generate.keyframed"])

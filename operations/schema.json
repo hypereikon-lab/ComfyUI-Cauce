@@ -56,13 +56,24 @@
     "variants": { "type": "array", "items": { "type": "object" } },
     "artifacts": {
       "type": "object",
-      "required": ["state", "ui_graph", "api_template", "ui_graph_hash", "api_template_hash"],
+      "required": ["state", "pairs"],
       "properties": {
         "state": { "enum": ["contract-only", "paired-graphs"] },
-        "ui_graph": { "type": ["string", "null"] },
-        "api_template": { "type": ["string", "null"] },
-        "ui_graph_hash": { "type": ["string", "null"] },
-        "api_template_hash": { "type": ["string", "null"] }
+        "pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["variant", "ui_graph", "api_template", "ui_graph_hash", "api_template_hash"],
+            "properties": {
+              "variant": { "type": "string", "minLength": 1 },
+              "ui_graph": { "type": "string", "pattern": "^artifacts/.+\\.ui\\.json$" },
+              "api_template": { "type": "string", "pattern": "^artifacts/.+\\.api\\.template\\.json$" },
+              "ui_graph_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+              "api_template_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            },
+            "additionalProperties": false
+          }
+        }
       },
       "additionalProperties": false
     },

@@ -152,20 +152,50 @@ def validate_operation_spec(value: Any) -> list[str]:
         state = artifacts.get("state")
         if state not in ARTIFACT_STATES:
             errors.append(f"invalid artifact state {state!r}")
-        values = [
-            artifacts.get("ui_graph"),
-            artifacts.get("api_template"),
-            artifacts.get("ui_graph_hash"),
-            artifacts.get("api_template_hash"),
-        ]
-        if state == "contract-only" and any(item is not None for item in values):
+        pairs = artifacts.get("pairs")
+        if not isinstance(pairs, list):
+            errors.append("artifact pairs must be a list")
+            pairs = []
+        if state == "contract-only" and pairs:
             errors.append("contract-only operation cannot claim graph artifacts")
-        if state == "paired-graphs":
-            if any(not isinstance(item, str) or not item for item in values):
-                errors.append("paired-graphs operation requires both paths and both hashes")
-            for item in values[2:]:
-                if isinstance(item, str) and not re.fullmatch(r"[0-9a-f]{64}", item):
-                    errors.append("graph artifact hashes must be lowercase SHA-256")
+        if state == "paired-graphs" and not pairs:
+            errors.append("paired-graphs operation requires at least one graph pair")
+
+        variant_ids = {
+            variant.get("id")
+            for variant in value.get("variants", [])
+            if isinstance(variant, dict) and isinstance(variant.get("id"), str)
+        }
+        paired_variants: set[str] = set()
+        for pair in pairs:
+            if not isinstance(pair, dict):
+                errors.append(f"malformed graph artifact pair {pair!r}")
+                continue
+            required_pair_fields = {
+                "variant",
+                "ui_graph",
+                "api_template",
+                "ui_graph_hash",
+                "api_template_hash",
+            }
+            if set(pair) != required_pair_fields:
+                errors.append("graph artifact pair has unexpected or missing fields")
+                continue
+            variant = pair.get("variant")
+            if variant not in variant_ids:
+                errors.append(f"graph artifact pair references unknown variant {variant!r}")
+            elif variant in paired_variants:
+                errors.append(f"duplicate graph artifact pair for variant {variant!r}")
+            else:
+                paired_variants.add(variant)
+            for field in ("ui_graph", "api_template"):
+                path = pair.get(field)
+                if not isinstance(path, str) or not path:
+                    errors.append(f"graph artifact pair requires {field}")
+            for field in ("ui_graph_hash", "api_template_hash"):
+                digest = pair.get(field)
+                if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+                    errors.append(f"graph artifact pair {field} must be lowercase SHA-256")
 
     evidence = value.get("evidence")
     if not isinstance(evidence, dict):
@@ -212,6 +242,25 @@ def load_operation_catalog(root: Path) -> dict[str, dict[str, Any]]:
             raise ValueError(f"catalog entry does not match {path}")
         if spec["id"] in loaded:
             raise ValueError(f"duplicate operation id {spec['id']!r}")
+        for pair in spec["artifacts"]["pairs"]:
+            for field in ("ui_graph", "api_template"):
+                relative_artifact = PurePosixPath(pair[field])
+                expected_suffix = ".ui.json" if field == "ui_graph" else ".api.template.json"
+                if (
+                    relative_artifact.is_absolute()
+                    or ".." in relative_artifact.parts
+                    or relative_artifact.parts[0] != "artifacts"
+                    or not relative_artifact.name.endswith(expected_suffix)
+                ):
+                    raise ValueError(f"unsafe {field} path {pair[field]!r}")
+                artifact_path = root / "operations" / Path(*relative_artifact.parts)
+                try:
+                    artifact = load_json(artifact_path)
+                except (OSError, json.JSONDecodeError) as exc:
+                    raise ValueError(f"invalid graph artifact {artifact_path}: {exc}") from exc
+                actual_hash = content_hash(artifact)
+                if actual_hash != pair[f"{field}_hash"]:
+                    raise ValueError(f"graph artifact hash mismatch for {artifact_path}")
         loaded[spec["id"]] = spec
     spec_paths = {path.resolve() for path in (root / "operations" / "specs").glob("*.json")}
     loaded_paths = {

@@ -34,10 +34,7 @@
   ],
   "artifacts": {
     "state": "contract-only",
-    "ui_graph": null,
-    "api_template": null,
-    "ui_graph_hash": null,
-    "api_template_hash": null
+    "pairs": []
   },
   "evidence": {
     "level": "unit-validated",

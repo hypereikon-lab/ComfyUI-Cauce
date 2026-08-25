@@ -65,19 +65,22 @@ native state.
 
 ## Materialization rule
 
-Each operation can eventually retain:
+Each operation can eventually retain one or more variant-scoped pairs:
 
 ```text
-<operation>.ui.json
-<operation>.api.template.json
+<operation>.<variant>.ui.json
+<operation>.<variant>.api.template.json
 ```
 
 The pair must come from the same active ComfyUI graph, be validated against the
 same live `/object_info` capture, and carry independent hashes. Optional graph
-branches use separate variants rather than muted or bypassed nodes.
+branches use separate variants rather than muted or bypassed nodes. A paired
+variant does not imply that the operation's other variants are materialized.
 
-Until those conditions hold, `artifacts.state` remains `contract-only` and both
-paths remain null.
+Until those conditions hold, `artifacts.state` remains `contract-only` and
+`artifacts.pairs` remains empty. Once at least one exact variant has a valid
+pair, the state becomes `paired-graphs` and every retained pair records its
+variant id, paths, and canonical JSON hashes.
 
 ## Evidence model
 

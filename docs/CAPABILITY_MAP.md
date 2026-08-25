@@ -9,14 +9,14 @@
 | H3 AV window layout | absolute 24 fps range mapped to visual and 40 Hz audio tokens | unit-validated |
 | H3 AV window allocation | fresh zero target matching layout and prior geometry | unit-validated |
 | H3 AV span extraction | synchronized visual/audio slice plus absolute range | unit-validated |
-| H3 AV span guide metadata | compatible span inserted at an explicit target frame | unit-validated; live schema/execution pending |
+| H3 AV span guide metadata | compatible span inserted at an explicit target frame | unit-validated; schema-validated; executes in W4 smoke |
 | H3 AV append | globally contiguous span concatenation with drift rejection | unit-validated |
 | affine/analytic/perspective/displacement maps | inverse coordinate field | unit-validated |
 | vector-field advection | Euler/RK2/RK4 map integration | unit-validated |
 | depth camera reprojection | map plus disocclusion validity | unit-validated |
 | map modulation/composition | one resampling-ready map | unit-validated |
 | image warp | decoded reference-media generation | unit-validated |
-| H3 AV persistence | atomic visual+structural-audio save/load | unit-validated at path layer; live tensor path pending |
+| H3 AV persistence | atomic visual+structural-audio save/load | unit-validated; save/load executes in W4 smoke verification |
 
 ## Workflow-level compositions
 
@@ -31,3 +31,15 @@
 
 “Composed” means the mechanism can be expressed as a graph. It does not mean a
 source/prompt pair is visually accepted.
+
+## Current evidence boundary
+
+The complete six-node H3 AV path has executed on the laboratory runtime with a
+synthetic packed latent. The run verified absolute planning, allocation, span
+extraction, guide insertion, suffix extraction, append, save, and reload. It did
+not establish production-resolution visual quality.
+
+The decoded-range and motion-map families are unit-validated. Their use inside
+a graph remains a composition possibility until that exact graph is
+schema-validated, executed, and visually evaluated where a visual objective is
+claimed.

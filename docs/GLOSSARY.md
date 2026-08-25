@@ -26,7 +26,6 @@ Use terms that identify observable data or a documented operation.
 documented native overlap into a later generation. `Inpainting` is reserved for
 an operation with source media, an explicit mask, and preserved regions.
 
-Do not use names such as *plate*, *confluence*, *seam fix*, or *continuity
-engine* as technical mechanisms. Editorial prose may say that a generated
-interval connects two clips, but implementation names must state the actual
-conditioning and frame-range operation.
+Implementation names must identify the actual conditioning, latent, coordinate
+map, or frame-range operation. An editorial description does not define a
+technical mechanism.

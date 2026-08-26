@@ -1,8 +1,7 @@
 # CAUCE
 
 CAUCE is a native ComfyUI standard library for deterministic media ranges,
-MiniMax H3 audiovisual-latent structure, reference-media coordinate maps, and
-bounded latent persistence.
+MiniMax H3 audiovisual-latent structure, and bounded latent persistence.
 
 Nodes expose low-level operations. Workflow graphs assign them production
 meaning. CAUCE does not own H3 model loading, prompts, conditioning from decoded
@@ -15,12 +14,11 @@ capability present in the graph.
 
 ## Node surface
 
-The package registers 28 nodes:
+The package registers 18 nodes:
 
 - 1 exact decoded-range node under `CAUCE/Assembly`;
 - 11 packed H3 AV operations under `CAUCE/H3 AV Latent`;
 - 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
-- 10 coordinate-map and image-warp nodes under `CAUCE/Motion Maps`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
 
 ## Native AV continuation as graph composition
@@ -56,12 +54,11 @@ generate.with_guides
 continue.native_av
 complete.native_av
 rollback.native_av
-reference.transform
 frames.assemble
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. Twenty-two validated, non-executable topology
+artifact state, and evidence. Twenty-one validated, non-executable topology
 dossiers cover every current operation, including official keyframe/reference/
 guide combinations and native AV continuation, completion, replacement, and
 rollback variants. None currently ships as a reusable UI/API graph pair;
@@ -85,7 +82,6 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Operation topology dossiers](docs/TOPOLOGY_DRAFTS.md)
 - [Operation data contracts](docs/DATA_CONTRACTS.md)
 - [Node catalog](docs/NODE_CATALOG.md)
-- [Motion-reference maps](docs/MOTION_MAPS.md)
 - [Validation protocol](docs/VALIDATION.md)
 - [Remote ComfyUI runtime](docs/REMOTE_COMFY_RUNTIME.md)
 

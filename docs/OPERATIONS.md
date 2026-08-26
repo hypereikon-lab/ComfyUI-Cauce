@@ -16,7 +16,7 @@ nodes that implement it. Every graph stage declares one of these owners:
 ```text
 official-comfy   model-specific H3 conditioning
 vanilla-comfy    loaders, sampler, decode, batching, and file outputs
-cauce            deterministic range, AV-state, map, or persistence primitive
+cauce            deterministic range, AV-state, or persistence primitive
 ```
 
 The H3 planning and conditioning-inspection nodes are optional graph preflight
@@ -33,7 +33,6 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `continue.native_av` | extend synchronized packed H3 AV state through keyframe or masked overlap | official H3 + CAUCE AV primitives | contract + offline topology | keyframe path executes synthetically; masked paths unit-validated |
 | `complete.native_av` | generate a prefix/interior/replacement while preserving explicit native AV context | official H3 + CAUCE placement/mask/replace primitives | contract + offline topology | deterministic layer unit-validated |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
-| `reference.transform` | construct decoded reference media from coordinate maps | CAUCE maps, optionally followed by official H3 | contract + offline topology | deterministic layer unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
 
 “Contract only” means no paired, import-tested UI graph and executable API
@@ -46,13 +45,6 @@ state and not an executable workflow. See [Topology drafts](TOPOLOGY_DRAFTS.md).
 
 Operations can be connected by their typed outputs rather than by catalog
 order. Examples:
-
-```text
-reference.transform
-  -> generate.from_references
-  -> continue.native_av
-  -> frames.assemble
-```
 
 ```text
 generate.keyframed

@@ -9,7 +9,7 @@ graph-level functions and node ownership without turning a complete workflow
 into a custom node.
 
 ```text
-decoded media ---------------- exact ranges / reference maps ------ CAUCE
+decoded media ---------------- exact ranges ----------------------- CAUCE
 H3 decoded inputs ------------- target / guide / reference plans -- CAUCE
 H3 conditioning --------------- read-only structural inspection --- CAUCE
 packed H3 AV latent ----------- layout / span / place / mask / replace -- CAUCE
@@ -40,7 +40,6 @@ cauce/
   conditioning.py  read-only H3 conditioning metadata inspection
   h3.py            packed audiovisual-latent validation
   h3_inputs.py     target, guide-clip, and reference-clip planning
-  motion.py        coordinate maps, fields, image-space sampling
   persistence.py   atomic packed audiovisual-latent save/load
   timebase.py      exact H3 frame/video-token/audio-token arithmetic
 
@@ -48,7 +47,6 @@ cauce_nodes/
   assembly.py      one decoded-range binding
   av_latent.py     eleven H3 AV bindings
   planning.py      four H3 input/conditioning planning bindings
-  motion.py        ten reference-map bindings
   persistence.py   two persistence bindings
 
 operations/
@@ -87,13 +85,6 @@ generation while `0` preserves the supplied latent token. CAUCE evaluates
 linear, smoothstep, or smootherstep temporal ramps at each stream's own token
 centers. It does not collapse 24 fps frames and 40 Hz audio tokens onto one
 approximate clock.
-
-## Motion-map contract
-
-Motion maps use inverse pullback coordinates (`target -> source`) normalized for
-PyTorch `grid_sample(..., align_corners=False)`. Maps carry validity and hashes
-and can be composed before a single decoded-image sample. Whether a resulting
-reference controls H3 as intended is a separate empirical question.
 
 ## Dependency policy
 

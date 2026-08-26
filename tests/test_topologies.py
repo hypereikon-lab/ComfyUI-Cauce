@@ -35,7 +35,6 @@ class TopologyTests(unittest.TestCase):
                 "generate.with_guides@guide-clip",
                 "generate.with_guides@multi-anchor",
                 "generate.with_guides@single-anchor",
-                "reference.transform@affine",
                 "rollback.native_av@branch-suffix",
             },
         )
@@ -48,7 +47,6 @@ class TopologyTests(unittest.TestCase):
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
-                "reference.transform",
                 "rollback.native_av",
             },
         )

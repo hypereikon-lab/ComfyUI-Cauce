@@ -11,7 +11,6 @@ Use names that describe the actual operation.
 | placed AV span | synchronized native context copied to an exact compatible target interval |
 | AV window layout | absolute frame interval and its synchronized video/audio token boundaries |
 | AV span | typed synchronized tensor subrange retaining absolute timeline bounds |
-| motion-reference media | images/video geometrically prepared before official H3 conditioning |
 | coordinate pullback | target-to-source sampling map |
 | structural-audio stream | packed H3 internal stream, distinct from the fixed production soundtrack |
 

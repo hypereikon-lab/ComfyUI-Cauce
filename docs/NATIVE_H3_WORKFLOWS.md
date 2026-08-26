@@ -132,20 +132,6 @@ The suffix can be appended to reconstruct the original state or replaced by a
 new continuation. This is deterministic state management and requires no H3
 sampling.
 
-## Motion-reference media
-
-```text
-source IMAGE batch or generated primitive frames
-  -> CAUCE map builders
-  -> CauceComposeMotionMaps
-  -> CauceWarpImage
-  -> inspect decoded reference
-  -> official Ref2VA or MiniMaxH3AddGuide graph
-```
-
-This path does not modify H3 latents or sampler internals. A correct coordinate
-map is not evidence that H3 followed it; evaluate that separately.
-
 ## Fixed soundtrack alignment
 
 Keep the final soundtrack as the editorial clock. Convert timeslots to exact 24

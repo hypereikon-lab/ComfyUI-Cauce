@@ -15,8 +15,8 @@ ranges, absolute 24→40 Hz token boundaries, window layout, allocation,
 synchronized span extraction, latent-guide metadata, drift-safe append,
 reversible state split, exact span placement/rebase, independent continuous AV
 denoise masks, exact interval replacement, mask cleanup, official target/
-guide/reference preprocessing rules, conditioning inspection, motion-map
-algebra, persistence paths, the 28-node
+guide/reference preprocessing rules, conditioning inspection,
+persistence paths, the 18-node
 registry, complete offline topology coverage, and every topology port that
 touches a CAUCE node.
 

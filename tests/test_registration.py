@@ -20,7 +20,7 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 28)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 18)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
@@ -34,7 +34,6 @@ class RegistrationTests(unittest.TestCase):
                     "CAUCE/Assembly",
                     "CAUCE/H3 AV Latent",
                     "CAUCE/H3 Planning",
-                    "CAUCE/Motion Maps",
                     "CAUCE/Persistence",
                 },
             )

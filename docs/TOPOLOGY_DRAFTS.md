@@ -23,7 +23,6 @@ API prompt object. Its required state is `offline-draft`.
 | `continue.native_av` | `keyframe-overlap`, `masked-overlap`, `masked-overlap-future-guide` | explicit native overlap transport around ordinary official sampling |
 | `complete.native_av` | `backward-prefix`, `two-sided-infill`, `local-replacement`, `two-source-connection` | native span placement, independent AV masks, optional exact interval replacement |
 | `rollback.native_av` | `branch-suffix` | exact native split and optional branch persistence |
-| `reference.transform` | `affine` | deterministic CAUCE coordinate map and decoded-image warp |
 | `frames.assemble` | `ordered-concatenation` | exact CAUCE decoded ranges plus vanilla image batching |
 
 This catalog is exhaustive over files and complete over operations: tests

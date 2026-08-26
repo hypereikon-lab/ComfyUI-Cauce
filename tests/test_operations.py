@@ -27,7 +27,6 @@ class OperationContractTests(unittest.TestCase):
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
-                "reference.transform",
                 "rollback.native_av",
             },
         )
@@ -49,7 +48,7 @@ class OperationContractTests(unittest.TestCase):
         for operation_id in ("continue.native_av", "complete.native_av"):
             owners = {stage["owner"] for stage in operations[operation_id]["graph_contract"]}
             self.assertTrue({"official-comfy", "cauce"} <= owners)
-        for operation_id in ("reference.transform", "frames.assemble", "rollback.native_av"):
+        for operation_id in ("frames.assemble", "rollback.native_av"):
             spec = operations[operation_id]
             owners = {stage["owner"] for stage in spec["graph_contract"]}
             self.assertEqual(spec["kind"], "decoded-media-transform")

@@ -21,7 +21,6 @@
     { "operation": "generate.with_guides", "variant": "first-last-interior", "path": "plans/generate.with_guides.first-last-interior.json" },
     { "operation": "generate.with_guides", "variant": "multi-anchor", "path": "plans/generate.with_guides.json" },
     { "operation": "generate.with_guides", "variant": "single-anchor", "path": "plans/generate.with_guides.single-anchor.json" },
-    { "operation": "reference.transform", "variant": "affine", "path": "plans/reference.transform.json" },
     { "operation": "rollback.native_av", "variant": "branch-suffix", "path": "plans/rollback.native_av.json" }
   ]
 }

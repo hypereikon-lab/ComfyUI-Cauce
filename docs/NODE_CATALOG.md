@@ -40,21 +40,6 @@ metadata; the official sampler owns how that metadata affects inference.
 Planning nodes do not encode media, create conditioning, or sample. Their
 accepted IMAGE output is passed to the corresponding official H3 node.
 
-## CAUCE/Motion Maps
-
-| Node | Operation |
-| --- | --- |
-| `CauceAffineMotionMap` | translation, scale, rotation, pivot, easing |
-| `CauceAnalyticMotionMap` | swirl, pinch, wave, radial wave, tunnel, kaleidoscope |
-| `CaucePerspectiveMotionMap` | four-corner projective pullback |
-| `CauceDisplacementMotionMap` | import arbitrary RG displacement data |
-| `CauceModulateMotionMap` | temporal envelope and optional spatial mask |
-| `CauceVectorField` | uniform, rotation, radial, vortex, curl, wave fields |
-| `CauceIntegrateAdvection` | Euler, RK2, or RK4 field integration |
-| `CauceDepthCameraMotionMap` | depth-based camera reprojection and validity |
-| `CauceComposeMotionMaps` | compose maps before media sampling |
-| `CauceWarpImage` | sample IMAGE media through a map |
-
 ## CAUCE/Persistence
 
 ### `CauceSaveAVLatent`

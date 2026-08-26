@@ -5,9 +5,13 @@
     { "operation": "continue.native_av", "variant": "characterized-layout", "path": "plans/continue.native_av.json" },
     { "operation": "frames.assemble", "variant": "ordered-concatenation", "path": "plans/frames.assemble.json" },
     { "operation": "generate.from_references", "variant": "image-reference-match", "path": "plans/generate.from_references.image-reference-match.json" },
+    { "operation": "generate.from_references", "variant": "image-reference-max", "path": "plans/generate.from_references.image-reference-max.json" },
     { "operation": "generate.from_references", "variant": "video-reference", "path": "plans/generate.from_references.json" },
     { "operation": "generate.keyframed", "variant": "first-frame", "path": "plans/generate.keyframed.first-frame.json" },
     { "operation": "generate.keyframed", "variant": "first-last", "path": "plans/generate.keyframed.json" },
+    { "operation": "generate.keyframed", "variant": "last-frame", "path": "plans/generate.keyframed.last-frame.json" },
+    { "operation": "generate.keyframed", "variant": "text-only", "path": "plans/generate.keyframed.text-only.json" },
+    { "operation": "generate.with_guides", "variant": "guide-clip", "path": "plans/generate.with_guides.guide-clip.json" },
     { "operation": "generate.with_guides", "variant": "multi-anchor", "path": "plans/generate.with_guides.json" },
     { "operation": "generate.with_guides", "variant": "single-anchor", "path": "plans/generate.with_guides.single-anchor.json" },
     { "operation": "reference.transform", "variant": "affine", "path": "plans/reference.transform.json" }

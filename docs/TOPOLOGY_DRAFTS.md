@@ -17,9 +17,9 @@ API prompt object. Its required state is `offline-draft`.
 
 | Operation | Draft variant | Principal composition |
 | --- | --- | --- |
-| `generate.keyframed` | `first-frame`, `first-last` | official `MiniMaxH3ImageToVideo` with exact selected endpoint inputs |
-| `generate.from_references` | `image-reference-match`, `video-reference` | official `MiniMaxH3ReferenceToVideo` with one exact static topology per reference family |
-| `generate.with_guides` | `single-anchor`, `multi-anchor` | one or two ordered official `MiniMaxH3AddGuide` nodes |
+| `generate.keyframed` | `text-only`, `first-frame`, `last-frame`, `first-last` | complete official `MiniMaxH3ImageToVideo` endpoint-input matrix |
+| `generate.from_references` | `image-reference-match`, `image-reference-max`, `video-reference` | official `MiniMaxH3ReferenceToVideo` with guarded reference mode |
+| `generate.with_guides` | `single-anchor`, `multi-anchor`, `guide-clip` | one/two image guides or one temporally prepared guide clip |
 | `continue.native_av` | `characterized-layout` | official sampling plus CAUCE AV window/span/append primitives |
 | `connect.two_sided_guides` | `default` | decoded left/right ranges, two official guides, exact assembly |
 | `reference.transform` | `affine` | deterministic CAUCE coordinate map and decoded-image warp |

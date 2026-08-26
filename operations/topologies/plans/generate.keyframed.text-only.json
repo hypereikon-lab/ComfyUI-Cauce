@@ -1,0 +1,61 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.keyframed",
+  "operation_version": 1,
+  "variant": "text-only",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" },
+    { "source": "Comfy-Org/workflow_templates", "path": "templates/video_minimax_h3_i2v.json", "commit": "66abae5205f7c5105281146fa109f7c12801d268" }
+  ],
+  "nodes": [
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load the H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load the H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create prompt-only conditioning and a fresh packed AV target" },
+    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch explicit flow shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind model and conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample native AV target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode visual frames" }
+  ],
+  "edges": [
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
+    { "name": "height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "video_shift", "type": "FLOAT", "target": { "node": "sigma_shift", "input": "video_shift" }, "required": true },
+    { "name": "audio_shift", "type": "FLOAT", "target": { "node": "sigma_shift", "input": "audio_shift" }, "required": true },
+    { "name": "steps", "type": "INT", "target": { "node": "scheduler", "input": "steps" }, "required": true },
+    { "name": "scheduler_name", "type": "STRING", "target": { "node": "scheduler", "input": "scheduler" }, "required": true },
+    { "name": "sampler_name", "type": "STRING", "target": { "node": "sampler", "input": "sampler_name" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "noise", "input": "noise_seed" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": [
+    "confirm both endpoint sockets are absent rather than muted",
+    "resolve all live loader and enum values",
+    "export the paired UI/API graph",
+    "execute and assess prompt-only generation separately from anchored variants"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.from_references",
+  "operation_version": 2,
+  "variant": "image-reference-max",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" },
+    { "source": "Comfy-Org/workflow_templates", "path": "templates/video_minimax_h3_r2v.json", "commit": "66abae5205f7c5105281146fa109f7c12801d268" }
+  ],
+  "nodes": [
+    { "key": "image_reference", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load one ordered image reference" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load the H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load the H3 video VAE" },
+    { "key": "audio_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "supply the required Ref2VA audio-VAE socket without soundtrack conditioning" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load Ref2VA" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ReferenceToVideo", "role": "encode the image reference with ref_image_size fixed to max" },
+    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch explicit flow shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind model and conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample native AV target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode visual frames" }
+  ],
+  "edges": [
+    { "from": { "node": "image_reference", "port": "IMAGE" }, "to": { "node": "conditioning", "port": "ref_images.ref_image_0" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "audio_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "audio_vae" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "image_reference_filename", "type": "STRING", "target": { "node": "image_reference", "input": "image" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "reference_image_size", "type": "STRING", "target": { "node": "conditioning", "input": "ref_image_size" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "video_shift", "type": "FLOAT", "target": { "node": "sigma_shift", "input": "video_shift" }, "required": true },
+    { "name": "audio_shift", "type": "FLOAT", "target": { "node": "sigma_shift", "input": "audio_shift" }, "required": true },
+    { "name": "steps", "type": "INT", "target": { "node": "scheduler", "input": "steps" }, "required": true },
+    { "name": "scheduler_name", "type": "STRING", "target": { "node": "scheduler", "input": "scheduler" }, "required": true },
+    { "name": "sampler_name", "type": "STRING", "target": { "node": "sampler", "input": "sampler_name" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "noise", "input": "noise_seed" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": [
+    "guard ref_image_size at max and leave video-reference sockets absent",
+    "confirm autogrow API input names and image ordering",
+    "export the paired UI/API graph",
+    "compare memory, token cost, and correspondence against image-reference-match"
+  ]
+}

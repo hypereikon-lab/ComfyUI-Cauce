@@ -10,6 +10,19 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
+The ordinary suite can skip tensor-dependent cases when the selected Python
+does not provide NumPy. That reduced result is useful for contract-only checks
+but is not complete validation. Before release, use a pre-existing runtime that
+already provides NumPy and require zero skips:
+
+```bash
+python3 tools/verify_full.py
+```
+
+`verify_full.py` fails closed when NumPy is absent or any test is skipped. Do
+not install or upgrade the laboratory GPU environment merely to satisfy this
+offline gate.
+
 Tests cover operation catalog/schema/ownership/artifact invariants, decoded
 ranges, absolute 24→40 Hz token boundaries, window layout, allocation,
 synchronized span extraction, latent-guide metadata, drift-safe append,

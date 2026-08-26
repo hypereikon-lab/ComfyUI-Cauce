@@ -103,5 +103,6 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 ```bash
 python3 -m compileall -q cauce cauce_nodes
 python3 -m unittest discover -s tests -v
+python3 tools/verify_full.py  # release gate: requires a pre-existing NumPy runtime
 git diff --check
 ```

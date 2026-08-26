@@ -103,6 +103,10 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
+The normal suite may skip tensor-dependent cases when NumPy is absent. Release
+claims require `python3 tools/verify_full.py` under a pre-existing NumPy runtime
+and zero skips. Never install or upgrade global GPU packages to make this pass.
+
 Do not install or upgrade global GPU packages to satisfy tests.
 
 ## 4. H3-native rules

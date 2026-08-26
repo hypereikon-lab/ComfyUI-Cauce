@@ -15,10 +15,10 @@ capability present in the graph.
 
 ## Node surface
 
-The package registers 24 nodes:
+The package registers 28 nodes:
 
 - 1 exact decoded-range node under `CAUCE/Assembly`;
-- 7 packed H3 AV operations under `CAUCE/H3 AV Latent`;
+- 11 packed H3 AV operations under `CAUCE/H3 AV Latent`;
 - 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
 - 10 coordinate-map and image-warp nodes under `CAUCE/Motion Maps`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
@@ -54,17 +54,18 @@ generate.keyframed
 generate.from_references
 generate.with_guides
 continue.native_av
-connect.two_sided_guides
+complete.native_av
+rollback.native_av
 reference.transform
 frames.assemble
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. Fourteen validated, non-executable topology
-dossiers cover every current operation, the complete keyframe-input matrix,
-both image-reference sizing modes, video reference, image anchors, and guide
-clips. None currently ships as a reusable UI/API graph pair; materialization
-requires live paired validation first.
+artifact state, and evidence. Twenty-two validated, non-executable topology
+dossiers cover every current operation, including official keyframe/reference/
+guide combinations and native AV continuation, completion, replacement, and
+rollback variants. None currently ships as a reusable UI/API graph pair;
+materialization requires live paired validation first.
 
 ## Install
 

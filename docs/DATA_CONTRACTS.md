@@ -97,6 +97,29 @@ returns a complete prefix `LATENT` and a globally contiguous
 state exactly. This supports rollback and branching without resetting a
 nonzero 40 Hz phase.
 
+`CauceH3PlaceAVSpan` accepts an explicit target origin and frame index. It may
+rebase the span descriptor only when its visual-token length and absolute
+40 Hz structural-audio phase remain exact. Incompatible placement is rejected;
+there is no fractional-token interpolation.
+
+## Native AV denoise mask
+
+Current official H3 sampling accepts `noise_mask` with the same nested video/
+structural-audio shape as the packed latent. CAUCE stores it as:
+
+```text
+latent["noise_mask"] = nested(video_mask, audio_mask)
+```
+
+Both values are continuous in `[0, 1]`: `1` requests generation and `0`
+preserves the supplied token. Video and audio profiles are evaluated on their
+own token centers from one pixel-frame interval. Optional linear, smoothstep,
+or smootherstep fades may extend before/after the fully generated interval.
+Composition is explicit: replace, maximum, minimum, or multiply.
+
+The mask is transient inference metadata. Clear it before persisting a completed
+native state unless a later run deliberately reuses that exact mask.
+
 ## Soundtrack boundary
 
 The fixed production soundtrack is not part of these operation inputs. H3's

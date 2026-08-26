@@ -1,8 +1,8 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "continue.native_av",
-  "operation_version": 1,
-  "variant": "characterized-layout",
+  "operation_version": 2,
+  "variant": "keyframe-overlap",
   "state": "offline-draft",
   "basis": [
     { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" },

@@ -1,0 +1,57 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "complete.native_av",
+  "version": 1,
+  "title": "Complete an unknown interval in native H3 AV state",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3-with-cauce-primitives",
+  "summary": "Generate a prefix, interior interval, or local replacement while preserving known native H3 video and structural-audio spans through continuous per-token masks.",
+  "inputs": [
+    { "name": "target_native_av_latent", "type": "LATENT", "required": true, "cardinality": "one complete target lattice, optionally containing known spans" },
+    { "name": "known_spans", "type": "CAUCE_H3_AV_SPAN", "required": false, "cardinality": "zero, one, or two spans placed before masking" },
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "unknown_start_frame", "type": "INT", "required": true },
+    { "name": "unknown_frame_count", "type": "INT", "required": true },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "completed_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "generated_interval", "type": "CAUCE_H3_AV_SPAN", "required": true },
+    { "name": "completed_frames", "type": "IMAGE", "required": false }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "unknown_interval_must_end_on_visual_token_boundary": true,
+    "absolute_audio_clock_hz": 40,
+    "mask_semantics": "1 generates, 0 preserves",
+    "continuous_mask_curves": ["linear", "smoothstep", "smootherstep"],
+    "minimum_comfyui_core_commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8",
+    "fixed_soundtrack_conditioning": false,
+    "sampler_patch": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate the complete target lattice" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3PlaceAVSpan", "role": "place each externally supplied known span at its explicit target range", "repeatable": true, "optional": true },
+    { "order": 3, "owner": "cauce", "node_type": "CauceH3SetAVDenoiseInterval", "role": "mark the unknown interval for generation and preserve known context on each side" },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the exact target shape" },
+    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally add decoded anchors without replacing native preservation", "repeatable": true, "optional": true },
+    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample the masked AV target with the ordinary official path" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract the explicit generated interval" },
+    { "order": 9, "owner": "cauce", "node_type": "CauceH3ReplaceAVSpan", "role": "optionally replace the same interval in an existing cumulative state", "optional": true },
+    { "order": 10, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata before persistence" }
+  ],
+  "variants": [
+    { "id": "backward-prefix", "unknown_position": "prefix", "known_sides": ["right"], "rebase_required": true },
+    { "id": "two-sided-infill", "unknown_position": "interior", "known_sides": ["left", "right"] },
+    { "id": "local-replacement", "unknown_position": "interior", "base_state_replacement": true },
+    { "id": "two-source-connection", "unknown_position": "interior", "known_spans_from_distinct_sources": true }
+  ],
+  "artifacts": { "state": "contract-only", "pairs": [] },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Placement, exact AV masking, replacement, and mask cleanup are unit-validated; every H3 sampling topology remains an offline draft until paired live execution and visual assessment."
+  }
+}

@@ -1,13 +1,15 @@
 {
   "schema": "cauce.operation/1",
   "id": "generate.with_guides",
-  "version": 1,
+  "version": 2,
   "title": "Generate with guides at exact frame indices",
   "kind": "h3-inference",
   "implementation_class": "official-h3",
   "summary": "Generate one H3 target with one or more decoded guide frames or clips placed at explicit pixel-frame indices.",
   "inputs": [
     { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "first_frame", "type": "IMAGE", "required": false, "cardinality": "one endpoint frame" },
+    { "name": "last_frame", "type": "IMAGE", "required": false, "cardinality": "one endpoint frame" },
     { "name": "guides", "type": "CAUCE_DECODED_GUIDE_SET", "required": true, "cardinality": "one or more media/index pairs" },
     { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
   ],
@@ -33,7 +35,8 @@
   "variants": [
     { "id": "single-anchor", "guide_count": 1 },
     { "id": "multi-anchor", "guide_count": "two or more" },
-    { "id": "guide-clip", "guide_length_rule": "17k+5" }
+    { "id": "guide-clip", "guide_length_rule": "17k+5" },
+    { "id": "first-last-interior", "first_frame": true, "last_frame": true, "interior_guide_count": "one or more" }
   ],
   "artifacts": {
     "state": "contract-only",

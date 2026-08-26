@@ -7,12 +7,16 @@ import json
 from collections.abc import Mapping
 
 from ..cauce.av_latent import (
+    apply_av_denoise_interval,
     allocate_av_window_like,
     append_av_span,
     build_av_span_keyframes,
+    clear_av_denoise_mask,
     extract_av_span,
     inspect_av_latent,
+    place_av_span,
     plan_av_window,
+    replace_av_span,
     split_av_latent,
 )
 
@@ -319,6 +323,190 @@ class CauceH3SplitAVLatent:
         return prefix, suffix, prefix_frames, suffix_frames, _json(report)
 
 
+class CauceH3PlaceAVSpan:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "target_av_latent": ("LATENT",),
+                "span": ("CAUCE_H3_AV_SPAN",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "target_frame_idx": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "BOOLEAN", "STRING")
+    RETURN_NAMES = ("latent", "rebased", "report_json")
+    FUNCTION = "place"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Copy one synchronized native AV span into a target at an exact frame; "
+        "does not choose denoise policy."
+    )
+
+    def place(self, target_av_latent, span, timeline_origin_frame, target_frame_idx):
+        latent, report = place_av_span(
+            target_av_latent,
+            span,
+            timeline_origin_frame=int(timeline_origin_frame),
+            target_frame_idx=int(target_frame_idx),
+            nested_factory=_nested_factory,
+        )
+        return latent, bool(report["rebased"]), _json(report)
+
+
+class CauceH3SetAVDenoiseInterval:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "start_frame": (
+                    "INT",
+                    {"default": 22, "min": 0, "max": 10_000_000},
+                ),
+                "frame_count": (
+                    "INT",
+                    {"default": 119, "min": 1, "max": 10_000_000},
+                ),
+                "inside_strength_video": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "outside_strength_video": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "inside_strength_audio": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "outside_strength_audio": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "fade_in_frames": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "fade_out_frames": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "curve": (["linear", "smoothstep", "smootherstep"],),
+                "combine": (["replace", "maximum", "minimum", "multiply"],),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("latent", "report_json")
+    FUNCTION = "apply"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Attach continuous per-token H3 video/audio noise masks: 1 generates and 0 preserves."
+    )
+
+    def apply(
+        self,
+        latent,
+        timeline_origin_frame,
+        start_frame,
+        frame_count,
+        inside_strength_video,
+        outside_strength_video,
+        inside_strength_audio,
+        outside_strength_audio,
+        fade_in_frames,
+        fade_out_frames,
+        curve,
+        combine,
+    ):
+        masked, report = apply_av_denoise_interval(
+            latent,
+            timeline_origin_frame=int(timeline_origin_frame),
+            start_frame=int(start_frame),
+            frame_count=int(frame_count),
+            inside_strength_video=float(inside_strength_video),
+            outside_strength_video=float(outside_strength_video),
+            inside_strength_audio=float(inside_strength_audio),
+            outside_strength_audio=float(outside_strength_audio),
+            fade_in_frames=int(fade_in_frames),
+            fade_out_frames=int(fade_out_frames),
+            curve=str(curve),
+            combine=str(combine),
+            nested_factory=_nested_factory,
+        )
+        return masked, _json(report)
+
+
+class CauceH3ReplaceAVSpan:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base_av_latent": ("LATENT",),
+                "replacement_span": ("CAUCE_H3_AV_SPAN",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("latent", "report_json")
+    FUNCTION = "replace"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Replace one globally aligned native AV interval and discard any spent noise mask."
+    )
+
+    def replace(self, base_av_latent, replacement_span, timeline_origin_frame):
+        latent, report = replace_av_span(
+            base_av_latent,
+            replacement_span,
+            timeline_origin_frame=int(timeline_origin_frame),
+            nested_factory=_nested_factory,
+        )
+        return latent, _json(report)
+
+
+class CauceH3ClearAVDenoiseMask:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "BOOLEAN")
+    RETURN_NAMES = ("latent", "removed")
+    FUNCTION = "clear"
+    CATEGORY = CATEGORY
+    DESCRIPTION = "Remove a consumed H3 AV noise mask without changing either latent stream."
+
+    def clear(self, latent, timeline_origin_frame):
+        return clear_av_denoise_mask(
+            latent,
+            timeline_origin_frame=int(timeline_origin_frame),
+        )
+
+
 NODE_CLASS_MAPPINGS = {
     "CauceH3InspectAVLatent": CauceH3InspectAVLatent,
     "CauceH3PlanAVWindow": CauceH3PlanAVWindow,
@@ -327,6 +515,10 @@ NODE_CLASS_MAPPINGS = {
     "CauceH3AddAVSpanGuide": CauceH3AddAVSpanGuide,
     "CauceH3AppendAVSpan": CauceH3AppendAVSpan,
     "CauceH3SplitAVLatent": CauceH3SplitAVLatent,
+    "CauceH3PlaceAVSpan": CauceH3PlaceAVSpan,
+    "CauceH3SetAVDenoiseInterval": CauceH3SetAVDenoiseInterval,
+    "CauceH3ReplaceAVSpan": CauceH3ReplaceAVSpan,
+    "CauceH3ClearAVDenoiseMask": CauceH3ClearAVDenoiseMask,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -337,4 +529,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceH3AddAVSpanGuide": "CAUCE · Add H3 AV Span Guide",
     "CauceH3AppendAVSpan": "CAUCE · Append H3 AV Span",
     "CauceH3SplitAVLatent": "CAUCE · Split H3 AV Latent",
+    "CauceH3PlaceAVSpan": "CAUCE · Place H3 AV Span",
+    "CauceH3SetAVDenoiseInterval": "CAUCE · Set H3 AV Denoise Interval",
+    "CauceH3ReplaceAVSpan": "CAUCE · Replace H3 AV Span",
+    "CauceH3ClearAVDenoiseMask": "CAUCE · Clear H3 AV Denoise Mask",
 }

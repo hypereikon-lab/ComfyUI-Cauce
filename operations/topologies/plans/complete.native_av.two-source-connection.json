@@ -1,0 +1,70 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "complete.native_av",
+  "operation_version": 1,
+  "variant": "two-source-connection",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8", "path": "comfy/model_base.py" },
+    { "source": "ComfyUI-Cauce", "path": "cauce/av_latent.py", "functions": ["place_av_span", "apply_av_denoise_interval"] }
+  ],
+  "nodes": [
+    { "key": "left", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load left source" },
+    { "key": "right", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load right source" },
+    { "key": "left_span", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract left known context" },
+    { "key": "right_span", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract right known context" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create target and prompt conditioning" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate target" },
+    { "key": "place_left", "owner": "cauce", "class_type": "CauceH3PlaceAVSpan", "role": "place left context" },
+    { "key": "place_right", "owner": "cauce", "class_type": "CauceH3PlaceAVSpan", "role": "place right context" },
+    { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "generate center" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample connection" },
+    { "key": "generated", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract generated connection" },
+    { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode connection" }
+  ],
+  "edges": [
+    { "from": { "node": "left", "port": "latent" }, "to": { "node": "left_span", "port": "latent" } },
+    { "from": { "node": "right", "port": "latent" }, "to": { "node": "right_span", "port": "latent" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "place_left", "port": "target_av_latent" } },
+    { "from": { "node": "left_span", "port": "span" }, "to": { "node": "place_left", "port": "span" } },
+    { "from": { "node": "place_left", "port": "latent" }, "to": { "node": "place_right", "port": "target_av_latent" } },
+    { "from": { "node": "right_span", "port": "span" }, "to": { "node": "place_right", "port": "span" } },
+    { "from": { "node": "place_right", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "generated", "port": "latent" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "clear", "port": "latent" } },
+    { "from": { "node": "clear", "port": "latent" }, "to": { "node": "decode", "port": "samples" } }
+  ],
+  "bindings": [
+    { "name": "left_path", "type": "STRING", "target": { "node": "left", "input": "path_or_folder" }, "required": true },
+    { "name": "right_path", "type": "STRING", "target": { "node": "right", "input": "path_or_folder" }, "required": true },
+    { "name": "left_start", "type": "INT", "target": { "node": "left_span", "input": "start_frame" }, "required": true },
+    { "name": "left_frames", "type": "INT", "target": { "node": "left_span", "input": "frame_count" }, "required": true },
+    { "name": "right_start", "type": "INT", "target": { "node": "right_span", "input": "start_frame" }, "required": true },
+    { "name": "right_frames", "type": "INT", "target": { "node": "right_span", "input": "frame_count" }, "required": true },
+    { "name": "left_target_index", "type": "INT", "target": { "node": "place_left", "input": "target_frame_idx" }, "required": true },
+    { "name": "right_target_index", "type": "INT", "target": { "node": "place_right", "input": "target_frame_idx" }, "required": true },
+    { "name": "target_origin_left", "type": "INT", "target": { "node": "place_left", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "target_origin_right", "type": "INT", "target": { "node": "place_right", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "unknown_start", "type": "INT", "target": { "node": "mask", "input": "start_frame" }, "required": true },
+    { "name": "unknown_frames", "type": "INT", "target": { "node": "mask", "input": "frame_count" }, "required": true },
+    { "name": "mask_origin", "type": "INT", "target": { "node": "mask", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "clear_origin", "type": "INT", "target": { "node": "clear", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "generated_origin", "type": "INT", "target": { "node": "generated", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "generated_start", "type": "INT", "target": { "node": "generated", "input": "start_frame" }, "required": true },
+    { "name": "generated_frames", "type": "INT", "target": { "node": "generated", "input": "frame_count" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "completed_native_av_latent", "type": "LATENT", "source": { "node": "clear", "port": "latent" } },
+    { "name": "generated_interval", "type": "CAUCE_H3_AV_SPAN", "source": { "node": "generated", "port": "span" } },
+    { "name": "completed_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } }
+  ],
+  "live_gates": ["validate both source spans against target visual and audio phases", "confirm mask support", "materialize paired graph", "visually assess identity and gesture continuity at both sides"]
+}

@@ -17,6 +17,9 @@ Use terms that identify observable data or a documented operation.
 | frame range | half-open interval `[start, end)` |
 | timeslot | editorial interval expressed as exact frame bounds at a known frame rate |
 | native AV latent | H3's packed visual and structural-audio latent streams |
+| native AV span | synchronized video/audio token subrange retaining absolute frame and clock bounds |
+| denoise mask | nested continuous per-token video/audio strengths where `1` generates and `0` preserves |
+| completion interval | explicit prefix, interior, or replacement range selected for generation inside a complete native target lattice |
 | operation contract | typed reusable graph function with explicit node ownership and evidence state |
 | operation invocation | project data binding one operation version to concrete media and parameters |
 | UI graph | ComfyUI graph including layout and widget state |

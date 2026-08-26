@@ -12,7 +12,8 @@ into a custom node.
 decoded media ---------------- exact ranges / reference maps ------ CAUCE
 H3 decoded inputs ------------- target / guide / reference plans -- CAUCE
 H3 conditioning --------------- read-only structural inspection --- CAUCE
-packed H3 AV latent ----------- layout / span / guide / split / append -- CAUCE
+packed H3 AV latent ----------- layout / span / place / mask / replace -- CAUCE
+                                      |       guide / split / append
                                       |
                                       v
 official H3 conditioning -> official guider/sampler -> official decode
@@ -33,7 +34,8 @@ operation contract
 ```text
 cauce/
   assembly.py      exact decoded-frame selection
-  av_latent.py     absolute AV layouts, synchronized spans, guides, append
+  av_latent.py     absolute AV layouts, spans, placement, masks, replacement,
+                   native guides, split, and append
   contracts.py     canonical JSON, schemas, and content hashes
   conditioning.py  read-only H3 conditioning metadata inspection
   h3.py            packed audiovisual-latent validation
@@ -44,7 +46,7 @@ cauce/
 
 cauce_nodes/
   assembly.py      one decoded-range binding
-  av_latent.py     seven H3 AV bindings
+  av_latent.py     eleven H3 AV bindings
   planning.py      four H3 input/conditioning planning bindings
   motion.py        ten reference-map bindings
   persistence.py   two persistence bindings
@@ -66,15 +68,25 @@ slices plus their absolute frame range. It intentionally is not exposed as a
 standalone `LATENT`: a subrange may inherit a nonzero timeline origin and must
 not silently reset its 40 Hz audio clock.
 
-The seven AV-state operations remain orthogonal:
+The eleven AV-state operations remain orthogonal:
 
 ```text
-inspect -> plan -> allocate -> extract -> add guide -> append
-                               split <-> append
+inspect -> plan -> allocate -> extract -> place -> set/clear mask -> replace
+                                  |          |
+                                  +-> native guide
+extract -> append
+split   -> reversible suffix -> append
 ```
 
 None loads a model, creates a prompt, selects a sampler, samples, decodes, or
 claims a visual objective.
+
+`noise_mask` follows current official H3 sampler semantics: video and
+structural-audio masks remain separate tensors, and a value of `1` requests
+generation while `0` preserves the supplied latent token. CAUCE evaluates
+linear, smoothstep, or smootherstep temporal ramps at each stream's own token
+centers. It does not collapse 24 fps frames and 40 Hz audio tokens onto one
+approximate clock.
 
 ## Motion-map contract
 

@@ -1,12 +1,13 @@
 {
   "schema": "cauce.operation-catalog/1",
   "operations": [
-    { "id": "connect.two_sided_guides", "version": 1, "spec": "specs/connect.two_sided_guides.json" },
-    { "id": "continue.native_av", "version": 1, "spec": "specs/continue.native_av.json" },
+    { "id": "complete.native_av", "version": 1, "spec": "specs/complete.native_av.json" },
+    { "id": "continue.native_av", "version": 2, "spec": "specs/continue.native_av.json" },
     { "id": "frames.assemble", "version": 2, "spec": "specs/frames.assemble.json" },
-    { "id": "generate.from_references", "version": 2, "spec": "specs/generate.from_references.json" },
+    { "id": "generate.from_references", "version": 3, "spec": "specs/generate.from_references.json" },
     { "id": "generate.keyframed", "version": 1, "spec": "specs/generate.keyframed.json" },
-    { "id": "generate.with_guides", "version": 1, "spec": "specs/generate.with_guides.json" },
-    { "id": "reference.transform", "version": 1, "spec": "specs/reference.transform.json" }
+    { "id": "generate.with_guides", "version": 2, "spec": "specs/generate.with_guides.json" },
+    { "id": "reference.transform", "version": 1, "spec": "specs/reference.transform.json" },
+    { "id": "rollback.native_av", "version": 1, "spec": "specs/rollback.native_av.json" }
   ]
 }

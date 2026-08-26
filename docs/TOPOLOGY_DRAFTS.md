@@ -18,10 +18,11 @@ API prompt object. Its required state is `offline-draft`.
 | Operation | Draft variant | Principal composition |
 | --- | --- | --- |
 | `generate.keyframed` | `text-only`, `first-frame`, `last-frame`, `first-last` | complete official `MiniMaxH3ImageToVideo` endpoint-input matrix |
-| `generate.from_references` | `image-reference-match`, `image-reference-max`, `video-reference` | official `MiniMaxH3ReferenceToVideo` with guarded reference mode |
-| `generate.with_guides` | `single-anchor`, `multi-anchor`, `guide-clip` | one/two image guides or one temporally prepared guide clip |
-| `continue.native_av` | `characterized-layout` | official sampling plus CAUCE AV window/span/append primitives |
-| `connect.two_sided_guides` | `default` | decoded left/right ranges, two official guides, exact assembly |
+| `generate.from_references` | `image-reference-match`, `image-reference-max`, `video-reference`, `video-reference-with-guide` | official Ref2VA with optional temporal guide on the same conditioning edge |
+| `generate.with_guides` | `single-anchor`, `multi-anchor`, `guide-clip`, `first-last-interior` | official endpoint frames plus exact temporal image/clip guides |
+| `continue.native_av` | `keyframe-overlap`, `masked-overlap`, `masked-overlap-future-guide` | explicit native overlap transport around ordinary official sampling |
+| `complete.native_av` | `backward-prefix`, `two-sided-infill`, `local-replacement`, `two-source-connection` | native span placement, independent AV masks, optional exact interval replacement |
+| `rollback.native_av` | `branch-suffix` | exact native split and optional branch persistence |
 | `reference.transform` | `affine` | deterministic CAUCE coordinate map and decoded-image warp |
 | `frames.assemble` | `ordered-concatenation` | exact CAUCE decoded ranges plus vanilla image batching |
 

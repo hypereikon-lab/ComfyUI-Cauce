@@ -1,15 +1,16 @@
 {
   "schema": "cauce.operation/1",
   "id": "generate.from_references",
-  "version": 2,
+  "version": 3,
   "title": "Generate from ordered references",
   "kind": "h3-inference",
   "implementation_class": "official-h3",
-  "summary": "Generate one H3 target from a prompt and ordered reference images or 24 fps reference clips.",
+  "summary": "Generate one H3 target from ordered references, optionally adding an exact temporal image or clip guide on the same official conditioning edge.",
   "inputs": [
     { "name": "prompt", "type": "STRING", "required": true },
     { "name": "reference_images", "type": "IMAGE", "required": false, "cardinality": "zero to nine images" },
     { "name": "reference_clips", "type": "IMAGE", "required": false, "cardinality": "zero to three 24 fps frame batches" },
+    { "name": "temporal_guide", "type": "IMAGE", "required": false, "cardinality": "one image or one legal 17k+5 clip at an exact frame" },
     { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
   ],
   "outputs": [
@@ -32,14 +33,16 @@
   "graph_contract": [
     { "order": 1, "owner": "vanilla-comfy", "node_type": null, "role": "load the selected Ref2VA model and required model components" },
     { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3ReferenceToVideo", "role": "encode ordered image and clip references and create a fresh packed AV latent" },
-    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
-    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally append an exact temporal guide while preserving reference conditioning", "optional": true },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
+    { "order": 6, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
   ],
   "variants": [
     { "id": "image-reference-match", "ref_image_size": "match" },
     { "id": "image-reference-max", "ref_image_size": "max" },
-    { "id": "video-reference", "reference_clips": true }
+    { "id": "video-reference", "reference_clips": true },
+    { "id": "video-reference-with-guide", "reference_clips": true, "temporal_guide": true }
   ],
   "artifacts": {
     "state": "contract-only",

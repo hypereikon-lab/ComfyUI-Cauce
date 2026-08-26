@@ -1,0 +1,32 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "rollback.native_av",
+  "operation_version": 1,
+  "variant": "branch-suffix",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "ComfyUI-Cauce", "path": "tests/test_av_latent.py", "evidence": "split then append reconstructs both streams exactly" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load cumulative native state" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate source" },
+    { "key": "split", "owner": "cauce", "class_type": "CauceH3SplitAVLatent", "role": "split prefix and reversible suffix" },
+    { "key": "save", "owner": "cauce", "class_type": "CauceSaveAVLatent", "role": "persist prefix checkpoint" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "split", "port": "latent" } },
+    { "from": { "node": "split", "port": "prefix_latent" }, "to": { "node": "save", "port": "latent" } }
+  ],
+  "bindings": [
+    { "name": "source_path", "type": "STRING", "target": { "node": "source", "input": "path_or_folder" }, "required": true },
+    { "name": "cut_frame", "type": "INT", "target": { "node": "split", "input": "cut_frame" }, "required": true },
+    { "name": "output_prefix", "type": "STRING", "target": { "node": "save", "input": "filename_prefix" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "prefix_native_av_latent", "type": "LATENT", "source": { "node": "split", "port": "prefix_latent" } },
+    { "name": "suffix_span", "type": "CAUCE_H3_AV_SPAN", "source": { "node": "split", "port": "suffix_span" } },
+    { "name": "prefix_frame_count", "type": "INT", "source": { "node": "split", "port": "prefix_frames" } }
+  ],
+  "live_gates": ["validate source artifact hash", "confirm cut leaves a legal non-empty prefix and suffix", "save branch under a new prefix rather than overwriting source"]
+}

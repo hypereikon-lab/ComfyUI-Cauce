@@ -1,0 +1,50 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.with_guides",
+  "operation_version": 2,
+  "variant": "first-last-interior",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "commit": "12d5279438bfefc058a269eae805ceab6047777f", "path": "comfy_extras/nodes_minimax_h3.py" }
+  ],
+  "nodes": [
+    { "key": "first", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load first endpoint" },
+    { "key": "last", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load last endpoint" },
+    { "key": "interior", "owner": "vanilla-comfy", "class_type": null, "role": "load interior image or clip" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load video VAE" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "encode first and last endpoints" },
+    { "key": "guide", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "append interior temporal anchor" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode target" }
+  ],
+  "edges": [
+    { "from": { "node": "first", "port": "IMAGE" }, "to": { "node": "conditioning", "port": "first_frame" } },
+    { "from": { "node": "last", "port": "IMAGE" }, "to": { "node": "conditioning", "port": "last_frame" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guide", "port": "positive" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "guide", "port": "latent" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "guide", "port": "vae" } },
+    { "from": { "node": "interior", "port": "IMAGE" }, "to": { "node": "guide", "port": "image" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } }
+  ],
+  "bindings": [
+    { "name": "first_filename", "type": "STRING", "target": { "node": "first", "input": "image" }, "required": true },
+    { "name": "last_filename", "type": "STRING", "target": { "node": "last", "input": "image" }, "required": true },
+    { "name": "interior_filename", "type": "STRING", "target": { "node": "interior", "input": "media" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "interior_frame_idx", "type": "INT", "target": { "node": "guide", "input": "frame_idx" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "sample", "input": "noise" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": ["confirm endpoint and AddGuide sockets from current object_info", "ensure interior guide fits exactly", "materialize paired graph", "compare against first-last without interior guide"]
+}

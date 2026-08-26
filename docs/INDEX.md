@@ -4,7 +4,7 @@
 - [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official
   ComfyUI graphs, and the remote runtime.
 - [Capability map](CAPABILITY_MAP.md): implemented and composable operations.
-- [Node catalog](NODE_CATALOG.md): all 24 registered nodes.
+- [Node catalog](NODE_CATALOG.md): all 28 registered nodes.
 - [Native H3 workflows](NATIVE_H3_WORKFLOWS.md): graph recipes using official
   conditioning/sampling nodes.
 - [Semantic operations](OPERATIONS.md): typed, composable graph-level functions

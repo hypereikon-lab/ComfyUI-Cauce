@@ -19,7 +19,8 @@ The low-level surface owns:
 - visible H3 target, guide-clip, and reference-clip planning;
 - read-only inspection of active H3 conditioning structure;
 - absolute H3 AV frame/video-token/audio-token layouts;
-- synchronized packed-AV span extraction, native guide insertion, split, and append;
+- synchronized packed-AV span extraction, placement, continuous denoise masks,
+  exact replacement, native guide insertion, split, and append;
 - generic image-space coordinate maps and reference-media warps;
 - bounded persistence of packed H3 audiovisual latents.
 
@@ -168,9 +169,11 @@ For native H3 AV continuation:
 8. append that globally contiguous span;
 9. decode and inspect the result.
 
-For a two-sided decoded guide graph, use `CauceAcceptDecodedRange`, two official
-`MiniMaxH3AddGuide` nodes, and vanilla `ImageBatch`; do not recreate a preset
-wrapper.
+For native completion or replacement, place known synchronized spans into one
+complete target lattice, set explicit per-stream denoise intervals, sample via
+the ordinary official path, then clear mask metadata before persistence. A
+prefix rebase is legal only when both the H3 visual grid and the absolute 40 Hz
+audio phase align; fail closed otherwise.
 
 Do not describe either graph as successful before visual inspection.
 
@@ -239,6 +242,10 @@ GET /object_info/CauceH3ExtractAVSpan
 GET /object_info/CauceH3AddAVSpanGuide
 GET /object_info/CauceH3AppendAVSpan
 GET /object_info/CauceH3SplitAVLatent
+GET /object_info/CauceH3PlaceAVSpan
+GET /object_info/CauceH3SetAVDenoiseInterval
+GET /object_info/CauceH3ReplaceAVSpan
+GET /object_info/CauceH3ClearAVDenoiseMask
 GET /object_info/CauceH3ResolveTargetShape
 GET /object_info/CauceH3PrepareGuideClip
 GET /object_info/CauceH3PrepareReferenceClip
@@ -290,5 +297,5 @@ on an ambiguous progress display.
 - documentation matches the current registry;
 - no output is called successful without visual inspection;
 - live deployment, if requested and confirmed, reports the intended commit and
-  exposes all seven H3 AV state nodes and four H3 planning nodes through
+  exposes all eleven H3 AV state nodes and four H3 planning nodes through
   `/object_info`.

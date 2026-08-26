@@ -1,0 +1,57 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "complete.native_av",
+  "operation_version": 1,
+  "variant": "backward-prefix",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8", "path": "comfy/model_base.py" },
+    { "source": "ComfyUI-Cauce", "path": "tests/test_av_latent.py", "evidence": "AV rebase succeeds only when both token phases align" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load known right-side native state" },
+    { "key": "source_span", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract known state as a span" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create larger target and prompt conditioning" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate larger target" },
+    { "key": "place", "owner": "cauce", "class_type": "CauceH3PlaceAVSpan", "role": "rebase known state after unknown prefix" },
+    { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "generate prefix and preserve right side" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample prefix" },
+    { "key": "generated", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract generated prefix" },
+    { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode completed target" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "source_span", "port": "latent" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "place", "port": "target_av_latent" } },
+    { "from": { "node": "source_span", "port": "span" }, "to": { "node": "place", "port": "span" } },
+    { "from": { "node": "place", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "generated", "port": "latent" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "clear", "port": "latent" } },
+    { "from": { "node": "clear", "port": "latent" }, "to": { "node": "decode", "port": "samples" } }
+  ],
+  "bindings": [
+    { "name": "source_path", "type": "STRING", "target": { "node": "source", "input": "path_or_folder" }, "required": true },
+    { "name": "source_frame_count", "type": "INT", "target": { "node": "source_span", "input": "frame_count" }, "required": true },
+    { "name": "target_frame_count", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "prefix_frame_count", "type": "INT", "target": { "node": "place", "input": "target_frame_idx" }, "required": true },
+    { "name": "target_origin", "type": "INT", "target": { "node": "place", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "unknown_start", "type": "INT", "target": { "node": "mask", "input": "start_frame" }, "required": true },
+    { "name": "unknown_frames", "type": "INT", "target": { "node": "mask", "input": "frame_count" }, "required": true },
+    { "name": "mask_origin", "type": "INT", "target": { "node": "mask", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "clear_origin", "type": "INT", "target": { "node": "clear", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "generated_start", "type": "INT", "target": { "node": "generated", "input": "start_frame" }, "required": true },
+    { "name": "generated_frames", "type": "INT", "target": { "node": "generated", "input": "frame_count" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "completed_native_av_latent", "type": "LATENT", "source": { "node": "clear", "port": "latent" } },
+    { "name": "generated_interval", "type": "CAUCE_H3_AV_SPAN", "source": { "node": "generated", "port": "span" } },
+    { "name": "completed_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } }
+  ],
+  "live_gates": ["choose a prefix length whose rebased visual and 40 Hz token spans both match", "validate current core masking", "materialize paired graph", "visually assess preservation and backward motion"]
+}

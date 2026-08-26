@@ -1,16 +1,17 @@
 {
   "schema": "cauce.operation/1",
   "id": "continue.native_av",
-  "version": 1,
+  "version": 2,
   "title": "Continue native H3 audiovisual state",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
-  "summary": "Extend a cumulative packed H3 AV latent through a globally aligned overlap window and append only the explicit generated suffix.",
+  "summary": "Extend cumulative packed H3 AV state through an absolute overlap window, optionally preserving the overlap with the official per-token mask path and adding a future decoded guide.",
   "inputs": [
     { "name": "source_native_av_latent", "type": "LATENT", "required": true, "cardinality": "one packed cumulative H3 AV latent" },
     { "name": "prompt", "type": "STRING", "required": true },
     { "name": "overlap_frames", "type": "INT", "required": true },
     { "name": "extension_frames", "type": "INT", "required": true },
+    { "name": "future_guide", "type": "IMAGE", "required": false, "cardinality": "one image or one legal 17k+5 clip" },
     { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
   ],
   "outputs": [
@@ -21,39 +22,40 @@
   "constraints": {
     "frame_rate": 24,
     "frame_count_rule": "17k+5",
-    "characterized_overlap_frames": 22,
-    "characterized_extension_frames": 119,
-    "characterized_window_frames": 141,
+    "default_overlap_frames": 22,
+    "default_extension_frames": 119,
+    "default_window_frames": 141,
     "absolute_audio_clock_hz": 40,
+    "mask_semantics": "1 generates, 0 preserves",
+    "minimum_comfyui_core_commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8",
     "fixed_soundtrack_conditioning": false,
     "sampler_patch": false
   },
   "graph_contract": [
     { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate cumulative packed AV geometry" },
-    { "order": 2, "owner": "cauce", "node_type": "CauceH3PlanAVWindow", "role": "resolve absolute overlap and extension boundaries on both H3 clocks" },
-    { "order": 3, "owner": "cauce", "node_type": "CauceH3AllocateAVWindow", "role": "allocate the fresh globally aligned AV target used by the sampler" },
-    { "order": 4, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract the synchronized native tail span from the cumulative source" },
-    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for exactly the planned window length" },
-    { "order": 6, "owner": "cauce", "node_type": "CauceH3AddAVSpanGuide", "role": "insert the extracted AV span at frame zero on the active positive-conditioning edge" },
-    { "order": 7, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 8, "owner": "vanilla-comfy", "node_type": null, "role": "sample the allocated AV window with explicit parameters" },
-    { "order": 9, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract only the explicit new suffix using the sampled window's nonzero origin" },
-    { "order": 10, "owner": "cauce", "node_type": "CauceH3AppendAVSpan", "role": "append the globally contiguous suffix to cumulative state" },
-    { "order": 11, "owner": "cauce", "node_type": "CauceSaveAVLatent", "role": "persist cumulative packed state when later continuation is required", "optional": true }
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3PlanAVWindow", "role": "resolve the overlap and extension on absolute visual and structural-audio clocks" },
+    { "order": 3, "owner": "cauce", "node_type": "CauceH3AllocateAVWindow", "role": "allocate the fresh absolute target window" },
+    { "order": 4, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract the synchronized source tail" },
+    { "order": 5, "owner": "cauce", "node_type": "CauceH3PlaceAVSpan", "role": "copy the source tail into the target overlap", "optional": true },
+    { "order": 6, "owner": "cauce", "node_type": "CauceH3SetAVDenoiseInterval", "role": "preserve the overlap and generate only the suffix", "optional": true },
+    { "order": 7, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the planned window" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceH3AddAVSpanGuide", "role": "optionally expose the overlap as native H3 keyframe conditioning", "optional": true },
+    { "order": 9, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally anchor a decoded future image or clip inside the extension", "optional": true },
+    { "order": 10, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 11, "owner": "vanilla-comfy", "node_type": null, "role": "sample the target with the ordinary official path" },
+    { "order": 12, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract only the explicit generated suffix" },
+    { "order": 13, "owner": "cauce", "node_type": "CauceH3AppendAVSpan", "role": "append the globally contiguous suffix to cumulative state" },
+    { "order": 14, "owner": "cauce", "node_type": "CauceSaveAVLatent", "role": "persist cumulative native state for later continuation", "optional": true }
   ],
   "variants": [
-    { "id": "characterized-layout", "overlap_frames": 22, "extension_frames": 119, "window_frames": 141 },
-    { "id": "overlap-ablation", "change_one_variable": "overlap_frames" },
-    { "id": "extension-ablation", "change_one_variable": "extension_frames" }
+    { "id": "keyframe-overlap", "overlap_transport": "minimax_keyframes", "future_guide": false },
+    { "id": "masked-overlap", "overlap_transport": "noise_mask", "future_guide": false },
+    { "id": "masked-overlap-future-guide", "overlap_transport": "noise_mask", "future_guide": true }
   ],
-  "artifacts": {
-    "state": "contract-only",
-    "pairs": []
-  },
+  "artifacts": { "state": "contract-only", "pairs": [] },
   "evidence": {
-    "level": "executes",
+    "level": "unit-validated",
     "visual_verdict": "unassessed",
-    "summary": "All native AV mechanics executed in a synthetic 320x192 one-step smoke; no paired retained graph or visual-quality result exists.",
-    "records": ["evidence/continue.native_av-smoke.json"]
+    "summary": "Absolute AV span mechanics and continuous mask construction are unit-validated. The native-keyframe path has a synthetic live smoke; masked variants require live schema and visual validation."
   }
 }

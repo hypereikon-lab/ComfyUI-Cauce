@@ -1,0 +1,39 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "rollback.native_av",
+  "version": 1,
+  "title": "Rollback and branch native H3 AV state",
+  "kind": "decoded-media-transform",
+  "implementation_class": "cauce-and-vanilla-deterministic",
+  "summary": "Split cumulative packed H3 AV state at an exact legal prefix boundary while retaining the discarded suffix as a reversible synchronized span.",
+  "inputs": [
+    { "name": "source_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "cut_frame", "type": "INT", "required": true }
+  ],
+  "outputs": [
+    { "name": "prefix_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "suffix_span", "type": "CAUCE_H3_AV_SPAN", "required": true },
+    { "name": "prefix_frame_count", "type": "INT", "required": true }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "cut_prefix_rule": "17k+5",
+    "non_empty_suffix": true,
+    "generation": false,
+    "reversible_with_append": true
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate source native state" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3SplitAVLatent", "role": "split exact prefix and synchronized suffix" },
+    { "order": 3, "owner": "cauce", "node_type": "CauceSaveAVLatent", "role": "optionally persist the rollback prefix as a branch checkpoint", "optional": true }
+  ],
+  "variants": [
+    { "id": "branch-suffix", "retain_suffix": true }
+  ],
+  "artifacts": { "state": "contract-only", "pairs": [] },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Split and exact append reconstruction are unit-validated for both native streams."
+  }
+}

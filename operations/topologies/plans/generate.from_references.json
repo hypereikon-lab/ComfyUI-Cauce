@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "generate.from_references",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "video-reference",
   "state": "offline-draft",
   "basis": [

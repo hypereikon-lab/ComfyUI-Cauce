@@ -1,0 +1,56 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "complete.native_av",
+  "operation_version": 1,
+  "variant": "local-replacement",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8", "path": "comfy/model_base.py" },
+    { "source": "ComfyUI-Cauce", "path": "cauce/av_latent.py", "functions": ["apply_av_denoise_interval", "replace_av_span"] }
+  ],
+  "nodes": [
+    { "key": "base", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load cumulative base state" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate base" },
+    { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "mark replacement interval" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "encode replacement prompt" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample replacement" },
+    { "key": "generated", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract replacement span" },
+    { "key": "replace", "owner": "cauce", "class_type": "CauceH3ReplaceAVSpan", "role": "replace exact range in base" },
+    { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "normalize persisted state" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode replaced state" }
+  ],
+  "edges": [
+    { "from": { "node": "base", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "base", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "generated", "port": "latent" } },
+    { "from": { "node": "base", "port": "latent" }, "to": { "node": "replace", "port": "base_av_latent" } },
+    { "from": { "node": "generated", "port": "span" }, "to": { "node": "replace", "port": "replacement_span" } },
+    { "from": { "node": "replace", "port": "latent" }, "to": { "node": "clear", "port": "latent" } },
+    { "from": { "node": "clear", "port": "latent" }, "to": { "node": "decode", "port": "samples" } }
+  ],
+  "bindings": [
+    { "name": "base_path", "type": "STRING", "target": { "node": "base", "input": "path_or_folder" }, "required": true },
+    { "name": "timeline_origin", "type": "INT", "target": { "node": "mask", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "interval_start", "type": "INT", "target": { "node": "mask", "input": "start_frame" }, "required": true },
+    { "name": "interval_frames", "type": "INT", "target": { "node": "mask", "input": "frame_count" }, "required": true },
+    { "name": "fade_in_frames", "type": "INT", "target": { "node": "mask", "input": "fade_in_frames" }, "required": true },
+    { "name": "fade_out_frames", "type": "INT", "target": { "node": "mask", "input": "fade_out_frames" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "generated_origin", "type": "INT", "target": { "node": "generated", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "generated_start", "type": "INT", "target": { "node": "generated", "input": "start_frame" }, "required": true },
+    { "name": "generated_frames", "type": "INT", "target": { "node": "generated", "input": "frame_count" }, "required": true },
+    { "name": "replacement_origin", "type": "INT", "target": { "node": "replace", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "clear_origin", "type": "INT", "target": { "node": "clear", "input": "timeline_origin_frame" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "completed_native_av_latent", "type": "LATENT", "source": { "node": "clear", "port": "latent" } },
+    { "name": "generated_interval", "type": "CAUCE_H3_AV_SPAN", "source": { "node": "generated", "port": "span" } },
+    { "name": "completed_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } }
+  ],
+  "live_gates": ["confirm mask support", "retain untouched base as rollback checkpoint", "execute one exact interval", "visually compare boundaries and content change"]
+}

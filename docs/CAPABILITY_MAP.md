@@ -16,6 +16,10 @@
 | H3 AV span guide metadata | compatible span inserted at an explicit target frame | unit-validated; schema-validated; executes in `continue.native_av` smoke |
 | H3 AV append | globally contiguous span concatenation with drift rejection | unit-validated |
 | H3 cumulative-state split | valid prefix latent plus reversible contiguous suffix span | unit-validated |
+| H3 AV span placement/rebase | copy one synchronized native span into an exact target interval while rejecting visual-grid or 40 Hz phase mismatch | unit-validated |
+| H3 continuous denoise interval | independent video/audio per-token masks with hard, linear, smoothstep, or smootherstep temporal boundaries and explicit composition | unit-validated |
+| H3 AV interval replacement | replace an exact synchronized interval in cumulative native state | unit-validated |
+| H3 denoise-mask cleanup | remove consumed nested mask metadata before persistence | unit-validated |
 | affine/analytic/perspective/displacement maps | inverse coordinate field | unit-validated |
 | vector-field advection | Euler/RK2/RK4 map integration | unit-validated |
 | depth camera reprojection | map plus disocclusion validity | unit-validated |
@@ -30,23 +34,25 @@
 | `generate.keyframed` | official FL2VA graph |
 | `generate.from_references` | official Ref2VA graph |
 | `generate.with_guides` | official `MiniMaxH3AddGuide` chain |
-| `continue.native_av` | CAUCE AV plan/allocate/extract/guide/append around official sampling |
-| `connect.two_sided_guides` | exact decoded ranges + two official AddGuide nodes + vanilla ImageBatch |
+| `continue.native_av` | keyframe or masked native overlap around official sampling; optional future guide |
+| `complete.native_av` | native prefix, interior, local replacement, or two-source completion through official per-token masking |
+| `rollback.native_av` | exact native split with reversible suffix span |
 | `reference.transform` | CAUCE decoded-media coordinate maps and image warp |
 | `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
 
-All seven currently remain `contract-only`: no paired reusable UI/API graph is
+All eight currently remain `contract-only`: no paired reusable UI/API graph is
 shipped. “Composed” means the mechanism can be expressed as a graph. It does not
 mean a source/prompt pair is visually accepted.
 
 ## Current evidence boundary
 
-The original six-node H3 AV continuation path has executed on the laboratory runtime with a
-synthetic packed latent. The run verified absolute planning, allocation, span
+The `keyframe-overlap` H3 AV continuation path has executed on the laboratory
+runtime with a synthetic packed latent. The run verified absolute planning, allocation, span
 extraction, guide insertion, suffix extraction, append, save, and reload. It did
 not establish production-resolution visual quality.
 
-The new planning/inspection/split nodes, decoded-range nodes, and motion-map
-families are unit-validated only. Their use inside a graph remains a composition
-possibility until that exact graph is schema-validated, executed, and visually
-evaluated where a visual objective is claimed.
+The new placement/mask/replacement/cleanup nodes, planning/inspection/split
+nodes, decoded-range nodes, and motion-map families are unit-validated only.
+Their use inside a graph remains a composition possibility until that exact
+graph is schema-validated, executed, and visually evaluated where a visual
+objective is claimed.

@@ -12,6 +12,7 @@ from .timebase import (
     h3_visual_latent_frames,
     is_h3_frame_count,
     visual_token_boundary,
+    visual_token_spans,
 )
 
 
@@ -62,6 +63,141 @@ def _concatenate(values: tuple[Any, ...], axis: int):
 def _make_latent(video: Any, audio: Any, nested_factory: NestedFactory | None):
     samples = nested_factory((video, audio)) if nested_factory is not None else (video, audio)
     return {"samples": samples}
+
+
+def _with_streams(
+    latent: Mapping[str, Any],
+    video: Any,
+    audio: Any,
+    nested_factory: NestedFactory | None,
+) -> dict[str, Any]:
+    out = dict(latent)
+    out["samples"] = nested_factory((video, audio)) if nested_factory is not None else (video, audio)
+    return out
+
+
+def _profile_tensor(reference: Any, values: Sequence[float]):
+    try:
+        import torch
+
+        if isinstance(reference, torch.Tensor):
+            return torch.tensor(values, dtype=torch.float32, device=reference.device)
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        pass
+    try:
+        import numpy as np
+
+        if isinstance(reference, np.ndarray):
+            return np.asarray(values, dtype=np.float32)
+    except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
+        pass
+    raise TypeError("AV tensors must be PyTorch tensors or NumPy arrays")
+
+
+def _broadcast_video_mask(profile: Any, video: Any):
+    shape = (int(video.shape[0]), 1, int(video.shape[2]), int(video.shape[3]), int(video.shape[4]))
+    try:
+        import torch
+
+        if isinstance(profile, torch.Tensor):
+            return profile.reshape(1, 1, -1, 1, 1).expand(shape).clone()
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        pass
+    try:
+        import numpy as np
+
+        if isinstance(profile, np.ndarray):
+            return np.broadcast_to(profile.reshape(1, 1, -1, 1, 1), shape).copy()
+    except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
+        pass
+    raise TypeError("mask profiles must be PyTorch tensors or NumPy arrays")
+
+
+def _broadcast_audio_mask(profile: Any, audio: Any):
+    shape = (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[3]))
+    try:
+        import torch
+
+        if isinstance(profile, torch.Tensor):
+            return profile.reshape(1, 1, 1, -1).expand(shape).clone()
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        pass
+    try:
+        import numpy as np
+
+        if isinstance(profile, np.ndarray):
+            return np.broadcast_to(profile.reshape(1, 1, 1, -1), shape).copy()
+    except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
+        pass
+    raise TypeError("mask profiles must be PyTorch tensors or NumPy arrays")
+
+
+def _combine_mask(existing: Any, proposed: Any, mode: str):
+    if mode == "replace" or existing is None:
+        return proposed
+    if tuple(existing.shape) != tuple(proposed.shape):
+        raise ValueError("existing AV noise_mask shape differs from the proposed mask")
+    if mode == "maximum":
+        maximum = getattr(existing, "maximum", None)
+        if callable(maximum):
+            return maximum(proposed)
+        try:
+            import numpy as np
+
+            return np.maximum(existing, proposed)
+        except ImportError as exc:  # pragma: no cover - NumPy ships with ComfyUI
+            raise TypeError("mask tensors must support maximum") from exc
+    if mode == "minimum":
+        minimum = getattr(existing, "minimum", None)
+        if callable(minimum):
+            return minimum(proposed)
+        try:
+            import numpy as np
+
+            return np.minimum(existing, proposed)
+        except ImportError as exc:  # pragma: no cover - NumPy ships with ComfyUI
+            raise TypeError("mask tensors must support minimum") from exc
+    if mode == "multiply":
+        return existing * proposed
+    raise ValueError("mask combine mode must be replace, maximum, minimum, or multiply")
+
+
+def _mask_streams(latent: Mapping[str, Any]) -> tuple[Any | None, Any | None]:
+    value = latent.get("noise_mask")
+    if value is None:
+        return None, None
+    try:
+        return get_av_streams({"samples": value})
+    except (TypeError, ValueError) as exc:
+        raise ValueError("H3 noise_mask must contain nested video and audio streams") from exc
+
+
+def _curve(value: float, curve: str) -> float:
+    x = min(1.0, max(0.0, float(value)))
+    if curve == "linear":
+        return x
+    if curve == "smoothstep":
+        return x * x * (3.0 - 2.0 * x)
+    if curve == "smootherstep":
+        return x * x * x * (x * (x * 6.0 - 15.0) + 10.0)
+    raise ValueError("mask curve must be linear, smoothstep, or smootherstep")
+
+
+def _interval_weight(
+    position: float,
+    start: int,
+    end: int,
+    fade_in: int,
+    fade_out: int,
+    curve: str,
+) -> float:
+    if start <= position < end:
+        return 1.0
+    if fade_in > 0 and start - fade_in < position < start:
+        return _curve((position - (start - fade_in)) / fade_in, curve)
+    if fade_out > 0 and end <= position < end + fade_out:
+        return _curve(1.0 - ((position - end) / fade_out), curve)
+    return 0.0
 
 
 def _dtype(value: Any) -> str:
@@ -464,6 +600,261 @@ def build_av_span_keyframes(
     )
     keyframes.sort(key=lambda item: int(item["resolved_frame_index"]))
     return keyframes
+
+
+def place_av_span(
+    target_av_latent: Mapping[str, Any],
+    span: Mapping[str, Any],
+    *,
+    target_frame_idx: int,
+    timeline_origin_frame: int = 0,
+    nested_factory: NestedFactory | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Copy one exact native AV span into a target without assigning denoise policy.
+
+    Placement may deliberately rebase a span onto another global frame. The two
+    streams must still occupy the same number of visual and audio tokens at the
+    requested target position; incompatible 24->40 Hz phases fail closed.
+    """
+
+    origin = int(timeline_origin_frame)
+    target_video, target_audio, target_frames = validate_av_latent(
+        target_av_latent,
+        timeline_origin_frame=origin,
+        name="target_av_latent",
+    )
+    span_video, span_audio, descriptor = validate_av_span(span)
+    _validate_tensor_compatibility(
+        target_video,
+        target_audio,
+        span_video,
+        span_audio,
+    )
+    index = int(target_frame_idx)
+    span_frames = int(descriptor["frame_count"])
+    end = index + span_frames
+    if index < 0 or end > target_frames:
+        raise ValueError("native AV span must fit completely inside the target latent")
+
+    video_start = visual_token_boundary(index)
+    video_end = visual_token_boundary(end)
+    audio_start = h3_audio_token_boundary(origin + index) - h3_audio_token_boundary(origin)
+    audio_end = h3_audio_token_boundary(origin + end) - h3_audio_token_boundary(origin)
+    if video_end - video_start != int(span_video.shape[2]):
+        raise ValueError("native AV span video tokens do not align at the requested target frame")
+    if audio_end - audio_start != int(span_audio.shape[-1]):
+        raise ValueError(
+            "native AV span audio tokens do not align at the requested target frame"
+        )
+
+    placed_video = _clone(target_video)
+    placed_audio = _clone(target_audio)
+    placed_video[:, :, video_start:video_end] = span_video
+    placed_audio[..., audio_start:audio_end] = span_audio
+    placed = _with_streams(
+        target_av_latent,
+        placed_video,
+        placed_audio,
+        nested_factory,
+    )
+    target_global_start = origin + index
+    report: dict[str, Any] = {
+        "schema": "cauce.h3-av-placement-report/1",
+        "timeline_origin_frame": origin,
+        "target_frame_range": [index, end],
+        "target_global_range": [target_global_start, origin + end],
+        "source_global_range": [
+            int(descriptor["global_start_frame"]),
+            int(descriptor["global_end_frame"]),
+        ],
+        "frame_count": span_frames,
+        "video_token_range": [video_start, video_end],
+        "audio_token_range": [audio_start, audio_end],
+        "rebased": int(descriptor["global_start_frame"]) != target_global_start,
+        "source_descriptor_hash": span["descriptor_hash"],
+    }
+    report["placement_hash"] = content_hash(report)
+    return placed, report
+
+
+def apply_av_denoise_interval(
+    latent: Mapping[str, Any],
+    *,
+    start_frame: int,
+    frame_count: int,
+    timeline_origin_frame: int = 0,
+    inside_strength_video: float = 1.0,
+    outside_strength_video: float = 0.0,
+    inside_strength_audio: float = 1.0,
+    outside_strength_audio: float = 0.0,
+    fade_in_frames: int = 0,
+    fade_out_frames: int = 0,
+    curve: str = "smoothstep",
+    combine: str = "replace",
+    nested_factory: NestedFactory | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Attach synchronized continuous H3 video/audio denoise masks.
+
+    Strength 1 means generate and strength 0 means preserve. Temporal ramps are
+    evaluated on each stream's own token centers, so the 24 fps visual lattice
+    and absolute 40 Hz structural-audio clock stay synchronized without being
+    forced onto a shared tensor axis.
+    """
+
+    origin = int(timeline_origin_frame)
+    video, audio, total_frames = validate_av_latent(
+        latent,
+        timeline_origin_frame=origin,
+    )
+    start = int(start_frame)
+    count = int(frame_count)
+    end = start + count
+    fade_in = int(fade_in_frames)
+    fade_out = int(fade_out_frames)
+    if start < 0 or count < 1 or end > total_frames:
+        raise ValueError("denoise interval must be a non-empty range inside the AV latent")
+    if fade_in < 0 or fade_out < 0:
+        raise ValueError("fade frame counts cannot be negative")
+    # Interval replacement/extraction must remain possible after sampling.
+    visual_token_boundary(start)
+    visual_token_boundary(end)
+    strengths = (
+        float(inside_strength_video),
+        float(outside_strength_video),
+        float(inside_strength_audio),
+        float(outside_strength_audio),
+    )
+    if any(value < 0.0 or value > 1.0 for value in strengths):
+        raise ValueError("AV denoise strengths must lie in [0, 1]")
+    if combine not in {"replace", "maximum", "minimum", "multiply"}:
+        raise ValueError("mask combine mode must be replace, maximum, minimum, or multiply")
+
+    video_profile: list[float] = []
+    for token_start, token_end in visual_token_spans(int(video.shape[2])):
+        center = (token_start + token_end) / 2.0
+        weight = _interval_weight(center, start, end, fade_in, fade_out, curve)
+        video_profile.append(
+            strengths[1] + (strengths[0] - strengths[1]) * weight
+        )
+
+    audio_origin_token = h3_audio_token_boundary(origin)
+    audio_profile: list[float] = []
+    for local_token in range(int(audio.shape[-1])):
+        global_token_center = audio_origin_token + local_token + 0.5
+        local_frame_center = global_token_center * (24.0 / 40.0) - origin
+        weight = _interval_weight(
+            local_frame_center,
+            start,
+            end,
+            fade_in,
+            fade_out,
+            curve,
+        )
+        audio_profile.append(
+            strengths[3] + (strengths[2] - strengths[3]) * weight
+        )
+
+    proposed_video = _broadcast_video_mask(
+        _profile_tensor(video, video_profile),
+        video,
+    )
+    proposed_audio = _broadcast_audio_mask(
+        _profile_tensor(audio, audio_profile),
+        audio,
+    )
+    existing_video, existing_audio = _mask_streams(latent)
+    mask_video = _combine_mask(existing_video, proposed_video, combine)
+    mask_audio = _combine_mask(existing_audio, proposed_audio, combine)
+    out = dict(latent)
+    out["noise_mask"] = (
+        nested_factory((mask_video, mask_audio))
+        if nested_factory is not None
+        else (mask_video, mask_audio)
+    )
+
+    rounded_video = [round(value, 8) for value in video_profile]
+    rounded_audio = [round(value, 8) for value in audio_profile]
+    report: dict[str, Any] = {
+        "schema": "cauce.h3-av-denoise-interval-report/1",
+        "timeline_origin_frame": origin,
+        "target_frame_count": total_frames,
+        "denoise_range": [start, end],
+        "fade_in_frames": fade_in,
+        "fade_out_frames": fade_out,
+        "curve": curve,
+        "combine": combine,
+        "video_strength": {"inside": strengths[0], "outside": strengths[1]},
+        "audio_strength": {"inside": strengths[2], "outside": strengths[3]},
+        "video_profile": {
+            "tokens": len(video_profile),
+            "minimum": min(video_profile),
+            "maximum": max(video_profile),
+            "hash": content_hash(rounded_video),
+        },
+        "audio_profile": {
+            "tokens": len(audio_profile),
+            "minimum": min(audio_profile),
+            "maximum": max(audio_profile),
+            "hash": content_hash(rounded_audio),
+        },
+        "requires_comfyui_core": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8-or-newer",
+    }
+    report["mask_hash"] = content_hash(report)
+    return out, report
+
+
+def clear_av_denoise_mask(
+    latent: Mapping[str, Any],
+    *,
+    timeline_origin_frame: int = 0,
+) -> tuple[dict[str, Any], bool]:
+    """Remove a spent sampler noise mask without changing either AV stream."""
+
+    validate_av_latent(latent, timeline_origin_frame=int(timeline_origin_frame))
+    out = dict(latent)
+    removed = out.pop("noise_mask", None) is not None
+    return out, removed
+
+
+def replace_av_span(
+    base_av_latent: Mapping[str, Any],
+    replacement_span: Mapping[str, Any],
+    *,
+    timeline_origin_frame: int = 0,
+    nested_factory: NestedFactory | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Replace one globally aligned native AV interval without changing duration."""
+
+    origin = int(timeline_origin_frame)
+    _, _, total_frames = validate_av_latent(
+        base_av_latent,
+        timeline_origin_frame=origin,
+        name="base_av_latent",
+    )
+    _, _, descriptor = validate_av_span(replacement_span)
+    target_index = int(descriptor["global_start_frame"]) - origin
+    if target_index < 0 or int(descriptor["global_end_frame"]) > origin + total_frames:
+        raise ValueError("replacement AV span lies outside the base latent timeline")
+    replaced, placement = place_av_span(
+        base_av_latent,
+        replacement_span,
+        target_frame_idx=target_index,
+        timeline_origin_frame=origin,
+        nested_factory=nested_factory,
+    )
+    if placement["rebased"]:
+        raise ValueError("replacement AV span must retain its original global frame range")
+    replaced.pop("noise_mask", None)
+    report: dict[str, Any] = {
+        "schema": "cauce.h3-av-replacement-report/1",
+        "timeline_origin_frame": origin,
+        "target_frame_count": total_frames,
+        "replaced_global_range": placement["target_global_range"],
+        "source_descriptor_hash": replacement_span["descriptor_hash"],
+        "placement_hash": placement["placement_hash"],
+    }
+    report["replacement_hash"] = content_hash(report)
+    return replaced, report
 
 
 def append_av_span(

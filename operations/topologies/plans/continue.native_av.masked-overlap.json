@@ -1,0 +1,66 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "continue.native_av",
+  "operation_version": 2,
+  "variant": "masked-overlap",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8", "path": "comfy/model_base.py" },
+    { "source": "ComfyUI-Cauce", "path": "cauce/av_latent.py", "state": "unit-validated" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load cumulative native state" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate source" },
+    { "key": "plan", "owner": "cauce", "class_type": "CauceH3PlanAVWindow", "role": "plan absolute continuation window" },
+    { "key": "allocate", "owner": "cauce", "class_type": "CauceH3AllocateAVWindow", "role": "allocate target window" },
+    { "key": "tail", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract source overlap" },
+    { "key": "place", "owner": "cauce", "class_type": "CauceH3PlaceAVSpan", "role": "copy overlap into target" },
+    { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "preserve overlap and generate suffix" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "encode prompt for window" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set AV shifts" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample masked window" },
+    { "key": "suffix", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract new suffix" },
+    { "key": "append", "owner": "cauce", "class_type": "CauceH3AppendAVSpan", "role": "append suffix" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode cumulative state" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "plan", "port": "previous_av_latent" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "allocate", "port": "previous_av_latent" } },
+    { "from": { "node": "plan", "port": "layout" }, "to": { "node": "allocate", "port": "layout" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "tail", "port": "latent" } },
+    { "from": { "node": "plan", "port": "window_start_frame" }, "to": { "node": "tail", "port": "start_frame" } },
+    { "from": { "node": "plan", "port": "overlap_frames" }, "to": { "node": "tail", "port": "frame_count" } },
+    { "from": { "node": "allocate", "port": "latent" }, "to": { "node": "place", "port": "target_av_latent" } },
+    { "from": { "node": "tail", "port": "span" }, "to": { "node": "place", "port": "span" } },
+    { "from": { "node": "plan", "port": "window_start_frame" }, "to": { "node": "place", "port": "timeline_origin_frame" } },
+    { "from": { "node": "place", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
+    { "from": { "node": "plan", "port": "window_start_frame" }, "to": { "node": "mask", "port": "timeline_origin_frame" } },
+    { "from": { "node": "plan", "port": "overlap_frames" }, "to": { "node": "mask", "port": "start_frame" } },
+    { "from": { "node": "plan", "port": "extension_frames" }, "to": { "node": "mask", "port": "frame_count" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "suffix", "port": "latent" } },
+    { "from": { "node": "plan", "port": "window_start_frame" }, "to": { "node": "suffix", "port": "timeline_origin_frame" } },
+    { "from": { "node": "plan", "port": "overlap_frames" }, "to": { "node": "suffix", "port": "start_frame" } },
+    { "from": { "node": "plan", "port": "extension_frames" }, "to": { "node": "suffix", "port": "frame_count" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "append", "port": "base_av_latent" } },
+    { "from": { "node": "suffix", "port": "span" }, "to": { "node": "append", "port": "span" } },
+    { "from": { "node": "append", "port": "latent" }, "to": { "node": "decode", "port": "samples" } }
+  ],
+  "bindings": [
+    { "name": "source_path", "type": "STRING", "target": { "node": "source", "input": "path_or_folder" }, "required": true },
+    { "name": "overlap_frames", "type": "INT", "target": { "node": "plan", "input": "overlap_frames" }, "required": true },
+    { "name": "extension_frames", "type": "INT", "target": { "node": "plan", "input": "extension_frames" }, "required": true },
+    { "name": "target_frame_idx", "type": "INT", "target": { "node": "place", "input": "target_frame_idx" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "sample", "input": "noise" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "continued_native_av_latent", "type": "LATENT", "source": { "node": "append", "port": "latent" } },
+    { "name": "generated_suffix", "type": "CAUCE_H3_AV_SPAN", "source": { "node": "suffix", "port": "span" } },
+    { "name": "continued_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } }
+  ],
+  "live_gates": ["confirm core commit includes PR 15375", "validate exact official and vanilla sockets from live object_info", "execute at production geometry", "visually assess the continuation boundary"]
+}

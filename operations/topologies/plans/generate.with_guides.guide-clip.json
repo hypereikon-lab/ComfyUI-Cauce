@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "generate.with_guides",
-  "operation_version": 1,
+  "operation_version": 2,
   "variant": "guide-clip",
   "state": "offline-draft",
   "basis": [

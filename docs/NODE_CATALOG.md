@@ -19,9 +19,14 @@ outside the node.
 | `CauceH3AddAVSpanGuide` | add one compatible span to H3 positive conditioning at a frame index |
 | `CauceH3AppendAVSpan` | append one globally contiguous span to a cumulative H3 latent |
 | `CauceH3SplitAVLatent` | split an origin-zero cumulative state into a valid prefix and contiguous suffix span |
+| `CauceH3PlaceAVSpan` | copy one synchronized span into an exact target interval, optionally rebasing only when both clocks align |
+| `CauceH3SetAVDenoiseInterval` | attach independent continuous video/audio token masks for one frame interval; `1` generates and `0` preserves |
+| `CauceH3ReplaceAVSpan` | replace one globally aligned synchronized interval and discard spent mask metadata |
+| `CauceH3ClearAVDenoiseMask` | remove a consumed nested AV denoise mask without changing latent samples |
 
-No node owns prompt, seed, sampler, scheduler, denoise, decode, or a
-continuation preset.
+No node owns prompt, seed, sampler, scheduler, decode, or a continuation/
+completion preset. The mask node owns only deterministic per-token denoise
+metadata; the official sampler owns how that metadata affects inference.
 
 ## CAUCE/H3 Planning
 

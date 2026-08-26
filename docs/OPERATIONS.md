@@ -30,8 +30,9 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `generate.keyframed` | generate from prompt and optional endpoint frames | official H3 / vanilla | contract + offline topology | defined |
 | `generate.from_references` | generate from ordered reference images or clips | official H3 / vanilla | contract + offline topology | defined |
 | `generate.with_guides` | place decoded guides at exact target-frame indices | official H3 / vanilla | contract + offline topology | defined |
-| `continue.native_av` | extend synchronized packed H3 AV state | official H3 + CAUCE AV primitives | contract + offline topology | executes synthetically |
-| `connect.two_sided_guides` | generate a center conditioned by both decoded sides | official H3 + CAUCE ranges + vanilla assembly | contract + offline topology | defined |
+| `continue.native_av` | extend synchronized packed H3 AV state through keyframe or masked overlap | official H3 + CAUCE AV primitives | contract + offline topology | keyframe path executes synthetically; masked paths unit-validated |
+| `complete.native_av` | generate a prefix/interior/replacement while preserving explicit native AV context | official H3 + CAUCE placement/mask/replace primitives | contract + offline topology | deterministic layer unit-validated |
+| `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `reference.transform` | construct decoded reference media from coordinate maps | CAUCE maps, optionally followed by official H3 | contract + offline topology | deterministic layer unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
 
@@ -61,8 +62,15 @@ generate.keyframed
 
 ```text
 decoded sources
-  -> connect.two_sided_guides
-  -> frames.assemble
+  -> generate.from_references
+  -> continue.native_av
+```
+
+```text
+native AV state + known left/right spans
+  -> complete.native_av
+  -> rollback.native_av
+  -> alternate continue.native_av
 ```
 
 The cumulative native AV latent is an explicit output and input. Persist it
@@ -109,8 +117,10 @@ can be schema-valid while its visual objective remains unassessed.
 
 ## Current exclusions
 
-The catalog does not currently claim masked temporal inpainting, automatic
-intent-to-graph synthesis, arbitrary sampler modification, generative audio,
-training, acceleration, or streaming. A new operation enters the catalog only
-with a typed data contract, explicit node ownership, and honest artifact and
-evidence state.
+The catalog now describes native temporal completion through current official
+H3 per-token mask semantics, but no masked sampling topology is yet claimed as
+executed or visually accepted. It does not claim automatic intent-to-graph
+synthesis, arbitrary sampler modification, generative audio, training,
+acceleration, or streaming. A new operation enters the catalog only with a
+typed data contract, explicit node ownership, and honest artifact and evidence
+state.

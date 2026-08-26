@@ -21,13 +21,14 @@ class OperationContractTests(unittest.TestCase):
         self.assertEqual(
             set(operations),
             {
-                "connect.two_sided_guides",
+                "complete.native_av",
                 "continue.native_av",
                 "frames.assemble",
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
                 "reference.transform",
+                "rollback.native_av",
             },
         )
         self.assertTrue(all(not operation_id.startswith("W") for operation_id in operations))
@@ -45,10 +46,10 @@ class OperationContractTests(unittest.TestCase):
 
     def test_composition_classes_match_real_graph_owners(self):
         operations = load_operation_catalog(ROOT)
-        for operation_id in ("continue.native_av", "connect.two_sided_guides"):
+        for operation_id in ("continue.native_av", "complete.native_av"):
             owners = {stage["owner"] for stage in operations[operation_id]["graph_contract"]}
             self.assertTrue({"official-comfy", "cauce"} <= owners)
-        for operation_id in ("reference.transform", "frames.assemble"):
+        for operation_id in ("reference.transform", "frames.assemble", "rollback.native_av"):
             spec = operations[operation_id]
             owners = {stage["owner"] for stage in spec["graph_contract"]}
             self.assertEqual(spec["kind"], "decoded-media-transform")

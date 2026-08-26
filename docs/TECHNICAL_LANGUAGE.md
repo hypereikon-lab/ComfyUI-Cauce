@@ -4,10 +4,11 @@ Use names that describe the actual operation.
 
 | Preferred term | Meaning |
 | --- | --- |
-| H3 two-sided guide window | fresh H3 target conditioned by two official temporal guides |
 | guide clip | decoded IMAGE batch supplied to `MiniMaxH3AddGuide` |
-| accepted generated range | decoded interval between the two guide spans |
 | native tail continuation | extension using a prior native H3 tail through supported guide conditioning |
+| native AV completion | generation of an explicit prefix/interior/replacement interval while known native AV tokens are preserved by the official mask path |
+| denoise interval | pixel-frame range mapped independently to continuous H3 video/audio token masks |
+| placed AV span | synchronized native context copied to an exact compatible target interval |
 | AV window layout | absolute frame interval and its synchronized video/audio token boundaries |
 | AV span | typed synchronized tensor subrange retaining absolute timeline bounds |
 | motion-reference media | images/video geometrically prepared before official H3 conditioning |

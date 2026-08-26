@@ -1,19 +1,27 @@
 {
   "schema": "cauce.operation-topology-catalog/2",
   "topologies": [
-    { "operation": "connect.two_sided_guides", "variant": "default", "path": "plans/connect.two_sided_guides.json" },
-    { "operation": "continue.native_av", "variant": "characterized-layout", "path": "plans/continue.native_av.json" },
+    { "operation": "complete.native_av", "variant": "backward-prefix", "path": "plans/complete.native_av.backward-prefix.json" },
+    { "operation": "complete.native_av", "variant": "local-replacement", "path": "plans/complete.native_av.local-replacement.json" },
+    { "operation": "complete.native_av", "variant": "two-sided-infill", "path": "plans/complete.native_av.two-sided-infill.json" },
+    { "operation": "complete.native_av", "variant": "two-source-connection", "path": "plans/complete.native_av.two-source-connection.json" },
+    { "operation": "continue.native_av", "variant": "keyframe-overlap", "path": "plans/continue.native_av.json" },
+    { "operation": "continue.native_av", "variant": "masked-overlap", "path": "plans/continue.native_av.masked-overlap.json" },
+    { "operation": "continue.native_av", "variant": "masked-overlap-future-guide", "path": "plans/continue.native_av.masked-overlap-future-guide.json" },
     { "operation": "frames.assemble", "variant": "ordered-concatenation", "path": "plans/frames.assemble.json" },
     { "operation": "generate.from_references", "variant": "image-reference-match", "path": "plans/generate.from_references.image-reference-match.json" },
     { "operation": "generate.from_references", "variant": "image-reference-max", "path": "plans/generate.from_references.image-reference-max.json" },
     { "operation": "generate.from_references", "variant": "video-reference", "path": "plans/generate.from_references.json" },
+    { "operation": "generate.from_references", "variant": "video-reference-with-guide", "path": "plans/generate.from_references.video-reference-with-guide.json" },
     { "operation": "generate.keyframed", "variant": "first-frame", "path": "plans/generate.keyframed.first-frame.json" },
     { "operation": "generate.keyframed", "variant": "first-last", "path": "plans/generate.keyframed.json" },
     { "operation": "generate.keyframed", "variant": "last-frame", "path": "plans/generate.keyframed.last-frame.json" },
     { "operation": "generate.keyframed", "variant": "text-only", "path": "plans/generate.keyframed.text-only.json" },
     { "operation": "generate.with_guides", "variant": "guide-clip", "path": "plans/generate.with_guides.guide-clip.json" },
+    { "operation": "generate.with_guides", "variant": "first-last-interior", "path": "plans/generate.with_guides.first-last-interior.json" },
     { "operation": "generate.with_guides", "variant": "multi-anchor", "path": "plans/generate.with_guides.json" },
     { "operation": "generate.with_guides", "variant": "single-anchor", "path": "plans/generate.with_guides.single-anchor.json" },
-    { "operation": "reference.transform", "variant": "affine", "path": "plans/reference.transform.json" }
+    { "operation": "reference.transform", "variant": "affine", "path": "plans/reference.transform.json" },
+    { "operation": "rollback.native_av", "variant": "branch-suffix", "path": "plans/rollback.native_av.json" }
   ]
 }

@@ -6,12 +6,16 @@ except ImportError:
     np = None
 
 from cauce.av_latent import (
+    apply_av_denoise_interval,
     allocate_av_window_like,
     append_av_span,
     build_av_span_keyframes,
+    clear_av_denoise_mask,
     extract_av_span,
     inspect_av_latent,
+    place_av_span,
     plan_av_window,
+    replace_av_span,
     split_av_latent,
     validate_av_span,
     validate_av_window_layout,
@@ -219,6 +223,96 @@ class AVLatentTests(unittest.TestCase):
             split_av_latent(self.previous, cut_frame=123)
         with self.assertRaisesRegex(ValueError, "non-empty suffix"):
             split_av_latent(self.previous, cut_frame=243)
+
+    def test_places_native_spans_and_makes_rebase_explicit(self):
+        source = self.latent(124, value=7.0)
+        span = extract_av_span(source, start_frame=0, frame_count=124)
+        target = self.latent(243, value=0.0)
+        placed, report = place_av_span(target, span, target_frame_idx=119)
+        self.assertTrue(report["rebased"])
+        self.assertEqual(report["target_frame_range"], [119, 243])
+        self.assertEqual(report["source_global_range"], [0, 124])
+        self.assertEqual(placed["samples"][0].shape, target["samples"][0].shape)
+        self.assertTrue(np.all(placed["samples"][0][:, :, 35:] == 7.0))
+        self.assertTrue(np.all(placed["samples"][1][..., 198:] == 7.0))
+
+        with self.assertRaisesRegex(ValueError, "audio tokens do not align"):
+            place_av_span(target, span, target_frame_idx=34)
+
+    def test_builds_hard_and_continuous_masks_on_both_native_clocks(self):
+        target = self.latent(141, origin=221)
+        masked, report = apply_av_denoise_interval(
+            target,
+            timeline_origin_frame=221,
+            start_frame=22,
+            frame_count=119,
+        )
+        video_mask, audio_mask = masked["noise_mask"]
+        self.assertEqual(video_mask.shape, (1, 1, 42, 2, 3))
+        self.assertEqual(audio_mask.shape, (1, 1, 2, 235))
+        self.assertTrue(np.all(video_mask[:, :, :7] == 0.0))
+        self.assertTrue(np.all(video_mask[:, :, 7:] == 1.0))
+        self.assertTrue(np.all(audio_mask[..., :37] == 0.0))
+        self.assertTrue(np.all(audio_mask[..., 37:] == 1.0))
+        self.assertEqual(report["denoise_range"], [22, 141])
+        self.assertEqual(report["curve"], "smoothstep")
+
+        feathered, feather_report = apply_av_denoise_interval(
+            self.latent(124),
+            start_frame=39,
+            frame_count=51,
+            fade_in_frames=17,
+            fade_out_frames=17,
+            curve="smootherstep",
+        )
+        feather_video, feather_audio = feathered["noise_mask"]
+        self.assertTrue(np.any((feather_video > 0.0) & (feather_video < 1.0)))
+        self.assertTrue(np.any((feather_audio > 0.0) & (feather_audio < 1.0)))
+        self.assertEqual(feather_report["video_profile"]["maximum"], 1.0)
+        self.assertEqual(feather_report["audio_profile"]["maximum"], 1.0)
+
+    def test_mask_composition_replacement_and_clear_are_deterministic(self):
+        base = self.latent(243, value=1.0)
+        first, _ = apply_av_denoise_interval(
+            base,
+            start_frame=124,
+            frame_count=51,
+        )
+        combined, _ = apply_av_denoise_interval(
+            first,
+            start_frame=141,
+            frame_count=17,
+            combine="multiply",
+        )
+        combined_video, _ = combined["noise_mask"]
+        self.assertTrue(np.all(combined_video[:, :, :37] == 0.0))
+        self.assertTrue(np.any(combined_video[:, :, 37:] == 1.0))
+
+        generated = self.latent(243, value=9.0)
+        replacement = extract_av_span(generated, start_frame=124, frame_count=51)
+        replaced, report = replace_av_span(base, replacement)
+        self.assertEqual(report["replaced_global_range"], [124, 175])
+        self.assertNotIn("noise_mask", replaced)
+        video_start = 37
+        video_end = 52
+        self.assertTrue(np.all(replaced["samples"][0][:, :, :video_start] == 1.0))
+        self.assertTrue(np.all(replaced["samples"][0][:, :, video_start:video_end] == 9.0))
+        self.assertTrue(np.all(replaced["samples"][0][:, :, video_end:] == 1.0))
+
+        cleared, removed = clear_av_denoise_mask(first)
+        self.assertTrue(removed)
+        self.assertNotIn("noise_mask", cleared)
+        _, removed_again = clear_av_denoise_mask(cleared)
+        self.assertFalse(removed_again)
+
+        nonzero = self.latent(56, origin=17)
+        nonzero["noise_mask"] = nonzero["samples"]
+        clean_nonzero, removed_nonzero = clear_av_denoise_mask(
+            nonzero,
+            timeline_origin_frame=17,
+        )
+        self.assertTrue(removed_nonzero)
+        self.assertNotIn("noise_mask", clean_nonzero)
 
 
 if __name__ == "__main__":

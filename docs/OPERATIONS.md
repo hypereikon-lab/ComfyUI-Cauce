@@ -4,6 +4,25 @@ A CAUCE operation is a typed graph-level function over decoded media or native
 H3 state. Operations are orthogonal and composable; their names do not imply a
 production sequence.
 
+The catalog groups them into three non-sequential families. This grouping is
+machine-readable in `operations/catalog.json` and does not change any operation
+id or individual contract hash.
+
+```text
+H3 conditioning grammar
+  generate.keyframed
+  generate.from_references
+  generate.with_guides
+
+native H3 AV state algebra
+  continue.native_av
+  complete.native_av
+  rollback.native_av
+
+decoded media algebra
+  frames.assemble
+```
+
 ```text
 inputs + explicit parameters
   -> official H3 / vanilla ComfyUI / CAUCE primitive graph
@@ -34,6 +53,12 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `complete.native_av` | generate a prefix/interior/replacement while preserving explicit native AV context | official H3 + CAUCE placement/mask/replace primitives | contract + offline topology | deterministic layer unit-validated |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
+
+The first family describes supported ways to construct H3 conditioning. The
+second treats packed synchronized AV state as an explicit value that can be
+extended, temporally completed, split, persisted, and recomposed. The third is
+deterministic post-decode work. See [Operation model](OPERATION_MODEL.md) for
+the lifecycle from primitive through run evidence.
 
 “Contract only” means no paired, import-tested UI graph and executable API
 template are shipped yet. It does not prevent the graph from being composed;

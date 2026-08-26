@@ -4,6 +4,7 @@ from pathlib import Path
 import unittest
 
 from cauce.operations import (
+    OPERATION_FAMILIES,
     load_json,
     load_operation_catalog,
     operation_contract_hash,
@@ -31,6 +32,28 @@ class OperationContractTests(unittest.TestCase):
             },
         )
         self.assertTrue(all(not operation_id.startswith("W") for operation_id in operations))
+
+    def test_catalog_groups_operations_into_three_non_sequential_families(self):
+        catalog = load_json(ROOT / "operations" / "catalog.json")
+        self.assertEqual(catalog["schema"], "cauce.operation-catalog/2")
+        self.assertEqual({family["id"] for family in catalog["families"]}, OPERATION_FAMILIES)
+        by_family = {
+            family: {
+                entry["id"]
+                for entry in catalog["operations"]
+                if entry["family"] == family
+            }
+            for family in OPERATION_FAMILIES
+        }
+        self.assertEqual(
+            by_family["h3-conditioning-grammar"],
+            {"generate.keyframed", "generate.from_references", "generate.with_guides"},
+        )
+        self.assertEqual(
+            by_family["native-av-state-algebra"],
+            {"continue.native_av", "complete.native_av", "rollback.native_av"},
+        )
+        self.assertEqual(by_family["decoded-media-algebra"], {"frames.assemble"})
 
     def test_official_operations_do_not_claim_cauce_nodes(self):
         operations = load_operation_catalog(ROOT)

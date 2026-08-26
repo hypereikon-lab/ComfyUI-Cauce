@@ -29,6 +29,11 @@ operation contract
           -> project bindings and run receipts outside this repository
 ```
 
+The operation catalog is a capability grammar, not a pipeline. It groups
+official H3 conditioning, native AV state transformations, and deterministic
+decoded-media transformations while keeping their node ownership explicit.
+See [Operation model](OPERATION_MODEL.md).
+
 ## Modules
 
 ```text

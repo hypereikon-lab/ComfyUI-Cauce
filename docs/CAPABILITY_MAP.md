@@ -24,6 +24,20 @@
 
 ## Named graph-level operations
 
+The operations are classified by data responsibility, not by presumed order:
+
+```text
+conditioning grammar      generate.keyframed
+                          generate.from_references
+                          generate.with_guides
+
+native AV state algebra   continue.native_av
+                          complete.native_av
+                          rollback.native_av
+
+decoded media algebra     frames.assemble
+```
+
 | Operation | Composition |
 | --- | --- |
 | `generate.keyframed` | official FL2VA graph |

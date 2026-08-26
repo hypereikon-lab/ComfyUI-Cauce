@@ -12,6 +12,18 @@ official/vanilla ComfyUI nodes. An operation is a reusable graph contract, not
 a monolithic custom node and not a claim that CAUCE implemented every model
 capability present in the graph.
 
+The seven operations form three non-sequential families:
+
+```text
+H3 conditioning grammar     keyframed / references / guides
+native H3 AV state algebra  continue / complete / rollback
+decoded media algebra       exact frame assembly
+```
+
+Primitives, operations, variants, workflow pairs, invocations, runs, and
+evidence are distinct lifecycle states. See the
+[operation model](docs/OPERATION_MODEL.md).
+
 ## Node surface
 
 The package registers 18 nodes:
@@ -77,6 +89,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 
 - [Documentation index](docs/INDEX.md)
 - [Architecture and boundaries](docs/ARCHITECTURE.md)
+- [Operation families and lifecycle](docs/OPERATION_MODEL.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Semantic operations](docs/OPERATIONS.md)
 - [Operation topology dossiers](docs/TOPOLOGY_DRAFTS.md)

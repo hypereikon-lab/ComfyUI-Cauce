@@ -1,6 +1,8 @@
 # Documentation index
 
 - [Architecture](ARCHITECTURE.md): ownership, modules, and data flow.
+- [Operation model](OPERATION_MODEL.md): three non-sequential capability
+  families and the primitive-to-evidence lifecycle.
 - [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official
   ComfyUI graphs, and the remote runtime.
 - [Capability map](CAPABILITY_MAP.md): implemented and composable operations.

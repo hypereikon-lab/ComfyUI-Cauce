@@ -1,12 +1,29 @@
 {
-  "schema": "cauce.operation-catalog/1",
+  "schema": "cauce.operation-catalog/2",
+  "families": [
+    {
+      "id": "h3-conditioning-grammar",
+      "title": "H3 conditioning grammar",
+      "summary": "Official endpoint, ordered-reference, and arbitrary-frame guide configurations used to construct H3 generation graphs."
+    },
+    {
+      "id": "native-av-state-algebra",
+      "title": "Native H3 AV state algebra",
+      "summary": "Extension, temporal completion, rollback, and branching over synchronized packed H3 video and structural-audio state."
+    },
+    {
+      "id": "decoded-media-algebra",
+      "title": "Decoded media algebra",
+      "summary": "Deterministic selection and assembly of decoded frame ranges without model inference."
+    }
+  ],
   "operations": [
-    { "id": "complete.native_av", "version": 1, "spec": "specs/complete.native_av.json" },
-    { "id": "continue.native_av", "version": 2, "spec": "specs/continue.native_av.json" },
-    { "id": "frames.assemble", "version": 2, "spec": "specs/frames.assemble.json" },
-    { "id": "generate.from_references", "version": 3, "spec": "specs/generate.from_references.json" },
-    { "id": "generate.keyframed", "version": 1, "spec": "specs/generate.keyframed.json" },
-    { "id": "generate.with_guides", "version": 2, "spec": "specs/generate.with_guides.json" },
-    { "id": "rollback.native_av", "version": 1, "spec": "specs/rollback.native_av.json" }
+    { "id": "complete.native_av", "version": 1, "family": "native-av-state-algebra", "spec": "specs/complete.native_av.json" },
+    { "id": "continue.native_av", "version": 2, "family": "native-av-state-algebra", "spec": "specs/continue.native_av.json" },
+    { "id": "frames.assemble", "version": 2, "family": "decoded-media-algebra", "spec": "specs/frames.assemble.json" },
+    { "id": "generate.from_references", "version": 3, "family": "h3-conditioning-grammar", "spec": "specs/generate.from_references.json" },
+    { "id": "generate.keyframed", "version": 1, "family": "h3-conditioning-grammar", "spec": "specs/generate.keyframed.json" },
+    { "id": "generate.with_guides", "version": 2, "family": "h3-conditioning-grammar", "spec": "specs/generate.with_guides.json" },
+    { "id": "rollback.native_av", "version": 1, "family": "native-av-state-algebra", "spec": "specs/rollback.native_av.json" }
   ]
 }

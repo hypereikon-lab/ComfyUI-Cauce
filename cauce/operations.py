@@ -11,8 +11,13 @@ from .contracts import content_hash
 
 
 OPERATION_SCHEMA = "cauce.operation/1"
-CATALOG_SCHEMA = "cauce.operation-catalog/1"
+CATALOG_SCHEMA = "cauce.operation-catalog/2"
 OPERATION_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$")
+OPERATION_FAMILIES = {
+    "h3-conditioning-grammar",
+    "native-av-state-algebra",
+    "decoded-media-algebra",
+}
 OWNERS = {"official-comfy", "vanilla-comfy", "cauce"}
 KINDS = {"h3-inference", "decoded-media-transform"}
 IMPLEMENTATION_CLASSES = {
@@ -223,13 +228,32 @@ def load_operation_catalog(root: Path) -> dict[str, dict[str, Any]]:
     catalog = load_json(catalog_path)
     if not isinstance(catalog, dict) or catalog.get("schema") != CATALOG_SCHEMA:
         raise ValueError("invalid operation catalog")
+    families = catalog.get("families")
+    if not isinstance(families, list) or not families:
+        raise ValueError("operation catalog must declare families")
+    declared_families: set[str] = set()
+    for family in families:
+        if not isinstance(family, dict) or set(family) != {"id", "title", "summary"}:
+            raise ValueError(f"malformed operation family {family!r}")
+        family_id = family.get("id")
+        if family_id not in OPERATION_FAMILIES:
+            raise ValueError(f"unknown operation family {family_id!r}")
+        if family_id in declared_families:
+            raise ValueError(f"duplicate operation family {family_id!r}")
+        if not all(isinstance(family.get(field), str) and family[field].strip() for field in ("title", "summary")):
+            raise ValueError(f"operation family {family_id!r} requires title and summary")
+        declared_families.add(family_id)
+    if declared_families != OPERATION_FAMILIES:
+        raise ValueError("operation catalog family set is incomplete")
     entries = catalog.get("operations")
     if not isinstance(entries, list) or not entries:
         raise ValueError("operation catalog must contain entries")
     loaded: dict[str, dict[str, Any]] = {}
     for entry in entries:
-        if not isinstance(entry, dict) or not {"id", "version", "spec"} <= set(entry):
+        if not isinstance(entry, dict) or set(entry) != {"id", "version", "family", "spec"}:
             raise ValueError(f"malformed catalog entry {entry!r}")
+        if entry["family"] not in declared_families:
+            raise ValueError(f"operation {entry['id']!r} has unknown family {entry['family']!r}")
         relative = PurePosixPath(str(entry["spec"]))
         if relative.is_absolute() or ".." in relative.parts or relative.parts[0] != "specs":
             raise ValueError(f"unsafe operation spec path {entry['spec']!r}")

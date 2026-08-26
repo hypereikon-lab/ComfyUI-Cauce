@@ -12,11 +12,11 @@ official/vanilla ComfyUI nodes. An operation is a reusable graph contract, not
 a monolithic custom node and not a claim that CAUCE implemented every model
 capability present in the graph.
 
-The seven operations form three non-sequential families:
+The ten operations form three non-sequential families:
 
 ```text
 H3 conditioning grammar     keyframed / references / guides
-native H3 AV state algebra  continue / complete / rollback
+native H3 AV state algebra  continue / complete / masked edit / outpaint / refine / rollback
 decoded media algebra       exact frame assembly
 ```
 
@@ -26,10 +26,10 @@ evidence are distinct lifecycle states. See the
 
 ## Node surface
 
-The package registers 18 nodes:
+The package registers 20 nodes:
 
 - 1 exact decoded-range node under `CAUCE/Assembly`;
-- 11 packed H3 AV operations under `CAUCE/H3 AV Latent`;
+- 13 packed H3 AV operations under `CAUCE/H3 AV Latent`;
 - 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
 
@@ -65,12 +65,15 @@ generate.from_references
 generate.with_guides
 continue.native_av
 complete.native_av
+edit.masked_video
+reframe.outpaint_video
+refine.video
 rollback.native_av
 frames.assemble
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. Twenty-one validated, non-executable topology
+artifact state, and evidence. Twenty-eight validated, non-executable topology
 dossiers cover every current operation, including official keyframe/reference/
 guide combinations and native AV continuation, completion, replacement, and
 rollback variants. None currently ships as a reusable UI/API graph pair;
@@ -91,6 +94,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Architecture and boundaries](docs/ARCHITECTURE.md)
 - [Operation families and lifecycle](docs/OPERATION_MODEL.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
+- [Current H3 extensions and experiment boundary](docs/H3_EXTENSION_MAP.md)
 - [Semantic operations](docs/OPERATIONS.md)
 - [Operation topology dossiers](docs/TOPOLOGY_DRAFTS.md)
 - [Operation data contracts](docs/DATA_CONTRACTS.md)

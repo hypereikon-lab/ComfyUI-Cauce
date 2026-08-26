@@ -1,0 +1,68 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "edit.masked_video",
+  "operation_version": 1,
+  "variant": "animated-spatiotemporal",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8", "path": "comfy/model_base.py" },
+    { "source": "ComfyUI-Cauce", "path": "cauce/av_latent.py", "functions": ["apply_video_denoise_mask", "clear_av_denoise_mask"] }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load source native AV state" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate source state" },
+    { "key": "mask_input", "owner": "vanilla-comfy", "class_type": null, "role": "supply one MASK per selected decoded frame" },
+    { "key": "mask", "owner": "cauce", "class_type": "CauceH3ApplyVideoDenoiseMask", "role": "project the animated mask onto H3 visual tokens" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load H3 model" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set H3 shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "bind seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "build sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample animated mask" },
+    { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed mask" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode edited frames" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
+    { "from": { "node": "mask_input", "port": "MASK" }, "to": { "node": "mask", "port": "mask" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "sigma", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "clear", "port": "latent" } },
+    { "from": { "node": "clear", "port": "latent" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "source_path", "type": "STRING", "target": { "node": "source", "input": "path_or_folder" }, "required": true },
+    { "name": "timeline_origin", "type": "INT", "target": { "node": "mask", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "mask_start", "type": "INT", "target": { "node": "mask", "input": "start_frame" }, "required": true },
+    { "name": "mask_frames", "type": "INT", "target": { "node": "mask", "input": "frame_count" }, "required": true },
+    { "name": "inside_strength", "type": "FLOAT", "target": { "node": "mask", "input": "inside_strength_video" }, "required": true },
+    { "name": "outside_strength", "type": "FLOAT", "target": { "node": "mask", "input": "outside_strength_video" }, "required": true },
+    { "name": "audio_strength", "type": "FLOAT", "target": { "node": "mask", "input": "audio_strength" }, "required": true },
+    { "name": "mask_combine", "type": "STRING", "target": { "node": "mask", "input": "combine" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
+    { "name": "target_height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "clear_origin", "type": "INT", "target": { "node": "clear", "input": "timeline_origin_frame" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "edited_native_av_latent", "type": "LATENT", "source": { "node": "clear", "port": "latent" } },
+    { "name": "edited_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } }
+  ],
+  "live_gates": ["validate one-mask-per-frame cardinality", "execute one animated mask", "inspect patch-grid boundary behavior", "visually assess temporal stability"]
+}

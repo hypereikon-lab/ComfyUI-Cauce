@@ -132,6 +132,85 @@ The suffix can be appended to reconstruct the original state or replaced by a
 new continuation. This is deterministic state management and requires no H3
 sampling.
 
+## Spatial and spatiotemporal masked editing
+
+`CauceH3ApplyVideoDenoiseMask` accepts either one static `MASK` or one mask per
+decoded frame in an exact interval. It resizes continuous spatial values to the
+visual latent grid and reduces decoded frames covered by each H3 visual token
+with `amax`.
+
+```text
+source native AV state
+  -> optional CauceH3SetAVDenoiseInterval
+  -> CauceH3ApplyVideoDenoiseMask(
+       mask=static or per-frame,
+       combine=replace or multiply,
+       audio_strength=0
+     )
+  -> ordinary official conditioning / guider / sampler
+  -> CauceH3ClearAVDenoiseMask
+```
+
+Use `replace` for a standalone spatial edit. Use a temporal interval followed
+by `multiply` for a local retake: the resulting generation volume is the
+intersection of temporal and spatial selections. The current official core
+pools to the 2x2 visual patch grid and bounds fractional token levels; evaluate
+edge behavior empirically at the final resolution.
+
+## Native video outpainting
+
+```text
+source native AV state
+  -> CauceH3ExpandAVCanvas(
+       target width/height = multiples of 32,
+       offset x/y = multiples of 32,
+       source strength = 0,
+       new-region strength = 1,
+       audio strength = 0
+     )
+  -> ordinary official H3 conditioning / guider / sampler
+  -> CauceH3ClearAVDenoiseMask
+```
+
+The source visual tensor is copied without interpolation. The structural-audio
+stream and duration remain unchanged. Centered and explicit-offset placements
+are separate topology variants because their bound offsets differ.
+
+## Bounded second-pass refinement
+
+Refinement is masked V2V over the original native state, not an independent
+generation and not a custom sampler:
+
+```text
+source native AV state
+  -> CauceH3SetAVDenoiseInterval(
+       start=0,
+       count=complete duration,
+       inside video strength=experimental bounded value,
+       inside/outside audio strength=0
+     )
+  -> optional CauceH3ApplyVideoDenoiseMask(combine=multiply)
+  -> ordinary official H3 conditioning / guider / sampler
+  -> CauceH3ClearAVDenoiseMask
+```
+
+No default strength is described as visually accepted. Characterize a ladder
+on one source, prompt, and seed before choosing a production range.
+
+## Workflow-only H3 patterns
+
+These need no new CAUCE node or semantic operation:
+
+- structured multishot prompting is a prompt protocol inside an ordinary
+  `generate.keyframed` or `generate.from_references` graph;
+- window-aligned motion references bind a different exact reference-video
+  range to each prebound generation or continuation graph in a serial plan;
+- first, last, and multiple interior image or clip anchors are explicit chains
+  of official `MiniMaxH3AddGuide` nodes.
+
+The production layer owns per-window media bindings. Runtime Control executes
+already bound graphs and does not infer window correspondence.
+
 ## Fixed soundtrack alignment
 
 Keep the final soundtrack as the editorial clock. Convert timeslots to exact 24
@@ -147,3 +226,5 @@ continuation requires it, but the production soundtrack is not a model input.
 - [Official AddGuide implementation PR](https://github.com/Comfy-Org/ComfyUI/pull/15439)
 - [Official continuous per-token mask implementation PR](https://github.com/Comfy-Org/ComfyUI/pull/15375)
 - [Inspected native continuation reference](https://github.com/ttulttul/ComfyUI-Minimax-H3-Continuation)
+- [Community masked V2V and outpaint workflows](https://github.com/ckinpdx/ComfyUI-MMH3Tools)
+- [Community H3 refinement workflows](https://github.com/mdkberry/comfyui_workflows/tree/main/workflows_by_model/Minimax-H3)

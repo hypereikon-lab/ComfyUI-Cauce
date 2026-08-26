@@ -17,6 +17,9 @@ H3 conditioning grammar
 native H3 AV state algebra
   continue.native_av
   complete.native_av
+  edit.masked_video
+  reframe.outpaint_video
+  refine.video
   rollback.native_av
 
 decoded media algebra
@@ -51,6 +54,9 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `generate.with_guides` | place decoded guides at exact target-frame indices | official H3 / vanilla | contract + offline topology | defined |
 | `continue.native_av` | extend synchronized packed H3 AV state through keyframe or masked overlap | official H3 + CAUCE AV primitives | contract + offline topology | keyframe path executes synthetically; masked paths unit-validated |
 | `complete.native_av` | generate a prefix/interior/replacement while preserving explicit native AV context | official H3 + CAUCE placement/mask/replace primitives | contract + offline topology | deterministic layer unit-validated |
+| `edit.masked_video` | regenerate an arbitrary spatial or spatiotemporal region while preserving its complement | official H3 + CAUCE mask projection | contract + offline topology | deterministic layer unit-validated |
+| `reframe.outpaint_video` | expand the latent canvas and generate only new regions | official H3 + CAUCE canvas/mask primitives | contract + offline topology | deterministic layer unit-validated |
+| `refine.video` | bounded-denoise second pass over a complete or masked source state | official H3 + CAUCE continuous masks | contract + offline topology | deterministic layer unit-validated |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
 
@@ -88,6 +94,13 @@ native AV state + known left/right spans
   -> complete.native_av
   -> rollback.native_av
   -> alternate continue.native_av
+```
+
+```text
+native AV state + MASK
+  -> edit.masked_video
+  -> refine.video
+  -> reframe.outpaint_video
 ```
 
 The cumulative native AV latent is an explicit output and input. Persist it
@@ -134,9 +147,10 @@ can be schema-valid while its visual objective remains unassessed.
 
 ## Current exclusions
 
-The catalog now describes native temporal completion through current official
-H3 per-token mask semantics, but no masked sampling topology is yet claimed as
-executed or visually accepted. It does not claim automatic intent-to-graph
+The catalog now describes temporal completion, continuous masked editing,
+outpainting, and bounded refinement through current official H3 per-token mask
+semantics, but no new masked sampling topology is yet claimed as executed or
+visually accepted. It does not claim automatic intent-to-graph
 synthesis, arbitrary sampler modification, generative audio, training,
 acceleration, or streaming. A new operation enters the catalog only with a
 typed data contract, explicit node ownership, and honest artifact and evidence

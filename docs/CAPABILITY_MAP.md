@@ -18,6 +18,8 @@
 | H3 cumulative-state split | valid prefix latent plus reversible contiguous suffix span | unit-validated |
 | H3 AV span placement/rebase | copy one synchronized native span into an exact target interval while rejecting visual-grid or 40 Hz phase mismatch | unit-validated |
 | H3 continuous denoise interval | independent video/audio per-token masks with hard, linear, smoothstep, or smootherstep temporal boundaries and explicit composition | unit-validated |
+| H3 spatial/spatiotemporal denoise mask | static or per-decoded-frame continuous MASK projected to visual tokens, with explicit mask algebra and preserved structural audio | unit-validated |
+| H3 AV canvas expansion | exact source placement on a larger 32-pixel-aligned visual lattice, zero allocation outside, and an outpaint mask | unit-validated |
 | H3 AV interval replacement | replace an exact synchronized interval in cumulative native state | unit-validated |
 | H3 denoise-mask cleanup | remove consumed nested mask metadata before persistence | unit-validated |
 | H3 AV persistence | atomic visual+structural-audio save/load | unit-validated; save/load executes in `continue.native_av` smoke verification |
@@ -33,6 +35,9 @@ conditioning grammar      generate.keyframed
 
 native AV state algebra   continue.native_av
                           complete.native_av
+                          edit.masked_video
+                          reframe.outpaint_video
+                          refine.video
                           rollback.native_av
 
 decoded media algebra     frames.assemble
@@ -45,10 +50,13 @@ decoded media algebra     frames.assemble
 | `generate.with_guides` | official `MiniMaxH3AddGuide` chain |
 | `continue.native_av` | keyframe or masked native overlap around official sampling; optional future guide |
 | `complete.native_av` | native prefix, interior, local replacement, or two-source completion through official per-token masking |
+| `edit.masked_video` | static spatial, animated spatiotemporal, or bounded local retake through current official mask semantics |
+| `reframe.outpaint_video` | centered or offset native canvas expansion followed by masked H3 sampling |
+| `refine.video` | full-frame or masked bounded-denoise second pass over existing native state |
 | `rollback.native_av` | exact native split with reversible suffix span |
 | `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
 
-All seven currently remain `contract-only`: no paired reusable UI/API graph is
+All ten currently remain `contract-only`: no paired reusable UI/API graph is
 shipped. “Composed” means the mechanism can be expressed as a graph. It does not
 mean a source/prompt pair is visually accepted.
 

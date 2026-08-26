@@ -8,11 +8,13 @@ from collections.abc import Mapping
 
 from ..cauce.av_latent import (
     apply_av_denoise_interval,
+    apply_video_denoise_mask,
     allocate_av_window_like,
     append_av_span,
     build_av_span_keyframes,
     clear_av_denoise_mask,
     extract_av_span,
+    expand_av_canvas,
     inspect_av_latent,
     place_av_span,
     plan_av_window,
@@ -449,6 +451,154 @@ class CauceH3SetAVDenoiseInterval:
         return masked, _json(report)
 
 
+class CauceH3ApplyVideoDenoiseMask:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "mask": ("MASK",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "start_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "frame_count": (
+                    "INT",
+                    {"default": 124, "min": 1, "max": 10_000_000},
+                ),
+                "inside_strength_video": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "outside_strength_video": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "audio_strength": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "combine": (["replace", "maximum", "minimum", "multiply"],),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("latent", "report_json")
+    FUNCTION = "apply"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Project a static or per-frame continuous MASK onto H3 video tokens; "
+        "1 generates and 0 preserves."
+    )
+
+    def apply(
+        self,
+        latent,
+        mask,
+        timeline_origin_frame,
+        start_frame,
+        frame_count,
+        inside_strength_video,
+        outside_strength_video,
+        audio_strength,
+        combine,
+    ):
+        masked, report = apply_video_denoise_mask(
+            latent,
+            mask,
+            timeline_origin_frame=int(timeline_origin_frame),
+            start_frame=int(start_frame),
+            frame_count=int(frame_count),
+            inside_strength_video=float(inside_strength_video),
+            outside_strength_video=float(outside_strength_video),
+            audio_strength=float(audio_strength),
+            combine=str(combine),
+            nested_factory=_nested_factory,
+        )
+        return masked, _json(report)
+
+
+class CauceH3ExpandAVCanvas:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "target_width": (
+                    "INT",
+                    {"default": 1024, "min": 32, "max": 16384, "step": 32},
+                ),
+                "target_height": (
+                    "INT",
+                    {"default": 1024, "min": 32, "max": 16384, "step": 32},
+                ),
+                "offset_x": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 16384, "step": 32},
+                ),
+                "offset_y": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 16384, "step": 32},
+                ),
+                "source_strength_video": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "new_region_strength_video": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "audio_strength": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("latent", "report_json")
+    FUNCTION = "expand"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Place one packed H3 AV state on a larger 32-pixel-aligned canvas and "
+        "mark only the new region for generation."
+    )
+
+    def expand(
+        self,
+        latent,
+        target_width,
+        target_height,
+        offset_x,
+        offset_y,
+        source_strength_video,
+        new_region_strength_video,
+        audio_strength,
+        timeline_origin_frame,
+    ):
+        expanded, report = expand_av_canvas(
+            latent,
+            target_width=int(target_width),
+            target_height=int(target_height),
+            offset_x=int(offset_x),
+            offset_y=int(offset_y),
+            source_strength_video=float(source_strength_video),
+            new_region_strength_video=float(new_region_strength_video),
+            audio_strength=float(audio_strength),
+            timeline_origin_frame=int(timeline_origin_frame),
+            nested_factory=_nested_factory,
+        )
+        return expanded, _json(report)
+
+
 class CauceH3ReplaceAVSpan:
     @classmethod
     def INPUT_TYPES(cls):
@@ -517,6 +667,8 @@ NODE_CLASS_MAPPINGS = {
     "CauceH3SplitAVLatent": CauceH3SplitAVLatent,
     "CauceH3PlaceAVSpan": CauceH3PlaceAVSpan,
     "CauceH3SetAVDenoiseInterval": CauceH3SetAVDenoiseInterval,
+    "CauceH3ApplyVideoDenoiseMask": CauceH3ApplyVideoDenoiseMask,
+    "CauceH3ExpandAVCanvas": CauceH3ExpandAVCanvas,
     "CauceH3ReplaceAVSpan": CauceH3ReplaceAVSpan,
     "CauceH3ClearAVDenoiseMask": CauceH3ClearAVDenoiseMask,
 }
@@ -531,6 +683,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceH3SplitAVLatent": "CAUCE · Split H3 AV Latent",
     "CauceH3PlaceAVSpan": "CAUCE · Place H3 AV Span",
     "CauceH3SetAVDenoiseInterval": "CAUCE · Set H3 AV Denoise Interval",
+    "CauceH3ApplyVideoDenoiseMask": "CAUCE · Apply H3 Video Denoise Mask",
+    "CauceH3ExpandAVCanvas": "CAUCE · Expand H3 AV Canvas",
     "CauceH3ReplaceAVSpan": "CAUCE · Replace H3 AV Span",
     "CauceH3ClearAVDenoiseMask": "CAUCE · Clear H3 AV Denoise Mask",
 }

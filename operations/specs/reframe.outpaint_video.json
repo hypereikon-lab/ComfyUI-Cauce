@@ -1,0 +1,51 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "reframe.outpaint_video",
+  "version": 1,
+  "title": "Expand and outpaint native H3 video state",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3-with-cauce-primitives",
+  "summary": "Place an existing native H3 state on a larger aligned canvas, preserve its interior, and generate only newly allocated regions.",
+  "inputs": [
+    { "name": "source_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "target_width", "type": "INT", "required": true },
+    { "name": "target_height", "type": "INT", "required": true },
+    { "name": "offset_x", "type": "INT", "required": true },
+    { "name": "offset_y", "type": "INT", "required": true },
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "reframed_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "reframed_frames", "type": "IMAGE", "required": true }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "canvas_alignment_pixels": 32,
+    "source_region_default_strength": 0.0,
+    "new_region_default_strength": 1.0,
+    "duration_change": false,
+    "fixed_soundtrack_conditioning": false,
+    "sampler_patch": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate source duration and canvas geometry" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3ExpandAVCanvas", "role": "allocate the larger visual lattice, copy the source exactly, and mask new regions" },
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the expanded canvas" },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
+    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "sample only the newly exposed visual regions" },
+    { "order": 6, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the reframed visual stream" }
+  ],
+  "variants": [
+    { "id": "centered", "placement": "centered on both expanded axes" },
+    { "id": "offset", "placement": "explicit 32-pixel-aligned x/y offset" }
+  ],
+  "artifacts": { "state": "contract-only", "pairs": [] },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Canvas allocation, exact source placement, structural-audio preservation, and generated-region masking are unit-validated; live H3 outpainting remains unassessed."
+  }
+}

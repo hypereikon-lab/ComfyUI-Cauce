@@ -21,12 +21,16 @@ outside the node.
 | `CauceH3SplitAVLatent` | split an origin-zero cumulative state into a valid prefix and contiguous suffix span |
 | `CauceH3PlaceAVSpan` | copy one synchronized span into an exact target interval, optionally rebasing only when both clocks align |
 | `CauceH3SetAVDenoiseInterval` | attach independent continuous video/audio token masks for one frame interval; `1` generates and `0` preserves |
+| `CauceH3ApplyVideoDenoiseMask` | project one static or per-frame continuous `MASK` onto the H3 visual-token lattice and compose it with existing mask state |
+| `CauceH3ExpandAVCanvas` | copy native video state onto a larger 32-pixel-aligned canvas, preserve the interior, and mask newly allocated regions |
 | `CauceH3ReplaceAVSpan` | replace one globally aligned synchronized interval and discard spent mask metadata |
 | `CauceH3ClearAVDenoiseMask` | remove a consumed nested AV denoise mask without changing latent samples |
 
 No node owns prompt, seed, sampler, scheduler, decode, or a continuation/
 completion preset. The mask node owns only deterministic per-token denoise
-metadata; the official sampler owns how that metadata affects inference.
+metadata; the official sampler owns how that metadata affects inference. Mask
+projection uses decoded-frame `amax` inside each H3 visual token and preserves
+continuous spatial values until the current core's own patch-grid processing.
 
 ## CAUCE/H3 Planning
 

@@ -24,10 +24,13 @@ class OperationContractTests(unittest.TestCase):
             {
                 "complete.native_av",
                 "continue.native_av",
+                "edit.masked_video",
                 "frames.assemble",
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
+                "reframe.outpaint_video",
+                "refine.video",
                 "rollback.native_av",
             },
         )
@@ -51,7 +54,14 @@ class OperationContractTests(unittest.TestCase):
         )
         self.assertEqual(
             by_family["native-av-state-algebra"],
-            {"continue.native_av", "complete.native_av", "rollback.native_av"},
+            {
+                "continue.native_av",
+                "complete.native_av",
+                "edit.masked_video",
+                "reframe.outpaint_video",
+                "refine.video",
+                "rollback.native_av",
+            },
         )
         self.assertEqual(by_family["decoded-media-algebra"], {"frames.assemble"})
 
@@ -68,7 +78,13 @@ class OperationContractTests(unittest.TestCase):
 
     def test_composition_classes_match_real_graph_owners(self):
         operations = load_operation_catalog(ROOT)
-        for operation_id in ("continue.native_av", "complete.native_av"):
+        for operation_id in (
+            "continue.native_av",
+            "complete.native_av",
+            "edit.masked_video",
+            "reframe.outpaint_video",
+            "refine.video",
+        ):
             owners = {stage["owner"] for stage in operations[operation_id]["graph_contract"]}
             self.assertTrue({"official-comfy", "cauce"} <= owners)
         for operation_id in ("frames.assemble", "rollback.native_av"):

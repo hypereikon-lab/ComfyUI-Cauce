@@ -27,9 +27,10 @@ Tests cover operation catalog/schema/ownership/artifact invariants, decoded
 ranges, absolute 24→40 Hz token boundaries, window layout, allocation,
 synchronized span extraction, latent-guide metadata, drift-safe append,
 reversible state split, exact span placement/rebase, independent continuous AV
-denoise masks, exact interval replacement, mask cleanup, official target/
+denoise masks, spatial/spatiotemporal mask projection, aligned canvas
+expansion, exact interval replacement, mask cleanup, official target/
 guide/reference preprocessing rules, conditioning inspection,
-persistence paths, the 18-node
+persistence paths, the 20-node
 registry, complete offline topology coverage, and every topology port that
 touches a CAUCE node.
 
@@ -47,6 +48,8 @@ GET /object_info/CauceH3AppendAVSpan
 GET /object_info/CauceH3SplitAVLatent
 GET /object_info/CauceH3PlaceAVSpan
 GET /object_info/CauceH3SetAVDenoiseInterval
+GET /object_info/CauceH3ApplyVideoDenoiseMask
+GET /object_info/CauceH3ExpandAVCanvas
 GET /object_info/CauceH3ReplaceAVSpan
 GET /object_info/CauceH3ClearAVDenoiseMask
 GET /object_info/CauceH3ResolveTargetShape

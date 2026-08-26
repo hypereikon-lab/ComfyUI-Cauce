@@ -8,6 +8,9 @@
     { "operation": "continue.native_av", "variant": "keyframe-overlap", "path": "plans/continue.native_av.json" },
     { "operation": "continue.native_av", "variant": "masked-overlap", "path": "plans/continue.native_av.masked-overlap.json" },
     { "operation": "continue.native_av", "variant": "masked-overlap-future-guide", "path": "plans/continue.native_av.masked-overlap-future-guide.json" },
+    { "operation": "edit.masked_video", "variant": "animated-spatiotemporal", "path": "plans/edit.masked_video.animated-spatiotemporal.json" },
+    { "operation": "edit.masked_video", "variant": "local-retake", "path": "plans/edit.masked_video.local-retake.json" },
+    { "operation": "edit.masked_video", "variant": "static-spatial", "path": "plans/edit.masked_video.static-spatial.json" },
     { "operation": "frames.assemble", "variant": "ordered-concatenation", "path": "plans/frames.assemble.json" },
     { "operation": "generate.from_references", "variant": "image-reference-match", "path": "plans/generate.from_references.image-reference-match.json" },
     { "operation": "generate.from_references", "variant": "image-reference-max", "path": "plans/generate.from_references.image-reference-max.json" },
@@ -21,6 +24,10 @@
     { "operation": "generate.with_guides", "variant": "first-last-interior", "path": "plans/generate.with_guides.first-last-interior.json" },
     { "operation": "generate.with_guides", "variant": "multi-anchor", "path": "plans/generate.with_guides.json" },
     { "operation": "generate.with_guides", "variant": "single-anchor", "path": "plans/generate.with_guides.single-anchor.json" },
+    { "operation": "reframe.outpaint_video", "variant": "centered", "path": "plans/reframe.outpaint_video.centered.json" },
+    { "operation": "reframe.outpaint_video", "variant": "offset", "path": "plans/reframe.outpaint_video.offset.json" },
+    { "operation": "refine.video", "variant": "full-frame", "path": "plans/refine.video.full-frame.json" },
+    { "operation": "refine.video", "variant": "masked", "path": "plans/refine.video.masked.json" },
     { "operation": "rollback.native_av", "variant": "branch-suffix", "path": "plans/rollback.native_av.json" }
   ]
 }

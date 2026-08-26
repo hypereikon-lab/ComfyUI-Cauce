@@ -21,6 +21,8 @@ The low-level surface owns:
 - absolute H3 AV frame/video-token/audio-token layouts;
 - synchronized packed-AV span extraction, placement, continuous denoise masks,
   exact replacement, native guide insertion, split, and append;
+- decoded-mask projection onto H3 visual tokens and aligned native visual-canvas
+  expansion with explicit generated-region masks;
 - bounded persistence of packed H3 audiovisual latents.
 
 Official ComfyUI/MiniMax nodes own model loading, decoded-media conditioning,
@@ -246,6 +248,8 @@ GET /object_info/CauceH3AppendAVSpan
 GET /object_info/CauceH3SplitAVLatent
 GET /object_info/CauceH3PlaceAVSpan
 GET /object_info/CauceH3SetAVDenoiseInterval
+GET /object_info/CauceH3ApplyVideoDenoiseMask
+GET /object_info/CauceH3ExpandAVCanvas
 GET /object_info/CauceH3ReplaceAVSpan
 GET /object_info/CauceH3ClearAVDenoiseMask
 GET /object_info/CauceH3ResolveTargetShape

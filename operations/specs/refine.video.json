@@ -1,0 +1,49 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "refine.video",
+  "version": 1,
+  "title": "Refine native H3 video state with bounded denoise",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3-with-cauce-primitives",
+  "summary": "Run a controlled second H3 pass over a complete or masked native video state while retaining the source as the sampler initial state.",
+  "inputs": [
+    { "name": "source_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "video_denoise_strength", "type": "FLOAT", "required": true },
+    { "name": "optional_video_mask", "type": "MASK", "required": false },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "refined_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "refined_frames", "type": "IMAGE", "required": true }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "video_denoise_strength_range": [0.0, 1.0],
+    "source_state_is_sampler_initial_state": true,
+    "fixed_soundtrack_conditioning": false,
+    "sampler_patch": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate the complete source state" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3SetAVDenoiseInterval", "role": "apply one bounded full-duration denoise strength" },
+    { "order": 3, "owner": "cauce", "node_type": "CauceH3ApplyVideoDenoiseMask", "role": "optionally restrict refinement spatially", "optional": true },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create refinement prompt conditioning at the unchanged shape" },
+    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally add visual reference anchors", "optional": true, "repeatable": true },
+    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample from the source state under bounded per-token denoise" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata" },
+    { "order": 9, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the refined visual stream" }
+  ],
+  "variants": [
+    { "id": "full-frame", "mask": false },
+    { "id": "masked", "mask": true, "mask_combine": "multiply" }
+  ],
+  "artifacts": { "state": "contract-only", "pairs": [] },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Continuous full-duration and spatial mask composition is unit-validated; useful refinement-strength ranges require live visual characterization."
+  }
+}

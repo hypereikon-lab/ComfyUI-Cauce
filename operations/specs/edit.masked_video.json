@@ -1,0 +1,53 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "edit.masked_video",
+  "version": 1,
+  "title": "Edit selected regions of native H3 video state",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3-with-cauce-primitives",
+  "summary": "Re-denoise an arbitrary spatial or spatiotemporal video region while preserving the complementary native H3 state.",
+  "inputs": [
+    { "name": "source_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "video_mask", "type": "MASK", "required": true, "cardinality": "one static mask or one mask per decoded frame in the selected interval" },
+    { "name": "mask_start_frame", "type": "INT", "required": true },
+    { "name": "mask_frame_count", "type": "INT", "required": true },
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "edited_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "edited_frames", "type": "IMAGE", "required": true }
+  ],
+  "constraints": {
+    "frame_rate": 24,
+    "frame_count_rule": "17k+5",
+    "mask_semantics": "1 generates, 0 preserves",
+    "mask_values": "continuous [0,1], quantized by current ComfyUI H3 core to at most 256 token-strength levels",
+    "temporal_projection": "one static mask or decoded-frame masks reduced by amax within each H3 visual token",
+    "spatial_projection": "bilinear to the visual latent grid followed by official H3 2x2 patch pooling",
+    "fixed_soundtrack_conditioning": false,
+    "sampler_patch": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate the complete source state and expose its exact geometry" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3SetAVDenoiseInterval", "role": "optionally restrict an animated or local retake to one exact temporal interval", "optional": true },
+    { "order": 3, "owner": "cauce", "node_type": "CauceH3ApplyVideoDenoiseMask", "role": "project and compose the continuous spatial or spatiotemporal mask" },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the exact source canvas and duration" },
+    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally add decoded visual anchors", "optional": true, "repeatable": true },
+    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample the masked native state through the ordinary H3 path" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata before persistence" },
+    { "order": 9, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the edited visual stream" }
+  ],
+  "variants": [
+    { "id": "static-spatial", "mask_frames": 1, "temporal_scope": "complete target" },
+    { "id": "animated-spatiotemporal", "mask_frames": "one per selected decoded frame" },
+    { "id": "local-retake", "temporal_interval": true, "mask_combine": "multiply" }
+  ],
+  "artifacts": { "state": "contract-only", "pairs": [] },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Continuous mask projection, native mask composition, and state preservation are unit-validated; H3 sampling and visual behavior remain to be paired and assessed live."
+  }
+}

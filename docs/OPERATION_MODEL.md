@@ -1,6 +1,6 @@
 # Operation model
 
-CAUCE exposes seven orthogonal graph-level operations in three capability
+CAUCE exposes ten orthogonal graph-level operations in three capability
 families. The families are a classification, not an execution order.
 
 ## H3 conditioning grammar
@@ -22,6 +22,9 @@ does not claim to have implemented the official H3 capability.
 ```text
 continue.native_av
 complete.native_av
+edit.masked_video
+reframe.outpaint_video
+refine.video
 rollback.native_av
 ```
 
@@ -31,6 +34,9 @@ state as a first-class artifact:
 ```text
 state -- extend --------------------------> longer state
 state -- complete[start, end) ------------> completed/replaced state
+state + mask -- edit[x, y, t] ------------> selectively edited state
+state -- expand canvas -------------------> reframed/outpaint target state
+state -- bounded second pass -------------> refined state
 state -- split[cut] ----------------------> prefix + reversible suffix
 ```
 
@@ -38,6 +44,11 @@ state -- split[cut] ----------------------> prefix + reversible suffix
 backward-prefix, two-sided-infill, local-replacement, and two-source-connection
 variants differ by placement of known spans and the unknown interval; they are
 not separate hidden mechanisms.
+
+`edit.masked_video` owns arbitrary static or animated spatial selection.
+`reframe.outpaint_video` owns aligned visual-lattice expansion.
+`refine.video` reuses the same official mask path at bounded strength; it is
+not a separate sampler.
 
 ## Decoded media algebra
 

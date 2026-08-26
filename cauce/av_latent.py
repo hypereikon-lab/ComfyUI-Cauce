@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+import hashlib
 from typing import Any, Callable
 
 from .contracts import AV_SPAN_SCHEMA, AV_WINDOW_LAYOUT_SCHEMA, content_hash
@@ -39,6 +40,18 @@ def _new_zeros(reference: Any, shape: tuple[int, ...]):
         return np.zeros(shape, dtype=reference.dtype)
     except (ImportError, AttributeError) as exc:  # pragma: no cover - NumPy ships with ComfyUI
         raise TypeError("AV tensors must support new_zeros() or be NumPy arrays") from exc
+
+
+def _new_full(reference: Any, shape: tuple[int, ...], value: float):
+    new_full = getattr(reference, "new_full", None)
+    if callable(new_full):
+        return new_full(shape, float(value))
+    try:
+        import numpy as np
+
+        return np.full(shape, float(value), dtype=reference.dtype)
+    except (ImportError, AttributeError) as exc:  # pragma: no cover - NumPy ships with ComfyUI
+        raise TypeError("AV tensors must support new_full() or be NumPy arrays") from exc
 
 
 def _concatenate(values: tuple[Any, ...], axis: int):
@@ -92,6 +105,134 @@ def _profile_tensor(reference: Any, values: Sequence[float]):
     except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
         pass
     raise TypeError("AV tensors must be PyTorch tensors or NumPy arrays")
+
+
+def _mask_tensor(reference: Any, value: Any):
+    """Return one float32 mask on the reference backend and device."""
+
+    try:
+        import torch
+
+        if isinstance(reference, torch.Tensor):
+            if isinstance(value, torch.Tensor):
+                return value.to(device=reference.device, dtype=torch.float32)
+            return torch.as_tensor(value, device=reference.device, dtype=torch.float32)
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        pass
+    try:
+        import numpy as np
+
+        if isinstance(reference, np.ndarray):
+            return np.asarray(value, dtype=np.float32)
+    except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
+        pass
+    raise TypeError("mask and AV tensors must be PyTorch tensors or NumPy arrays")
+
+
+def _mask_min_max(value: Any) -> tuple[float, float]:
+    try:
+        return float(value.min().item()), float(value.max().item())
+    except AttributeError:
+        return float(value.min()), float(value.max())
+
+
+def _mask_all_finite(value: Any) -> bool:
+    try:
+        import torch
+
+        if isinstance(value, torch.Tensor):
+            return bool(torch.isfinite(value).all().item())
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        pass
+    try:
+        import numpy as np
+
+        if isinstance(value, np.ndarray):
+            return bool(np.isfinite(value).all())
+    except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
+        pass
+    raise TypeError("mask tensors must be PyTorch tensors or NumPy arrays")
+
+
+def _mask_digest(value: Any) -> str:
+    """Hash one mask after canonical float32 CPU materialization."""
+
+    try:
+        import torch
+
+        if isinstance(value, torch.Tensor):
+            array = value.detach().to(device="cpu", dtype=torch.float32).contiguous().numpy()
+        else:
+            array = value
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        array = value
+    try:
+        import numpy as np
+
+        canonical = np.asarray(array, dtype=np.float32)
+        digest = hashlib.sha256()
+        digest.update(str(tuple(int(item) for item in canonical.shape)).encode("ascii"))
+        digest.update(canonical.tobytes(order="C"))
+        return digest.hexdigest()
+    except ImportError as exc:  # pragma: no cover - NumPy ships with ComfyUI
+        raise TypeError("mask hashing requires NumPy") from exc
+
+
+def _resize_mask_frames(mask: Any, height: int, width: int):
+    """Resize ``[N,H,W]`` masks while preserving continuous values."""
+
+    target = (int(height), int(width))
+    if tuple(int(item) for item in mask.shape[-2:]) == target:
+        return mask.clone() if hasattr(mask, "clone") else mask.copy()
+    try:
+        import torch
+        import torch.nn.functional as functional
+
+        if isinstance(mask, torch.Tensor):
+            return functional.interpolate(
+                mask.unsqueeze(1),
+                size=target,
+                mode="bilinear",
+                align_corners=False,
+            ).squeeze(1)
+    except ImportError:  # pragma: no cover - PyTorch ships with ComfyUI
+        pass
+    try:
+        import numpy as np
+
+        if isinstance(mask, np.ndarray):
+            source_h, source_w = (int(mask.shape[-2]), int(mask.shape[-1]))
+            ys = np.linspace(0.0, max(0, source_h - 1), target[0], dtype=np.float32)
+            xs = np.linspace(0.0, max(0, source_w - 1), target[1], dtype=np.float32)
+            y0 = np.floor(ys).astype(np.int64)
+            x0 = np.floor(xs).astype(np.int64)
+            y1 = np.minimum(y0 + 1, source_h - 1)
+            x1 = np.minimum(x0 + 1, source_w - 1)
+            wy = (ys - y0).reshape(1, target[0], 1)
+            wx = (xs - x0).reshape(1, 1, target[1])
+            top = mask[:, y0][:, :, x0] * (1.0 - wx) + mask[:, y0][:, :, x1] * wx
+            bottom = mask[:, y1][:, :, x0] * (1.0 - wx) + mask[:, y1][:, :, x1] * wx
+            return top * (1.0 - wy) + bottom * wy
+    except ImportError:  # pragma: no cover - NumPy ships with ComfyUI
+        pass
+    raise TypeError("mask resizing requires PyTorch or NumPy tensors")
+
+
+def _temporal_amax(value: Any, start: int, end: int):
+    segment = value[int(start):int(end)]
+    maximum = getattr(segment, "amax", None)
+    if callable(maximum):
+        try:
+            return maximum(dim=0)
+        except TypeError:
+            return maximum(axis=0)
+    maximum = getattr(segment, "max", None)
+    if callable(maximum):
+        try:
+            return maximum(dim=0).values
+        except TypeError:
+            return maximum(axis=0)
+    raise TypeError("mask tensors must support amax")
 
 
 def _broadcast_video_mask(profile: Any, video: Any):
@@ -801,6 +942,270 @@ def apply_av_denoise_interval(
     }
     report["mask_hash"] = content_hash(report)
     return out, report
+
+
+def apply_video_denoise_mask(
+    latent: Mapping[str, Any],
+    mask: Any,
+    *,
+    start_frame: int,
+    frame_count: int,
+    timeline_origin_frame: int = 0,
+    inside_strength_video: float = 1.0,
+    outside_strength_video: float = 0.0,
+    audio_strength: float = 0.0,
+    combine: str = "replace",
+    nested_factory: NestedFactory | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Project a decoded spatial/video mask onto H3's visual-token lattice.
+
+    ``mask`` is either one static ``[H,W]``/``[1,H,W]`` mask or one mask per
+    decoded frame in the requested interval. Spatial resizing remains
+    continuous; multiple decoded masks covered by one H3 visual token are
+    reduced with ``amax``. The interval boundaries must be representable on the
+    native visual-token clock. Structural audio receives one explicit constant
+    strength because a spatial mask has no audio geometry.
+    """
+
+    origin = int(timeline_origin_frame)
+    video, audio, total_frames = validate_av_latent(
+        latent,
+        timeline_origin_frame=origin,
+    )
+    start = int(start_frame)
+    count = int(frame_count)
+    end = start + count
+    if start < 0 or count < 1 or end > total_frames:
+        raise ValueError("video denoise mask interval must lie inside the AV latent")
+    video_start_token = visual_token_boundary(start)
+    video_end_token = visual_token_boundary(end)
+    strengths = (
+        float(inside_strength_video),
+        float(outside_strength_video),
+        float(audio_strength),
+    )
+    if any(value < 0.0 or value > 1.0 for value in strengths):
+        raise ValueError("video-mask denoise strengths must lie in [0, 1]")
+    if combine not in {"replace", "maximum", "minimum", "multiply"}:
+        raise ValueError("mask combine mode must be replace, maximum, minimum, or multiply")
+
+    source = _mask_tensor(video, mask)
+    if getattr(source, "ndim", 0) == 2:
+        source = source.reshape((1,) + tuple(source.shape))
+    if getattr(source, "ndim", 0) != 3:
+        raise ValueError("video denoise mask must have shape [H,W] or [frames,H,W]")
+    source_frames = int(source.shape[0])
+    if source_frames not in {1, count}:
+        raise ValueError(
+            "video denoise mask must contain one static mask or exactly frame_count masks"
+        )
+    if int(source.shape[1]) < 1 or int(source.shape[2]) < 1:
+        raise ValueError("video denoise mask spatial dimensions must be positive")
+    if not _mask_all_finite(source):
+        raise ValueError("video denoise mask values must be finite")
+    source_min, source_max = _mask_min_max(source)
+    if source_min < 0.0 or source_max > 1.0:
+        raise ValueError("video denoise mask values must lie in [0, 1]")
+
+    resized = _resize_mask_frames(source, int(video.shape[3]), int(video.shape[4]))
+    proposed_video = _new_full(
+        video,
+        (
+            int(video.shape[0]),
+            1,
+            int(video.shape[2]),
+            int(video.shape[3]),
+            int(video.shape[4]),
+        ),
+        strengths[1],
+    )
+    token_spans = visual_token_spans(int(video.shape[2]))
+    for token_index in range(video_start_token, video_end_token):
+        token_start, token_end = token_spans[token_index]
+        if source_frames == 1:
+            spatial = resized[0]
+        else:
+            spatial = _temporal_amax(
+                resized,
+                token_start - start,
+                token_end - start,
+            )
+        proposed_video[:, :, token_index] = strengths[1] + (
+            strengths[0] - strengths[1]
+        ) * spatial
+
+    proposed_audio = _new_full(
+        audio,
+        (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[3])),
+        strengths[2],
+    )
+    existing_video, existing_audio = _mask_streams(latent)
+    mask_video = _combine_mask(existing_video, proposed_video, combine)
+    mask_audio = _combine_mask(existing_audio, proposed_audio, combine)
+    out = dict(latent)
+    out["noise_mask"] = (
+        nested_factory((mask_video, mask_audio))
+        if nested_factory is not None
+        else (mask_video, mask_audio)
+    )
+
+    result_min, result_max = _mask_min_max(mask_video)
+    report: dict[str, Any] = {
+        "schema": "cauce.h3-video-denoise-mask-report/1",
+        "timeline_origin_frame": origin,
+        "target_frame_count": total_frames,
+        "mask_frame_range": [start, end],
+        "video_token_range": [video_start_token, video_end_token],
+        "source_mask_shape": [int(item) for item in source.shape],
+        "latent_mask_shape": [int(item) for item in proposed_video.shape],
+        "temporal_projection": (
+            "static" if source_frames == 1 else "amax-per-h3-visual-token"
+        ),
+        "spatial_projection": "continuous-bilinear-to-video-latent-grid",
+        "combine": combine,
+        "video_strength": {"inside": strengths[0], "outside": strengths[1]},
+        "audio_strength": strengths[2],
+        "source_minimum": source_min,
+        "source_maximum": source_max,
+        "result_minimum": result_min,
+        "result_maximum": result_max,
+        "result_digest": _mask_digest(mask_video),
+        "requires_comfyui_core": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8-or-newer",
+    }
+    report["mask_hash"] = content_hash(report)
+    return out, report
+
+
+def expand_av_canvas(
+    latent: Mapping[str, Any],
+    *,
+    target_width: int,
+    target_height: int,
+    offset_x: int,
+    offset_y: int,
+    source_strength_video: float = 0.0,
+    new_region_strength_video: float = 1.0,
+    audio_strength: float = 0.0,
+    timeline_origin_frame: int = 0,
+    nested_factory: NestedFactory | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Place a packed H3 video latent on a larger 32-pixel-aligned canvas.
+
+    The source visual state is copied exactly, new regions are zero allocated,
+    and a nested denoise mask is attached. The synchronized structural-audio
+    stream is cloned without resizing. Existing mask metadata is rejected so a
+    caller must make mask lifecycle explicit before reframing.
+    """
+
+    origin = int(timeline_origin_frame)
+    video, audio, total_frames = validate_av_latent(
+        latent,
+        timeline_origin_frame=origin,
+    )
+    if latent.get("noise_mask") is not None:
+        raise ValueError("clear the existing AV denoise mask before expanding the canvas")
+    width = int(target_width)
+    height = int(target_height)
+    x = int(offset_x)
+    y = int(offset_y)
+    if width < 32 or height < 32 or width % 32 or height % 32:
+        raise ValueError("target canvas dimensions must be positive multiples of 32 pixels")
+    if x < 0 or y < 0 or x % 32 or y % 32:
+        raise ValueError("canvas offsets must be non-negative multiples of 32 pixels")
+    source_width = int(video.shape[4]) * 16
+    source_height = int(video.shape[3]) * 16
+    if source_width % 32 or source_height % 32:
+        raise ValueError("source H3 latent must already align to the 32-pixel DiT patch grid")
+    if width < source_width or height < source_height:
+        raise ValueError("target canvas cannot be smaller than the source latent")
+    if width == source_width and height == source_height:
+        raise ValueError("target canvas must expand at least one source dimension")
+    if x + source_width > width or y + source_height > height:
+        raise ValueError("source latent placement does not fit inside the target canvas")
+    strengths = (
+        float(source_strength_video),
+        float(new_region_strength_video),
+        float(audio_strength),
+    )
+    if any(value < 0.0 or value > 1.0 for value in strengths):
+        raise ValueError("canvas denoise strengths must lie in [0, 1]")
+
+    target_h = height // 16
+    target_w = width // 16
+    offset_h = y // 16
+    offset_w = x // 16
+    expanded_video = _new_zeros(
+        video,
+        (
+            int(video.shape[0]),
+            int(video.shape[1]),
+            int(video.shape[2]),
+            target_h,
+            target_w,
+        ),
+    )
+    expanded_video[
+        :,
+        :,
+        :,
+        offset_h:offset_h + int(video.shape[3]),
+        offset_w:offset_w + int(video.shape[4]),
+    ] = video
+    expanded_audio = _clone(audio)
+    expanded = _with_streams(latent, expanded_video, expanded_audio, nested_factory)
+
+    video_mask = _new_full(
+        video,
+        (int(video.shape[0]), 1, int(video.shape[2]), target_h, target_w),
+        strengths[1],
+    )
+    video_mask[
+        :,
+        :,
+        :,
+        offset_h:offset_h + int(video.shape[3]),
+        offset_w:offset_w + int(video.shape[4]),
+    ] = strengths[0]
+    audio_mask = _new_full(
+        audio,
+        (int(audio.shape[0]), 1, int(audio.shape[2]), int(audio.shape[3])),
+        strengths[2],
+    )
+    expanded["noise_mask"] = (
+        nested_factory((video_mask, audio_mask))
+        if nested_factory is not None
+        else (video_mask, audio_mask)
+    )
+    validate_av_latent(
+        expanded,
+        timeline_origin_frame=origin,
+        name="expanded_av_latent",
+    )
+
+    report: dict[str, Any] = {
+        "schema": "cauce.h3-av-canvas-expansion-report/1",
+        "timeline_origin_frame": origin,
+        "frame_count": total_frames,
+        "source_canvas": {
+            "width": source_width,
+            "height": source_height,
+            "latent_width": int(video.shape[4]),
+            "latent_height": int(video.shape[3]),
+        },
+        "target_canvas": {
+            "width": width,
+            "height": height,
+            "latent_width": target_w,
+            "latent_height": target_h,
+        },
+        "source_offset": {"x": x, "y": y},
+        "video_strength": {"source": strengths[0], "new_region": strengths[1]},
+        "audio_strength": strengths[2],
+        "mask_digest": _mask_digest(video_mask),
+        "requires_comfyui_core": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8-or-newer",
+    }
+    report["expansion_hash"] = content_hash(report)
+    return expanded, report
 
 
 def clear_av_denoise_mask(

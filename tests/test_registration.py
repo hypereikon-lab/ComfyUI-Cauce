@@ -20,7 +20,7 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 18)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 20)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
@@ -47,6 +47,8 @@ class RegistrationTests(unittest.TestCase):
                 "CauceH3SplitAVLatent",
                 "CauceH3PlaceAVSpan",
                 "CauceH3SetAVDenoiseInterval",
+                "CauceH3ApplyVideoDenoiseMask",
+                "CauceH3ExpandAVCanvas",
                 "CauceH3ReplaceAVSpan",
                 "CauceH3ClearAVDenoiseMask",
                 "CauceH3ResolveTargetShape",

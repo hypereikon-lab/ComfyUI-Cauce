@@ -7,11 +7,13 @@ except ImportError:
 
 from cauce.av_latent import (
     apply_av_denoise_interval,
+    apply_video_denoise_mask,
     allocate_av_window_like,
     append_av_span,
     build_av_span_keyframes,
     clear_av_denoise_mask,
     extract_av_span,
+    expand_av_canvas,
     inspect_av_latent,
     place_av_span,
     plan_av_window,
@@ -313,6 +315,122 @@ class AVLatentTests(unittest.TestCase):
         )
         self.assertTrue(removed_nonzero)
         self.assertNotIn("noise_mask", clean_nonzero)
+
+    def test_projects_static_and_animated_masks_onto_native_video_tokens(self):
+        latent = self.latent(124)
+        static = np.zeros((2, 3), dtype=np.float32)
+        static[:, 1:] = 0.75
+        masked, report = apply_video_denoise_mask(
+            latent,
+            static,
+            start_frame=0,
+            frame_count=124,
+        )
+        video_mask, audio_mask = masked["noise_mask"]
+        self.assertEqual(video_mask.shape, (1, 1, 37, 2, 3))
+        self.assertEqual(audio_mask.shape, (1, 1, 2, 207))
+        self.assertTrue(np.all(video_mask[:, :, :, :, 0] == 0.0))
+        self.assertTrue(np.all(video_mask[:, :, :, :, 1:] == 0.75))
+        self.assertTrue(np.all(audio_mask == 0.0))
+        self.assertEqual(report["temporal_projection"], "static")
+        self.assertEqual(report["video_token_range"], [0, 37])
+        self.assertRegex(report["result_digest"], r"^[0-9a-f]{64}$")
+
+        animated = np.zeros((124, 2, 3), dtype=np.float32)
+        animated[1:5] = 0.5
+        animated[5:] = 1.0
+        projected, animated_report = apply_video_denoise_mask(
+            latent,
+            animated,
+            start_frame=0,
+            frame_count=124,
+        )
+        projected_video, _ = projected["noise_mask"]
+        self.assertTrue(np.all(projected_video[:, :, 0] == 0.0))
+        self.assertTrue(np.all(projected_video[:, :, 1] == 0.5))
+        self.assertTrue(np.all(projected_video[:, :, 2:] == 1.0))
+        self.assertEqual(
+            animated_report["temporal_projection"],
+            "amax-per-h3-visual-token",
+        )
+
+    def test_composes_spatial_and_temporal_masks_without_touching_latents(self):
+        latent = self.latent(124, value=3.0)
+        interval, _ = apply_av_denoise_interval(
+            latent,
+            start_frame=39,
+            frame_count=51,
+            inside_strength_audio=0.0,
+        )
+        spatial = np.zeros((2, 3), dtype=np.float32)
+        spatial[:, 1:] = 1.0
+        combined, _ = apply_video_denoise_mask(
+            interval,
+            spatial,
+            start_frame=39,
+            frame_count=51,
+            combine="multiply",
+        )
+        video_mask, audio_mask = combined["noise_mask"]
+        self.assertTrue(np.all(video_mask[:, :, :12] == 0.0))
+        self.assertTrue(np.all(video_mask[:, :, 12:27, :, 0] == 0.0))
+        self.assertTrue(np.all(video_mask[:, :, 12:27, :, 1:] == 1.0))
+        self.assertTrue(np.all(video_mask[:, :, 27:] == 0.0))
+        self.assertTrue(np.all(audio_mask == 0.0))
+        np.testing.assert_array_equal(combined["samples"][0], latent["samples"][0])
+        np.testing.assert_array_equal(combined["samples"][1], latent["samples"][1])
+
+        with self.assertRaisesRegex(ValueError, "one static mask"):
+            apply_video_denoise_mask(
+                latent,
+                np.zeros((2, 2, 3), dtype=np.float32),
+                start_frame=0,
+                frame_count=124,
+            )
+
+    def test_expands_h3_canvas_with_exact_placement_and_outpaint_mask(self):
+        frames = 124
+        video = np.full((1, 24, 37, 4, 6), 7.0, dtype=np.float32)
+        audio = np.full((1, 32, 2, 207), 5.0, dtype=np.float32)
+        source = {"samples": (video, audio)}
+        expanded, report = expand_av_canvas(
+            source,
+            target_width=160,
+            target_height=128,
+            offset_x=32,
+            offset_y=32,
+        )
+        expanded_video, expanded_audio = expanded["samples"]
+        video_mask, audio_mask = expanded["noise_mask"]
+        self.assertEqual(expanded_video.shape, (1, 24, 37, 8, 10))
+        self.assertEqual(expanded_audio.shape, audio.shape)
+        self.assertTrue(np.all(expanded_video[:, :, :, 2:6, 2:8] == 7.0))
+        self.assertTrue(np.all(expanded_video[:, :, :, :2] == 0.0))
+        self.assertTrue(np.all(video_mask[:, :, :, 2:6, 2:8] == 0.0))
+        self.assertTrue(np.all(video_mask[:, :, :, :2] == 1.0))
+        self.assertTrue(np.all(audio_mask == 0.0))
+        np.testing.assert_array_equal(expanded_audio, audio)
+        self.assertEqual(report["frame_count"], frames)
+        self.assertEqual(report["source_offset"], {"x": 32, "y": 32})
+        self.assertRegex(report["expansion_hash"], r"^[0-9a-f]{64}$")
+
+        with self.assertRaisesRegex(ValueError, "multiples of 32"):
+            expand_av_canvas(
+                source,
+                target_width=150,
+                target_height=128,
+                offset_x=32,
+                offset_y=32,
+            )
+        source_with_mask = dict(source, noise_mask=(video[:, :1], audio[:, :1]))
+        with self.assertRaisesRegex(ValueError, "clear the existing"):
+            expand_av_canvas(
+                source_with_mask,
+                target_width=160,
+                target_height=128,
+                offset_x=32,
+                offset_y=32,
+            )
 
 
 if __name__ == "__main__":

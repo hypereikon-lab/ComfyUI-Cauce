@@ -1,0 +1,67 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "reframe.outpaint_video",
+  "operation_version": 1,
+  "variant": "centered",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "ComfyUI-Cauce", "path": "cauce/av_latent.py", "functions": ["expand_av_canvas", "clear_av_denoise_mask"] },
+    { "source": "ckinpdx/ComfyUI-MMH3Tools", "path": "workflow/ComfyUI-MMH3Tools/MMH3_Outpaint.json", "role": "community graph precedent only; no runtime dependency" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load source native AV state" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate source state" },
+    { "key": "expand", "owner": "cauce", "class_type": "CauceH3ExpandAVCanvas", "role": "place source at centered aligned offsets and mask new regions" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load H3 model" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "condition the expanded target" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set H3 shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "bind seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "build sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample only expanded regions" },
+    { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed mask" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode reframed frames" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "expand", "port": "latent" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "sigma", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "expand", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "clear", "port": "latent" } },
+    { "from": { "node": "clear", "port": "latent" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "source_path", "type": "STRING", "target": { "node": "source", "input": "path_or_folder" }, "required": true },
+    { "name": "target_width", "type": "INT", "target": { "node": "expand", "input": "target_width" }, "required": true },
+    { "name": "target_height", "type": "INT", "target": { "node": "expand", "input": "target_height" }, "required": true },
+    { "name": "centered_offset_x", "type": "INT", "target": { "node": "expand", "input": "offset_x" }, "required": true },
+    { "name": "centered_offset_y", "type": "INT", "target": { "node": "expand", "input": "offset_y" }, "required": true },
+    { "name": "source_strength", "type": "FLOAT", "target": { "node": "expand", "input": "source_strength_video" }, "required": true },
+    { "name": "new_region_strength", "type": "FLOAT", "target": { "node": "expand", "input": "new_region_strength_video" }, "required": true },
+    { "name": "audio_strength", "type": "FLOAT", "target": { "node": "expand", "input": "audio_strength" }, "required": true },
+    { "name": "timeline_origin", "type": "INT", "target": { "node": "expand", "input": "timeline_origin_frame" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "conditioning_width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
+    { "name": "conditioning_height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "clear_origin", "type": "INT", "target": { "node": "clear", "input": "timeline_origin_frame" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "reframed_native_av_latent", "type": "LATENT", "source": { "node": "clear", "port": "latent" } },
+    { "name": "reframed_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } }
+  ],
+  "live_gates": ["verify aligned centered offsets", "execute one bounded canvas expansion", "confirm source region preservation", "visually inspect new-region continuity"]
+}

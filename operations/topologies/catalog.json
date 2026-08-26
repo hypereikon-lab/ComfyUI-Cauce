@@ -1,12 +1,15 @@
 {
-  "schema": "cauce.operation-topology-catalog/1",
+  "schema": "cauce.operation-topology-catalog/2",
   "topologies": [
-    { "operation": "connect.two_sided_guides", "path": "plans/connect.two_sided_guides.json" },
-    { "operation": "continue.native_av", "path": "plans/continue.native_av.json" },
-    { "operation": "frames.assemble", "path": "plans/frames.assemble.json" },
-    { "operation": "generate.from_references", "path": "plans/generate.from_references.json" },
-    { "operation": "generate.keyframed", "path": "plans/generate.keyframed.json" },
-    { "operation": "generate.with_guides", "path": "plans/generate.with_guides.json" },
-    { "operation": "reference.transform", "path": "plans/reference.transform.json" }
+    { "operation": "connect.two_sided_guides", "variant": "default", "path": "plans/connect.two_sided_guides.json" },
+    { "operation": "continue.native_av", "variant": "characterized-layout", "path": "plans/continue.native_av.json" },
+    { "operation": "frames.assemble", "variant": "ordered-concatenation", "path": "plans/frames.assemble.json" },
+    { "operation": "generate.from_references", "variant": "image-reference-match", "path": "plans/generate.from_references.image-reference-match.json" },
+    { "operation": "generate.from_references", "variant": "video-reference", "path": "plans/generate.from_references.json" },
+    { "operation": "generate.keyframed", "variant": "first-frame", "path": "plans/generate.keyframed.first-frame.json" },
+    { "operation": "generate.keyframed", "variant": "first-last", "path": "plans/generate.keyframed.json" },
+    { "operation": "generate.with_guides", "variant": "multi-anchor", "path": "plans/generate.with_guides.json" },
+    { "operation": "generate.with_guides", "variant": "single-anchor", "path": "plans/generate.with_guides.single-anchor.json" },
+    { "operation": "reference.transform", "variant": "affine", "path": "plans/reference.transform.json" }
   ]
 }

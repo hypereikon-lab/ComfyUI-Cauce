@@ -10,8 +10,14 @@ from .operations import load_json, load_operation_catalog
 
 
 TOPOLOGY_SCHEMA = "cauce.operation-topology/1"
-TOPOLOGY_CATALOG_SCHEMA = "cauce.operation-topology-catalog/1"
+TOPOLOGY_CATALOG_SCHEMA = "cauce.operation-topology-catalog/2"
 KEY = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+def topology_key(operation_id: str, variant: str) -> str:
+    """Return the stable catalog key for one operation topology variant."""
+
+    return f"{operation_id}@{variant}"
 
 
 def validate_topology(value: Any, operation: dict[str, Any]) -> list[str]:
@@ -150,27 +156,31 @@ def load_topology_catalog(root: Path) -> dict[str, dict[str, Any]]:
     loaded: dict[str, dict[str, Any]] = {}
     paths: set[Path] = set()
     for entry in entries:
-        if not isinstance(entry, dict) or set(entry) != {"operation", "path"}:
+        if not isinstance(entry, dict) or set(entry) != {"operation", "variant", "path"}:
             raise ValueError(f"malformed topology catalog entry {entry!r}")
         operation_id = entry["operation"]
-        if operation_id not in operations or operation_id in loaded:
-            raise ValueError(f"unknown or duplicate topology operation {operation_id!r}")
+        variant = entry["variant"]
+        key = topology_key(operation_id, variant)
+        if operation_id not in operations or key in loaded:
+            raise ValueError(f"unknown or duplicate topology variant {key!r}")
         relative = PurePosixPath(str(entry["path"]))
         if relative.is_absolute() or ".." in relative.parts or relative.parts[0] != "plans":
             raise ValueError(f"unsafe topology path {entry['path']!r}")
         path = root / "operations" / "topologies" / Path(*relative.parts)
         topology = load_json(path)
         errors = validate_topology(topology, operations[operation_id])
+        if topology.get("variant") != variant:
+            errors.append("topology variant does not match its catalog entry")
         if errors:
             raise ValueError(f"{path}: {'; '.join(errors)}")
-        loaded[operation_id] = topology
+        loaded[key] = topology
         paths.add(path.resolve())
     expected = {
         path.resolve()
         for path in (root / "operations" / "topologies" / "plans").glob("*.json")
     }
-    if set(loaded) != set(operations):
-        raise ValueError("topology catalog must cover every operation exactly once")
+    if {value["operation"] for value in loaded.values()} != set(operations):
+        raise ValueError("topology catalog must cover every operation at least once")
     if paths != expected:
         raise ValueError("topology catalog and plan directory differ")
     return loaded

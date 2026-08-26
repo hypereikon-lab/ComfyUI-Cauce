@@ -60,9 +60,10 @@ frames.assemble
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. Every current operation also has a validated
-non-executable topology dossier. None currently ships as a reusable UI/API
-graph pair; materialization requires live paired validation first.
+artifact state, and evidence. Every current operation has at least one validated
+non-executable topology dossier; selected operations have separate dossiers for
+distinct static variants. None currently ships as a reusable UI/API graph pair;
+materialization requires live paired validation first.
 
 ## Install
 

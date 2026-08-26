@@ -17,17 +17,18 @@ API prompt object. Its required state is `offline-draft`.
 
 | Operation | Draft variant | Principal composition |
 | --- | --- | --- |
-| `generate.keyframed` | `first-last` | official `MiniMaxH3ImageToVideo` with explicit endpoint images |
-| `generate.from_references` | `video-reference` | official `MiniMaxH3ReferenceToVideo` with image/video references |
-| `generate.with_guides` | `multi-anchor` | ordered official `MiniMaxH3AddGuide` conditioning chain |
+| `generate.keyframed` | `first-frame`, `first-last` | official `MiniMaxH3ImageToVideo` with exact selected endpoint inputs |
+| `generate.from_references` | `image-reference-match`, `video-reference` | official `MiniMaxH3ReferenceToVideo` with one exact static topology per reference family |
+| `generate.with_guides` | `single-anchor`, `multi-anchor` | one or two ordered official `MiniMaxH3AddGuide` nodes |
 | `continue.native_av` | `characterized-layout` | official sampling plus CAUCE AV window/span/append primitives |
 | `connect.two_sided_guides` | `default` | decoded left/right ranges, two official guides, exact assembly |
 | `reference.transform` | `affine` | deterministic CAUCE coordinate map and decoded-image warp |
 | `frames.assemble` | `ordered-concatenation` | exact CAUCE decoded ranges plus vanilla image batching |
 
-This catalog is exhaustive: tests require exactly one topology dossier for each
-current semantic operation. Additional variants may be added only after the
-catalog schema is intentionally extended beyond that one-draft invariant.
+This catalog is exhaustive over files and complete over operations: tests
+require at least one dossier for every current semantic operation, permit
+multiple explicitly named variants, reject duplicate operation/variant pairs,
+and reject uncatalogued plan files.
 
 ## What is validated offline
 

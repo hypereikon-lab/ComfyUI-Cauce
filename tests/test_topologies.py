@@ -15,6 +15,21 @@ class TopologyTests(unittest.TestCase):
         self.assertEqual(
             set(topologies),
             {
+                "connect.two_sided_guides@default",
+                "continue.native_av@characterized-layout",
+                "frames.assemble@ordered-concatenation",
+                "generate.from_references@image-reference-match",
+                "generate.from_references@video-reference",
+                "generate.keyframed@first-frame",
+                "generate.keyframed@first-last",
+                "generate.with_guides@multi-anchor",
+                "generate.with_guides@single-anchor",
+                "reference.transform@affine",
+            },
+        )
+        self.assertEqual(
+            {value["operation"] for value in topologies.values()},
+            {
                 "connect.two_sided_guides",
                 "continue.native_av",
                 "frames.assemble",

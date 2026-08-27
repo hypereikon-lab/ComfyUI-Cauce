@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 import unittest
 
-from cauce.topologies import load_topology_catalog
+from cauce.topologies import load_archetype_catalog, load_topology_catalog, topology_signature
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +67,27 @@ class TopologyTests(unittest.TestCase):
             self.assertNotIn("class_type", topology)
             self.assertNotIn("links", topology)
             self.assertTrue(topology["live_gates"])
+
+    def test_graph_archetypes_group_only_identical_structures(self):
+        archetypes = load_archetype_catalog(ROOT)
+        topologies = load_topology_catalog(ROOT)
+        self.assertEqual(len(archetypes), 25)
+        self.assertEqual(
+            archetypes["references-image"]["topology_keys"],
+            [
+                "generate.from_references@image-reference-match",
+                "generate.from_references@image-reference-max",
+            ],
+        )
+        self.assertEqual(
+            archetypes["reframe-outpaint"]["topology_keys"],
+            ["reframe.outpaint_video@centered", "reframe.outpaint_video@offset"],
+        )
+        for archetype in archetypes.values():
+            self.assertEqual(
+                {topology_signature(topologies[key]) for key in archetype["topology_keys"]},
+                {archetype["topology_signature"]},
+            )
 
     @unittest.skipUnless(importlib.util.find_spec("numpy"), "NumPy is unavailable")
     def test_cauce_topology_ports_match_installed_node_contracts(self):

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path, PurePosixPath
 import re
 from typing import Any
@@ -11,7 +13,9 @@ from .operations import load_json, load_operation_catalog
 
 TOPOLOGY_SCHEMA = "cauce.operation-topology/1"
 TOPOLOGY_CATALOG_SCHEMA = "cauce.operation-topology-catalog/2"
+ARCHETYPE_CATALOG_SCHEMA = "cauce.graph-archetype-catalog/1"
 KEY = re.compile(r"^[a-z][a-z0-9_]*$")
+ARCHETYPE_ID = re.compile(r"^[a-z][a-z0-9-]*$")
 
 
 def topology_key(operation_id: str, variant: str) -> str:
@@ -183,4 +187,82 @@ def load_topology_catalog(root: Path) -> dict[str, dict[str, Any]]:
         raise ValueError("topology catalog must cover every operation at least once")
     if paths != expected:
         raise ValueError("topology catalog and plan directory differ")
+    return loaded
+
+
+def topology_signature(topology: dict[str, Any]) -> str:
+    """Hash graph structure while excluding bindings, roles, and live state."""
+
+    structure = {
+        "nodes": sorted(
+            (
+                {
+                    "key": node["key"],
+                    "class_type": node["class_type"],
+                    "owner": node["owner"],
+                }
+                for node in topology["nodes"]
+            ),
+            key=lambda node: node["key"],
+        ),
+        "edges": sorted(
+            topology["edges"],
+            key=lambda edge: (
+                edge["from"]["node"],
+                edge["from"]["port"],
+                edge["to"]["node"],
+                edge["to"]["port"],
+            ),
+        ),
+    }
+    encoded = json.dumps(structure, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def load_archetype_catalog(root: Path) -> dict[str, dict[str, Any]]:
+    """Load structural graph archetypes and prove exact topology coverage."""
+
+    topologies = load_topology_catalog(root)
+    catalog = load_json(root / "operations" / "archetypes" / "catalog.json")
+    if not isinstance(catalog, dict) or catalog.get("schema") != ARCHETYPE_CATALOG_SCHEMA:
+        raise ValueError("invalid graph-archetype catalog")
+    entries = catalog.get("archetypes")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError("graph-archetype catalog must contain entries")
+
+    loaded: dict[str, dict[str, Any]] = {}
+    covered: set[str] = set()
+    signatures: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {
+            "id",
+            "topology_signature",
+            "topology_keys",
+        }:
+            raise ValueError(f"malformed graph archetype {entry!r}")
+        archetype_id = entry["id"]
+        keys = entry["topology_keys"]
+        signature = entry["topology_signature"]
+        if (
+            not isinstance(archetype_id, str)
+            or not ARCHETYPE_ID.fullmatch(archetype_id)
+            or archetype_id in loaded
+        ):
+            raise ValueError(f"invalid or duplicate graph-archetype id {archetype_id!r}")
+        if not isinstance(keys, list) or not keys or keys != sorted(set(keys)):
+            raise ValueError(f"graph archetype {archetype_id!r} needs sorted unique topology keys")
+        if any(key not in topologies for key in keys):
+            raise ValueError(f"graph archetype {archetype_id!r} references an unknown topology")
+        if covered.intersection(keys):
+            raise ValueError(f"graph archetype {archetype_id!r} repeats a topology")
+        actual = {topology_signature(topologies[key]) for key in keys}
+        if actual != {signature}:
+            raise ValueError(f"graph archetype {archetype_id!r} mixes graph structures")
+        if signature in signatures:
+            raise ValueError(f"graph archetype {archetype_id!r} duplicates a structural signature")
+        covered.update(keys)
+        signatures.add(signature)
+        loaded[archetype_id] = entry
+    if covered != set(topologies):
+        raise ValueError("graph-archetype catalog must cover every topology exactly once")
     return loaded

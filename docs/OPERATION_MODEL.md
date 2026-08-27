@@ -71,7 +71,13 @@ operation
   one typed graph-level data function
 
 variant
-  one explicit static topology of an operation
+  one named contract choice within an operation
+
+graph archetype
+  one structurally distinct set of nodes and edges
+
+binding profile
+  guarded literal and media choices applied to one archetype
 
 workflow pair
   UI graph + API template exported from the same live graph
@@ -85,6 +91,12 @@ run
 evidence
   technical state and separate human visual verdict
 ```
+
+A variant does not imply a distinct graph: image-reference `match`/`max`,
+static/animated mask cardinality, and centered/offset outpaint currently share
+their respective archetypes. `operations/archetypes/catalog.json` proves this
+by hashing only node identity, ownership, class types, and edges; bindings,
+roles, and evidence are excluded.
 
 A topology dossier is not a workflow pair. A schema-valid workflow is not an
 execution. A completed queue item is not visual acceptance. Each transition is

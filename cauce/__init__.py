@@ -1,3 +1,3 @@
 """Mathematical and model-adapter operations used by CAUCE nodes."""
 
-__version__ = "5.2.0"
+__version__ = "5.3.0"

@@ -24,9 +24,10 @@ decoded range selection / native AV persistence ------------------ CAUCE
 
 ```text
 operation contract
-  -> explicit official / vanilla / CAUCE graph stages
-      -> paired UI/API artifacts, once live-validated
-          -> project bindings and run receipts outside this repository
+  -> content-addressed graph archetype
+      -> guarded binding profile
+          -> paired UI/API artifacts, once live-validated
+              -> project invocation and run receipt outside this repository
 ```
 
 The operation catalog is a capability grammar, not a pipeline. It groups
@@ -56,6 +57,7 @@ cauce_nodes/
 
 operations/
   catalog.json     open semantic operation catalog
+  archetypes/      structural grouping over topology dossiers
   schema.json      operation data contract
   specs/           typed graph-level operation definitions
   evidence/        structured evidence that is not an importable graph

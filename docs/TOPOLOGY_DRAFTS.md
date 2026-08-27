@@ -13,6 +13,12 @@ They are not workflow JSON. A topology has symbolic node keys and named ports,
 but deliberately lacks ComfyUI node ids, positions, widgets, link ids, and an
 API prompt object. Its required state is `offline-draft`.
 
+`operations/archetypes/catalog.json` adds a narrower structural identity above
+the dossiers. It hashes node keys, owners, class types, and exact edges while
+excluding bindings and descriptive metadata. The 28 dossiers currently form 25
+archetypes. A shared archetype means one eventual paired graph can support
+multiple guarded binding profiles; it does not merge their semantic variants.
+
 ## Current dossiers
 
 | Operation | Draft variant | Principal composition |
@@ -42,6 +48,10 @@ and reject uncatalogued plan files.
 - presence of explicit live gates;
 - absence of undeclared topology files.
 
+It also requires every topology to belong to exactly one graph archetype,
+rejects mixed structures inside an archetype, and rejects duplicate archetypes
+for the same structural signature.
+
 The test suite additionally loads the actual CAUCE node registry. Every edge,
 binding, and operation output that touches a CAUCE node must match that node's
 current `INPUT_TYPES` and `RETURN_NAMES`. This catches drift in our own code.
@@ -53,7 +63,10 @@ validated against the laboratory runtime's captured `/object_info`.
 The progression is:
 
 ```text
-offline topology dossier
+operation contract
+  -> graph archetype
+  -> variant binding profile
+  -> offline topology dossier
   -> manually composed active UI graph in live ComfyUI
   -> Workspace Control paired UI/API export
   -> Runtime Control schema/hash/round-trip validation
@@ -61,7 +74,8 @@ offline topology dossier
   -> variant-scoped CAUCE UI/API artifact pair
 ```
 
-No topology file may be copied or renamed into an executable artifact. The live
+No topology or archetype file may be copied or renamed into an executable
+artifact. The live
 graph remains the authority for numeric node ids, exact upstream schemas, model
 selectors, sampler defaults, and UI serialization.
 

@@ -88,8 +88,11 @@ prompt have been paired, validated against live node schemas, and recorded in
 the operation contract. A contract or evidence record may describe an exact
 graph without masquerading as an importable template.
 
-`operations/topologies/` contains non-executable offline design dossiers. Keep
-them symbolic and in `offline-draft` state. Validate all CAUCE-owned ports
+`operations/topologies/` contains non-executable offline design dossiers.
+`operations/archetypes/catalog.json` groups dossiers only when their nodes and
+edges have the same structural signature. Keep both symbolic and treat project
+values as binding profiles, not new graph identities. Keep dossiers in
+`offline-draft` state. Validate all CAUCE-owned ports
 against the actual registry locally; validate official/vanilla ports against a
 fresh live `/object_info` capture during materialization. Never promote a
 topology file by renaming it into workflow JSON.
@@ -181,127 +184,10 @@ audio phase align; fail closed otherwise.
 
 Do not describe either graph as successful before visual inspection.
 
-## 7. Laboratory topology
-
-The usual laboratory origin is:
-
-```text
-https://comfy.hypereikon.online/
-```
-
-Physical envelope:
-
-```text
-Windows portable ComfyUI
-RTX 5090, 32 GB VRAM
-64 GB RAM
-Cloudflare Tunnel -> http://localhost:8188
-Cloudflare Access in front of the hostname
-```
-
-The tunnel exposes the ComfyUI HTTP origin. It is not SSH, PowerShell, CMD,
-RDP, arbitrary filesystem access, or a power controller. The hostname works
-only while the tower, network, tunnel service, and ComfyUI process are healthy.
-
-Use the authenticated in-app browser for live operations. Do not extract
-cookies or embed credentials in commands, code, graphs, or documents.
-
-## 8. Targeted deployment
-
-Installing/updating custom code or restarting ComfyUI is a consequential live
-action. Confirm it with the user at action time even when the code work itself
-was already authorized.
-
-Before deployment:
-
-- intended changes are committed and pushed to the branch the installed clone
-  follows;
-- the queue is idle;
-- the authenticated browser is on the laboratory origin;
-- no core/runtime/model update is included.
-
-Manager sequence:
-
-```text
-POST /manager/queue/reset
-POST /manager/queue/update
-POST /manager/queue/start
-GET  /manager/queue/status
-GET  /customnode/installed
-```
-
-Target only `ComfyUI-Cauce`. Python changes then require:
-
-```text
-POST /manager/reboot
-```
-
-A brief 502 is expected while ComfyUI restarts. Afterwards verify:
-
-```text
-GET /customnode/installed
-GET /object_info/CauceH3PlanAVWindow
-GET /object_info/CauceH3AllocateAVWindow
-GET /object_info/CauceH3ExtractAVSpan
-GET /object_info/CauceH3AddAVSpanGuide
-GET /object_info/CauceH3AppendAVSpan
-GET /object_info/CauceH3SplitAVLatent
-GET /object_info/CauceH3PlaceAVSpan
-GET /object_info/CauceH3SetAVDenoiseInterval
-GET /object_info/CauceH3ApplyVideoDenoiseMask
-GET /object_info/CauceH3ExpandAVCanvas
-GET /object_info/CauceH3ReplaceAVSpan
-GET /object_info/CauceH3ClearAVDenoiseMask
-GET /object_info/CauceH3ResolveTargetShape
-GET /object_info/CauceH3PrepareGuideClip
-GET /object_info/CauceH3PrepareReferenceClip
-GET /object_info/CauceH3InspectConditioning
-GET /queue
-```
-
-Do not update CUDA, PyTorch, drivers, models, ComfyUI core, or unrelated nodes.
-Do not reboot the physical tower.
-
-## 9. Workflow-tab hygiene
-
-Distinguish the browser page tab, the workflow tabs inside ComfyUI, and the
-automation handle controlling the page. Before live work, keep a ledger:
-
-```text
-label | owner | purpose | signature | output prefix | state
-```
-
-Pre-existing or unidentified workflows are user-owned. Close only workflows
-created by the current agent or explicitly identified by the user. Use at most
-one active graph and one matched comparison. Pasting JSON can open a new
-workflow instead of replacing the canvas; reconcile the ledger immediately.
-
-Before queueing, verify the active workflow, source files, parameters, output
-prefix, validation errors, and queue state. After completion, resolve exact
-outputs from `/history` and authenticated `/view` routes.
-
-## 10. Recovery
-
-| Observation | Interpretation | Action |
-| --- | --- | --- |
-| brief 502 after Manager reboot | Python process restarting | wait and reload |
-| persistent 502 | origin reachable but ComfyUI may be down | retry once, then request operator start |
-| hostname unreachable | tower/network/tunnel layer | request smallest physical check |
-| node absent from `/object_info` | import or dependency failure | inspect logs; do not mutate GPU stack |
-| Manager reports old commit | installed clone/update mismatch | verify remote ref, then targeted update |
-| queue unexpectedly busy | active or stalled job | inspect queue/history before restart |
-
-Retry only the narrow failed layer. For long inferences poll every 20–40
-seconds, communicate at least once per minute, and do not duplicate a job based
-on an ambiguous progress display.
-
-## 11. Finish checklist
+## 7. Finish checklist
 
 - registry imports without ComfyUI;
 - all local tests pass;
 - `git diff --check` passes;
 - documentation matches the current registry;
-- no output is called successful without visual inspection;
-- live deployment, if requested and confirmed, reports the intended commit and
-  exposes all eleven H3 AV state nodes and four H3 planning nodes through
-  `/object_info`.
+- no output is called successful without visual inspection.

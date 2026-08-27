@@ -1,0 +1,30 @@
+{
+  "schema": "cauce.graph-archetype-catalog/1",
+  "archetypes": [
+    { "id": "complete-backward-prefix", "topology_signature": "7e34c1e0a1ef18dbf4a0d7b4a400078c73bea3466083adddd2ab137d8279c950", "topology_keys": ["complete.native_av@backward-prefix"] },
+    { "id": "complete-local-replacement", "topology_signature": "f6c40baa4bd7583d95ada85ab64ba9564bc5e79327bcf36de1a9c3a31bc65623", "topology_keys": ["complete.native_av@local-replacement"] },
+    { "id": "complete-two-sided-infill", "topology_signature": "1b2194f351219c170d26086b5d959f0f439b4bd8af96906caf695a840c85e461", "topology_keys": ["complete.native_av@two-sided-infill"] },
+    { "id": "complete-two-source-connection", "topology_signature": "f6e9a5e6cbb93b5564819843bc4a28ef0b98a4abffe1036aa0377c80e88af839", "topology_keys": ["complete.native_av@two-source-connection"] },
+    { "id": "continue-keyframe-overlap", "topology_signature": "1d1ce787af3dc82718a658640cb7d5a79329c4e5e93dd4ebe71ad1594d172680", "topology_keys": ["continue.native_av@keyframe-overlap"] },
+    { "id": "continue-masked-future-guide", "topology_signature": "42e0eab5a61b7840cf95963546534cab07bd3a08ec85eaaab9c337d703c67672", "topology_keys": ["continue.native_av@masked-overlap-future-guide"] },
+    { "id": "continue-masked-overlap", "topology_signature": "21c23442ae00a0343f23c96542f4f95177f78ffc76c2831a4eef89b73cf5aaff", "topology_keys": ["continue.native_av@masked-overlap"] },
+    { "id": "edit-local-retake", "topology_signature": "e4377184a8a8518d3c468bacec9cf3181f624d1701243e2385718e0ef799d5e4", "topology_keys": ["edit.masked_video@local-retake"] },
+    { "id": "edit-spatiotemporal-mask", "topology_signature": "00ea34901e3f7d24af17f5bda3a5a2c5a267247989f059e4a16349a42cf0c69a", "topology_keys": ["edit.masked_video@animated-spatiotemporal", "edit.masked_video@static-spatial"] },
+    { "id": "frames-ordered-assembly", "topology_signature": "ad7e5288361fa1edd50b019230a9df336f93ef03890c978fe581c91d2bf97393", "topology_keys": ["frames.assemble@ordered-concatenation"] },
+    { "id": "guides-first-last-interior", "topology_signature": "240cfb11cf2d9463d05f5713c3f76ad076f4c81c48c9a66f1b7cf9a0541f9ee8", "topology_keys": ["generate.with_guides@first-last-interior"] },
+    { "id": "guides-guide-clip", "topology_signature": "d4076e5fb720310200aa43818908045e9a6b7ef1972916d0780189f34df3f1cd", "topology_keys": ["generate.with_guides@guide-clip"] },
+    { "id": "guides-multi-anchor", "topology_signature": "6501339414b4f5f3a42466c45f0dd0870a7a8f1efb0cbef8a2b19bae26aefe09", "topology_keys": ["generate.with_guides@multi-anchor"] },
+    { "id": "guides-single-anchor", "topology_signature": "af7b1b3b2a8ea65bbbcb07aa049cca5cdcebda2b7d5bf7b3b5c43a9a3d80428b", "topology_keys": ["generate.with_guides@single-anchor"] },
+    { "id": "keyframed-first-frame", "topology_signature": "175fbedfc492ae095700b6d58e949e343d91ce05176157cc36740c25f8ecb6e0", "topology_keys": ["generate.keyframed@first-frame"] },
+    { "id": "keyframed-first-last", "topology_signature": "a200ca40ddced1d8e71c927c372178e8f1d49d46b7ed2318a23a44bc1678c217", "topology_keys": ["generate.keyframed@first-last"] },
+    { "id": "keyframed-last-frame", "topology_signature": "92fb791e1845108bd7705fcbfcdf075ca9107b3a7019a5f18f0b2baff28d4677", "topology_keys": ["generate.keyframed@last-frame"] },
+    { "id": "keyframed-text-only", "topology_signature": "17de1c9e175d6611a2f372b7c7bf4f47c1e6997ce7b2599af4d1918dc6cc8491", "topology_keys": ["generate.keyframed@text-only"] },
+    { "id": "references-image", "topology_signature": "353fcb080c7ec510dffd6f7225a9116e8212ae27c0d478fd433a8dafddd952f3", "topology_keys": ["generate.from_references@image-reference-match", "generate.from_references@image-reference-max"] },
+    { "id": "references-video", "topology_signature": "21c242feeb8a4826524ed0dc003cb1ba44593939b3625bb902c305e79445b53e", "topology_keys": ["generate.from_references@video-reference"] },
+    { "id": "references-video-with-guide", "topology_signature": "18908c0ded4267a7b8bd58b072c806279d0f14c13b0734b113d486b4e1f82b0f", "topology_keys": ["generate.from_references@video-reference-with-guide"] },
+    { "id": "refine-full-frame", "topology_signature": "0bbc6df2ac44fe7196018c100f2bd5af2c7bb28dcd8d7416cf71bcb600baaca9", "topology_keys": ["refine.video@full-frame"] },
+    { "id": "refine-masked", "topology_signature": "945649d6b737a23cda66f38fd3cdfdff72b5cf79812781ffa561ba77f7c29428", "topology_keys": ["refine.video@masked"] },
+    { "id": "reframe-outpaint", "topology_signature": "4ce911c316f901dd600c4baa3bafec08799805fbb69daf7762183541ab486e5d", "topology_keys": ["reframe.outpaint_video@centered", "reframe.outpaint_video@offset"] },
+    { "id": "rollback-native-branch", "topology_signature": "04032ca56ce4c950a4b3041581ccbafe0cde029d57a63e9ba52aa40f721b5344", "topology_keys": ["rollback.native_av@branch-suffix"] }
+  ]
+}

@@ -1,6 +1,6 @@
 # CAUCE
 
-CAUCE is a native ComfyUI standard library for deterministic media ranges,
+CAUCE is a native ComfyUI custom-node library for deterministic media ranges,
 MiniMax H3 audiovisual-latent structure, and bounded latent persistence.
 
 Nodes expose low-level operations. Workflow graphs assign them production
@@ -20,8 +20,10 @@ native H3 AV state algebra  continue / complete / masked edit / outpaint / refin
 decoded media algebra       exact frame assembly
 ```
 
-Primitives, operations, variants, workflow pairs, invocations, runs, and
-evidence are distinct lifecycle states. See the
+Primitives, operations, graph archetypes, binding profiles, workflow pairs,
+invocations, runs, and evidence are distinct lifecycle states. The 28 current
+operation variants resolve to 25 structurally distinct archetypes; variants
+that differ only by guarded literals share one graph. See the
 [operation model](docs/OPERATION_MODEL.md).
 
 ## Node surface
@@ -76,7 +78,8 @@ Each operation records typed inputs/outputs, graph-stage ownership, constraints,
 artifact state, and evidence. Twenty-eight validated, non-executable topology
 dossiers cover every current operation, including official keyframe/reference/
 guide combinations and native AV continuation, completion, replacement, and
-rollback variants. None currently ships as a reusable UI/API graph pair;
+rollback variants. A content-addressed archetype catalog groups only dossiers
+whose nodes and edges are identical. None currently ships as a reusable UI/API graph pair;
 materialization requires live paired validation first.
 
 ## Install
@@ -100,7 +103,6 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Operation data contracts](docs/DATA_CONTRACTS.md)
 - [Node catalog](docs/NODE_CATALOG.md)
 - [Validation protocol](docs/VALIDATION.md)
-- [Remote ComfyUI runtime](docs/REMOTE_COMFY_RUNTIME.md)
 
 ## Local verification
 

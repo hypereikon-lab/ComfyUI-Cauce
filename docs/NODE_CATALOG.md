@@ -44,6 +44,18 @@ continuous spatial values until the current core's own patch-grid processing.
 Planning nodes do not encode media, create conditioning, or sample. Their
 accepted IMAGE output is passed to the corresponding official H3 node.
 
+## CAUCE/Temporal Planning
+
+| Node | Operation |
+| --- | --- |
+| `CaucePlanFrameInterpolation` | calculate exact endpoint-preserving output count, target fps, inserted count, and original-frame positions for decoded VFI |
+| `CauceInspectH3InterleaveProjection` | classify the real H3 temporal tokens produced by an alternating known/missing decoded-frame mask |
+| `CaucePlanH3GuideRetime` | map sparse source frames to endpoint-aligned official arbitrary-frame guides on a legal H3 target |
+
+These nodes do not interpolate frames or sample H3. RIFE/FILM and official H3
+remain visible graph stages. See
+[Temporal and spatial video enhancement](TEMPORAL_SPATIAL_ENHANCEMENT.md).
+
 ## CAUCE/Persistence
 
 ### `CauceSaveAVLatent`

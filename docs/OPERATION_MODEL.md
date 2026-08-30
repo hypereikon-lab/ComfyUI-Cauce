@@ -1,6 +1,6 @@
 # Operation model
 
-CAUCE exposes ten orthogonal graph-level operations in three capability
+CAUCE exposes twelve orthogonal graph-level operations in four capability
 families. The families are a classification, not an execution order.
 
 ## H3 conditioning grammar
@@ -58,6 +58,19 @@ frames.assemble
 
 This family performs exact deterministic work after decode. It neither samples
 H3 nor substitutes decoded video for retained native state.
+
+## Decoded video enhancement
+
+```text
+interpolate.frames
+restore.video
+```
+
+`interpolate.frames` combines CAUCE's exact output-clock plan with a
+version-locked external RIFE or FILM node. `restore.video` records the official
+native SeedVR2 topology without claiming a CAUCE model implementation. Both
+operate on decoded video; neither changes or extends retained H3 native AV
+state.
 
 ## Lifecycle
 

@@ -1,0 +1,45 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "interpolate.frames",
+  "operation_version": 1,
+  "variant": "rife-2x",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "ThunderFun/ComfyUI-RIFE-FILM-Only", "commit": "3469aad35d6774bb7943bf30d5ae7b5acd9039bc", "path": "vfi_models/rife/__init__.py" },
+    { "source": "ComfyUI-Cauce", "path": "cauce/temporal.py", "version": "5.4.0" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "vanilla-comfy", "class_type": "GetVideoComponents", "role": "decode source video and expose frames plus fps" },
+    { "key": "plan", "owner": "cauce", "class_type": "CaucePlanFrameInterpolation", "role": "calculate exact target count, fps, and source anchor positions" },
+    { "key": "interpolate", "owner": "external-comfy", "class_type": "RIFE VFI", "role": "synthesize multiplier minus one frames between every source pair" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "images" }, "to": { "node": "interpolate", "port": "frames" } },
+    { "from": { "node": "plan", "port": "resolved_multiplier" }, "to": { "node": "interpolate", "port": "multiplier" } }
+  ],
+  "bindings": [
+    { "name": "source_video", "type": "VIDEO", "target": { "node": "source", "input": "video" }, "required": true },
+    { "name": "source_frame_count", "type": "INT", "target": { "node": "plan", "input": "source_frame_count" }, "required": true },
+    { "name": "source_fps", "type": "FLOAT", "target": { "node": "plan", "input": "source_fps" }, "required": true },
+    { "name": "multiplier", "type": "INT", "target": { "node": "plan", "input": "multiplier" }, "required": true },
+    { "name": "ckpt_name", "type": "COMBO", "target": { "node": "interpolate", "input": "ckpt_name" }, "required": true },
+    { "name": "clear_cache_after_n_frames", "type": "INT", "target": { "node": "interpolate", "input": "clear_cache_after_n_frames" }, "required": true },
+    { "name": "fast_mode", "type": "BOOLEAN", "target": { "node": "interpolate", "input": "fast_mode" }, "required": true },
+    { "name": "ensemble", "type": "BOOLEAN", "target": { "node": "interpolate", "input": "ensemble" }, "required": true },
+    { "name": "scale_factor", "type": "FLOAT", "target": { "node": "interpolate", "input": "scale_factor" }, "required": true },
+    { "name": "precision", "type": "COMBO", "target": { "node": "interpolate", "input": "precision" }, "required": true },
+    { "name": "keep_model_loaded", "type": "BOOLEAN", "target": { "node": "interpolate", "input": "keep_model_loaded" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "interpolated_frames", "type": "IMAGE", "source": { "node": "interpolate", "port": "IMAGE" } },
+    { "name": "target_fps", "type": "FLOAT", "source": { "node": "plan", "port": "target_fps" } },
+    { "name": "interpolation_plan", "type": "CAUCE_FRAME_INTERPOLATION_PLAN", "source": { "node": "plan", "port": "plan" } }
+  ],
+  "live_gates": [
+    "verify the exact public extension commit and RIFE VFI object_info contract",
+    "derive source_frame_count from the decoded batch and reject mismatches before queueing",
+    "confirm the emitted count equals (N - 1) * multiplier + 1 and original frames occupy every multiplier-th output index",
+    "compare fast_mode and ensemble settings on representative H3 motion",
+    "save or rewrap at target_fps only after the count assertion passes"
+  ]
+}

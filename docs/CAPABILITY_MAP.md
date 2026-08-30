@@ -9,6 +9,9 @@
 | H3 guide-clip preparation | official single-image/floor rule plus resolved target range | unit-validated |
 | H3 reference-clip preparation | official target clamp/floor rule plus 2 fps Qwen sample indices | unit-validated |
 | H3 conditioning inspection | read-only keyframe/reference/range/overlap report | unit-validated |
+| decoded-frame interpolation plan | exact `(N-1)m+1` count, target fps, and source-anchor output indices | unit-validated |
+| H3 interleave-mask projection | per-token preserve/mixed/generate classification using official temporal `amax` geometry | unit-validated |
+| H3 sparse-guide retime plan | source-frame anchors mapped across a legal endpoint-aligned `17k+5` target | unit-validated |
 | H3 AV inspection | packed stream shapes and absolute frame/token lengths | unit-validated |
 | H3 AV window layout | absolute 24 fps range mapped to visual and 40 Hz audio tokens | unit-validated |
 | H3 AV window allocation | fresh zero target matching layout and prior geometry | unit-validated |
@@ -41,6 +44,9 @@ native AV state algebra   continue.native_av
                           rollback.native_av
 
 decoded media algebra     frames.assemble
+
+decoded video enhancement interpolate.frames
+                          restore.video
 ```
 
 | Operation | Composition |
@@ -55,8 +61,10 @@ decoded media algebra     frames.assemble
 | `refine.video` | full-frame or masked bounded-denoise second pass over existing native state |
 | `rollback.native_av` | exact native split with reversible suffix span |
 | `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
+| `interpolate.frames` | CAUCE exact clock plan + version-locked external RIFE/FILM decoded-frame interpolation |
+| `restore.video` | official native SeedVR2 resize/preprocess/chunk/condition/sample/merge/decode/postprocess graph |
 
-All ten currently remain `contract-only`: no paired reusable UI/API graph is
+All twelve currently remain `contract-only`: no paired reusable UI/API graph is
 shipped. “Composed” means the mechanism can be expressed as a graph. It does not
 mean a source/prompt pair is visually accepted.
 
@@ -68,7 +76,7 @@ extraction, guide insertion, suffix extraction, append, save, and reload. It did
 not establish production-resolution visual quality.
 
 The new placement/mask/replacement/cleanup nodes, planning/inspection/split
-nodes, and decoded-range nodes are unit-validated only.
+nodes, decoded-range nodes, and temporal planning nodes are unit-validated only.
 Their use inside a graph remains a composition possibility until that exact
 graph is schema-validated, executed, and visually evaluated where a visual
 objective is claimed.

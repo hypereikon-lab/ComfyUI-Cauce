@@ -29,14 +29,16 @@ class OperationContractTests(unittest.TestCase):
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
+                "interpolate.frames",
                 "reframe.outpaint_video",
                 "refine.video",
+                "restore.video",
                 "rollback.native_av",
             },
         )
         self.assertTrue(all(not operation_id.startswith("W") for operation_id in operations))
 
-    def test_catalog_groups_operations_into_three_non_sequential_families(self):
+    def test_catalog_groups_operations_into_non_sequential_families(self):
         catalog = load_json(ROOT / "operations" / "catalog.json")
         self.assertEqual(catalog["schema"], "cauce.operation-catalog/2")
         self.assertEqual({family["id"] for family in catalog["families"]}, OPERATION_FAMILIES)
@@ -64,6 +66,10 @@ class OperationContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(by_family["decoded-media-algebra"], {"frames.assemble"})
+        self.assertEqual(
+            by_family["decoded-video-enhancement"],
+            {"interpolate.frames", "restore.video"},
+        )
 
     def test_official_operations_do_not_claim_cauce_nodes(self):
         operations = load_operation_catalog(ROOT)
@@ -92,6 +98,19 @@ class OperationContractTests(unittest.TestCase):
             owners = {stage["owner"] for stage in spec["graph_contract"]}
             self.assertEqual(spec["kind"], "decoded-media-transform")
             self.assertNotIn("official-comfy", owners)
+
+        interpolation = operations["interpolate.frames"]
+        self.assertEqual(
+            interpolation["implementation_class"],
+            "external-comfy-with-cauce-planning",
+        )
+        self.assertTrue(
+            {"external-comfy", "cauce"}
+            <= {stage["owner"] for stage in interpolation["graph_contract"]}
+        )
+        restoration = operations["restore.video"]
+        self.assertEqual(restoration["implementation_class"], "official-comfy")
+        self.assertNotIn("cauce", {stage["owner"] for stage in restoration["graph_contract"]})
 
     def test_contract_only_operations_ship_no_graph_pair(self):
         operations = load_operation_catalog(ROOT)

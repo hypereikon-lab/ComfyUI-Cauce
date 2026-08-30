@@ -12,27 +12,29 @@ official/vanilla ComfyUI nodes. An operation is a reusable graph contract, not
 a monolithic custom node and not a claim that CAUCE implemented every model
 capability present in the graph.
 
-The ten operations form three non-sequential families:
+The twelve operations form four non-sequential families:
 
 ```text
 H3 conditioning grammar     keyframed / references / guides
 native H3 AV state algebra  continue / complete / masked edit / outpaint / refine / rollback
 decoded media algebra       exact frame assembly
+decoded video enhancement   frame interpolation / SeedVR2 restoration
 ```
 
 Primitives, operations, graph archetypes, binding profiles, workflow pairs,
-invocations, runs, and evidence are distinct lifecycle states. The 28 current
-operation variants resolve to 25 structurally distinct archetypes; variants
+invocations, runs, and evidence are distinct lifecycle states. The 31 current
+operation variants resolve to 28 structurally distinct archetypes; variants
 that differ only by guarded literals share one graph. See the
 [operation model](docs/OPERATION_MODEL.md).
 
 ## Node surface
 
-The package registers 20 nodes:
+The package registers 23 nodes:
 
 - 1 exact decoded-range node under `CAUCE/Assembly`;
 - 13 packed H3 AV operations under `CAUCE/H3 AV Latent`;
 - 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
+- 3 exact interpolation/H3 retime planning nodes under `CAUCE/Temporal Planning`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
 
 ## Native AV continuation as graph composition
@@ -72,13 +74,15 @@ reframe.outpaint_video
 refine.video
 rollback.native_av
 frames.assemble
+interpolate.frames
+restore.video
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. Twenty-eight validated, non-executable topology
+artifact state, and evidence. Thirty-one validated, non-executable topology
 dossiers cover every current operation, including official keyframe/reference/
-guide combinations and native AV continuation, completion, replacement, and
-rollback variants. A content-addressed archetype catalog groups only dossiers
+guide combinations, decoded video enhancement, and native AV continuation,
+completion, replacement, and rollback variants. A content-addressed archetype catalog groups only dossiers
 whose nodes and edges are identical. None currently ships as a reusable UI/API graph pair;
 materialization requires live paired validation first.
 
@@ -98,6 +102,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Operation families and lifecycle](docs/OPERATION_MODEL.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Current H3 extensions and experiment boundary](docs/H3_EXTENSION_MAP.md)
+- [Temporal and spatial video enhancement](docs/TEMPORAL_SPATIAL_ENHANCEMENT.md)
 - [Semantic operations](docs/OPERATIONS.md)
 - [Operation topology dossiers](docs/TOPOLOGY_DRAFTS.md)
 - [Operation data contracts](docs/DATA_CONTRACTS.md)

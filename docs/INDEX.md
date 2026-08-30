@@ -1,12 +1,15 @@
 # Documentation index
 
 - [Architecture](ARCHITECTURE.md): ownership, modules, and data flow.
-- [Operation model](OPERATION_MODEL.md): three non-sequential capability
+- [Operation model](OPERATION_MODEL.md): four non-sequential capability
   families and the primitive-to-evidence lifecycle.
 - [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official
   ComfyUI graphs, and the remote runtime.
 - [Capability map](CAPABILITY_MAP.md): implemented and composable operations.
-- [Node catalog](NODE_CATALOG.md): all 20 registered nodes.
+- [Node catalog](NODE_CATALOG.md): all 23 registered nodes.
+- [Temporal and spatial video enhancement](TEMPORAL_SPATIAL_ENHANCEMENT.md):
+  exact VFI clocks, H3 interleave-mask geometry, guide retiming, SeedVR2, and
+  the combined production pipeline.
 - [Native H3 workflows](NATIVE_H3_WORKFLOWS.md): graph recipes using official
   conditioning/sampling nodes.
 - [H3 extension map](H3_EXTENSION_MAP.md): implemented editing/refinement

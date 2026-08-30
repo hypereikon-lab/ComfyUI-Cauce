@@ -11,6 +11,8 @@
     { "id": "edit-local-retake", "topology_signature": "e4377184a8a8518d3c468bacec9cf3181f624d1701243e2385718e0ef799d5e4", "topology_keys": ["edit.masked_video@local-retake"] },
     { "id": "edit-spatiotemporal-mask", "topology_signature": "00ea34901e3f7d24af17f5bda3a5a2c5a267247989f059e4a16349a42cf0c69a", "topology_keys": ["edit.masked_video@animated-spatiotemporal", "edit.masked_video@static-spatial"] },
     { "id": "frames-ordered-assembly", "topology_signature": "ad7e5288361fa1edd50b019230a9df336f93ef03890c978fe581c91d2bf97393", "topology_keys": ["frames.assemble@ordered-concatenation"] },
+    { "id": "interpolate-film", "topology_signature": "ff0334885b88e042f60c8017cc7656166e0ca3514575722dad0a09a1ed6b93d8", "topology_keys": ["interpolate.frames@film-2x"] },
+    { "id": "interpolate-rife", "topology_signature": "13e31998e025f80a649541e22c604191d2c8abcd8f8f6af01c824c97cc6e9bb0", "topology_keys": ["interpolate.frames@rife-2x"] },
     { "id": "guides-first-last-interior", "topology_signature": "240cfb11cf2d9463d05f5713c3f76ad076f4c81c48c9a66f1b7cf9a0541f9ee8", "topology_keys": ["generate.with_guides@first-last-interior"] },
     { "id": "guides-guide-clip", "topology_signature": "d4076e5fb720310200aa43818908045e9a6b7ef1972916d0780189f34df3f1cd", "topology_keys": ["generate.with_guides@guide-clip"] },
     { "id": "guides-multi-anchor", "topology_signature": "6501339414b4f5f3a42466c45f0dd0870a7a8f1efb0cbef8a2b19bae26aefe09", "topology_keys": ["generate.with_guides@multi-anchor"] },
@@ -25,6 +27,7 @@
     { "id": "refine-full-frame", "topology_signature": "0bbc6df2ac44fe7196018c100f2bd5af2c7bb28dcd8d7416cf71bcb600baaca9", "topology_keys": ["refine.video@full-frame"] },
     { "id": "refine-masked", "topology_signature": "945649d6b737a23cda66f38fd3cdfdff72b5cf79812781ffa561ba77f7c29428", "topology_keys": ["refine.video@masked"] },
     { "id": "reframe-outpaint", "topology_signature": "4ce911c316f901dd600c4baa3bafec08799805fbb69daf7762183541ab486e5d", "topology_keys": ["reframe.outpaint_video@centered", "reframe.outpaint_video@offset"] },
+    { "id": "restore-seedvr2", "topology_signature": "2b5e4b9af7ce6cb16bede0f756a262bbb08b590c669ebbab1a595af401c00b51", "topology_keys": ["restore.video@seedvr2-3b-nvfp4"] },
     { "id": "rollback-native-branch", "topology_signature": "04032ca56ce4c950a4b3041581ccbafe0cde029d57a63e9ba52aa40f721b5344", "topology_keys": ["rollback.native_av@branch-suffix"] }
   ]
 }

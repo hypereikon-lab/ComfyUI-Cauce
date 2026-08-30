@@ -4,7 +4,7 @@ A CAUCE operation is a typed graph-level function over decoded media or native
 H3 state. Operations are orthogonal and composable; their names do not imply a
 production sequence.
 
-The catalog groups them into three non-sequential families. This grouping is
+The catalog groups them into four non-sequential families. This grouping is
 machine-readable in `operations/catalog.json` and does not change any operation
 id or individual contract hash.
 
@@ -24,6 +24,10 @@ native H3 AV state algebra
 
 decoded media algebra
   frames.assemble
+
+decoded video enhancement
+  interpolate.frames
+  restore.video
 ```
 
 ```text
@@ -38,6 +42,7 @@ nodes that implement it. Every graph stage declares one of these owners:
 ```text
 official-comfy   model-specific H3 conditioning
 vanilla-comfy    loaders, sampler, decode, batching, and file outputs
+external-comfy   one explicit version-locked public custom-node dependency
 cauce            deterministic range, AV-state, or persistence primitive
 ```
 
@@ -59,11 +64,14 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `refine.video` | bounded-denoise second pass over a complete or masked source state | official H3 + CAUCE continuous masks | contract + offline topology | deterministic layer unit-validated |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
+| `interpolate.frames` | increase decoded frame rate while preserving source sample positions | CAUCE clock plan + external RIFE/FILM | contract + offline topology | clock unit-validated; visuals unassessed |
+| `restore.video` | increase spatial definition with temporal restoration | official native SeedVR2 + vanilla sampling | contract + offline topology | schema-validated; visuals unassessed |
 
 The first family describes supported ways to construct H3 conditioning. The
 second treats packed synchronized AV state as an explicit value that can be
 extended, temporally completed, split, persisted, and recomposed. The third is
-deterministic post-decode work. See [Operation model](OPERATION_MODEL.md) for
+deterministic post-decode work. The fourth owns decoded model-based frame
+interpolation and restoration. See [Operation model](OPERATION_MODEL.md) for
 the lifecycle from primitive through run evidence.
 
 “Contract only” means no paired, import-tested UI graph and executable API

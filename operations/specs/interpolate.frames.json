@@ -1,0 +1,64 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "interpolate.frames",
+  "version": 1,
+  "title": "Interpolate decoded video frames",
+  "kind": "decoded-video-enhancement",
+  "implementation_class": "external-comfy-with-cauce-planning",
+  "summary": "Increase decoded sample rate with endpoint-preserving RIFE or FILM interpolation while CAUCE records the exact output clock and source-anchor positions.",
+  "inputs": [
+    { "name": "source_video", "type": "VIDEO", "required": true },
+    { "name": "source_frame_count", "type": "INT", "required": true },
+    { "name": "source_fps", "type": "FLOAT", "required": true },
+    { "name": "multiplier", "type": "INT", "required": true }
+  ],
+  "outputs": [
+    { "name": "interpolated_frames", "type": "IMAGE", "required": true },
+    { "name": "target_fps", "type": "FLOAT", "required": true },
+    { "name": "interpolation_plan", "type": "CAUCE_FRAME_INTERPOLATION_PLAN", "required": true }
+  ],
+  "constraints": {
+    "minimum_source_frames": 2,
+    "output_frame_formula": "(source_frames - 1) * multiplier + 1",
+    "target_fps_formula": "source_fps * multiplier",
+    "preserves_source_samples": true,
+    "preserves_first_to_last_sample_span": true,
+    "semantic_regeneration": false,
+    "audio_handling": "outside operation"
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "vanilla-comfy", "node_type": "GetVideoComponents", "role": "decode source video into frames and expose its exact frame rate" },
+    { "order": 2, "owner": "cauce", "node_type": "CaucePlanFrameInterpolation", "role": "compute the exact endpoint-preserving output clock and count" },
+    { "order": 3, "owner": "external-comfy", "node_type": null, "role": "interpolate every adjacent decoded frame pair with the selected version-locked model" },
+    { "order": 4, "owner": "vanilla-comfy", "node_type": "CreateVideo", "role": "optionally rewrap interpolated frames at the planned target frame rate", "optional": true }
+  ],
+  "variants": [
+    {
+      "id": "rife-2x",
+      "node_type": "RIFE VFI",
+      "multiplier": 2,
+      "source": "ThunderFun/ComfyUI-RIFE-FILM-Only",
+      "source_commit": "3469aad35d6774bb7943bf30d5ae7b5acd9039bc",
+      "license": "MIT",
+      "role": "practical default with arbitrary-timestep interpolation"
+    },
+    {
+      "id": "film-2x",
+      "node_type": "FILM VFI",
+      "multiplier": 2,
+      "source": "ThunderFun/ComfyUI-RIFE-FILM-Only",
+      "source_commit": "3469aad35d6774bb7943bf30d5ae7b5acd9039bc",
+      "license": "MIT",
+      "role": "large-motion comparison path using recursive midpoint interpolation"
+    }
+  ],
+  "artifacts": {
+    "state": "contract-only",
+    "pairs": []
+  },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "CAUCE output-clock algebra and the selected extension's current endpoint-copying implementation were audited; live node availability and visual interpolation quality remain empirical gates."
+  }
+}

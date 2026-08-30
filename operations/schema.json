@@ -23,13 +23,15 @@
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" },
     "version": { "type": "integer", "minimum": 1 },
     "title": { "type": "string", "minLength": 1 },
-    "kind": { "enum": ["h3-inference", "decoded-media-transform"] },
+    "kind": { "enum": ["h3-inference", "decoded-media-transform", "decoded-video-enhancement"] },
     "implementation_class": {
       "enum": [
         "official-h3",
+        "official-comfy",
         "official-h3-with-cauce-primitives",
         "cauce-preprocess-to-official-h3",
-        "cauce-and-vanilla-deterministic"
+        "cauce-and-vanilla-deterministic",
+        "external-comfy-with-cauce-planning"
       ]
     },
     "summary": { "type": "string", "minLength": 1 },
@@ -44,7 +46,7 @@
         "required": ["order", "owner", "role"],
         "properties": {
           "order": { "type": "integer", "minimum": 1 },
-          "owner": { "enum": ["official-comfy", "vanilla-comfy", "cauce"] },
+          "owner": { "enum": ["official-comfy", "vanilla-comfy", "external-comfy", "cauce"] },
           "node_type": { "type": ["string", "null"] },
           "role": { "type": "string", "minLength": 1 },
           "repeatable": { "type": "boolean" },

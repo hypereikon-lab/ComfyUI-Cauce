@@ -77,7 +77,12 @@ def validate_topology(value: Any, operation: dict[str, Any]) -> list[str]:
             errors.append(f"invalid or duplicate topology node key {key!r}")
         else:
             node_keys.add(key)
-        if node.get("owner") not in {"official-comfy", "vanilla-comfy", "cauce"}:
+        if node.get("owner") not in {
+            "official-comfy",
+            "vanilla-comfy",
+            "external-comfy",
+            "cauce",
+        }:
             errors.append(f"invalid topology node owner {node.get('owner')!r}")
         class_type = node.get("class_type")
         if class_type is not None and (not isinstance(class_type, str) or not class_type):

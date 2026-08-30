@@ -33,7 +33,7 @@
     { "id": "generate.with_guides", "version": 2, "family": "h3-conditioning-grammar", "spec": "specs/generate.with_guides.json" },
     { "id": "reframe.outpaint_video", "version": 1, "family": "native-av-state-algebra", "spec": "specs/reframe.outpaint_video.json" },
     { "id": "refine.video", "version": 1, "family": "native-av-state-algebra", "spec": "specs/refine.video.json" },
-    { "id": "restore.video", "version": 1, "family": "decoded-video-enhancement", "spec": "specs/restore.video.json" },
+    { "id": "restore.video", "version": 2, "family": "decoded-video-enhancement", "spec": "specs/restore.video.json" },
     { "id": "rollback.native_av", "version": 1, "family": "native-av-state-algebra", "spec": "specs/rollback.native_av.json" }
   ]
 }

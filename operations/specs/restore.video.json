@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "restore.video",
-  "version": 1,
+  "version": 2,
   "title": "Restore decoded video with SeedVR2",
   "kind": "decoded-video-enhancement",
   "implementation_class": "official-comfy",
@@ -20,7 +20,7 @@
     "frame_count_change": false,
     "frame_rate_change": false,
     "temporal_model": true,
-    "recommended_initial_model": "seedvr2_ema_3b_fp16_nvfp4.safetensors",
+    "recommended_initial_model": "seedvr2_3b_nvfp4.safetensors",
     "recommended_color_correction": "lab",
     "recommended_steps": 1,
     "audio_handling": "outside operation"
@@ -40,8 +40,11 @@
   "variants": [
     {
       "id": "seedvr2-3b-nvfp4",
-      "model": "seedvr2_ema_3b_fp16_nvfp4.safetensors",
+      "model": "seedvr2_3b_nvfp4.safetensors",
       "vae": "ema_vae_fp16.safetensors",
+      "model_sha256": "c8dea38b04d43295621726e2cd371c0d2d001006169c113aea17950f2cb2e295",
+      "vae_sha256": "20678548f420d98d26f11442d3528f8b8c94e57ee046ef93dbb7633da8612ca1",
+      "source_revision": "673340c8a66db62b84e4099def7d01d337ae12dc",
       "license": "Apache-2.0",
       "role": "initial 32 GB VRAM production target"
     }

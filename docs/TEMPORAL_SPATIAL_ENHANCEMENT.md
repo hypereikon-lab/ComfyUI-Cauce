@@ -149,7 +149,7 @@ For the laboratory RTX 5090 with 32 GB VRAM and limited disk, the initial
 target is:
 
 ```text
-model   seedvr2_ema_3b_fp16_nvfp4.safetensors   about 2.0 GB
+model   seedvr2_3b_nvfp4.safetensors            1.997 GB
 VAE     ema_vae_fp16.safetensors                about 0.5 GB
 steps   1
 chunk   auto first

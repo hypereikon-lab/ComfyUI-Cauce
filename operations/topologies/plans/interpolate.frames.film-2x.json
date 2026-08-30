@@ -8,7 +8,7 @@
     { "source": "Comfy-Org/ComfyUI", "commit": "12d5279438bfefc058a269eae805ceab6047777f", "path": "comfy_extras/nodes_frame_interpolation.py" },
     { "source": "Comfy-Org/frame_interpolation", "commit": "9bca6366a22473ccee25602fa82b224d78413960", "path": "frame_interpolation/film_net_fp16.safetensors" },
     { "source": "Comfy-Org/workflow_templates", "commit": "d11b69157009227ad2a7d3a927a1eb68a3d5f281", "path": "templates/utility_video_frame_interpolation.json" },
-    { "source": "ComfyUI-Cauce", "path": "cauce/temporal.py", "version": "5.4.1" }
+    { "source": "ComfyUI-Cauce", "path": "cauce/temporal.py", "version": "5.4.2" }
   ],
   "nodes": [
     { "key": "source", "owner": "vanilla-comfy", "class_type": "GetVideoComponents", "role": "decode source video and expose frames plus fps" },

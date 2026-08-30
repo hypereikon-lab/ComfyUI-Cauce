@@ -1,12 +1,14 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "restore.video",
-  "operation_version": 1,
+  "operation_version": 2,
   "variant": "seedvr2-3b-nvfp4",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/workflow_templates", "commit": "d3b4a9e89573162b005961865164c18c8ae2206b", "path": "templates/utility_seedvr2_3b_int8_upscale_video.json" },
-    { "source": "Comfy-Org/ComfyUI", "commit": "8a33128f2f8c5585c57486c07de481241e70a39c", "path": "comfy_extras/nodes_seedvr.py" }
+    { "source": "Comfy-Org/workflow_templates", "commit": "d11b69157009227ad2a7d3a927a1eb68a3d5f281", "path": "templates/utility_seedvr2_3b_int8_upscale_video.json" },
+    { "source": "Comfy-Org/ComfyUI", "commit": "12d5279438bfefc058a269eae805ceab6047777f", "path": "comfy_extras/nodes_seedvr.py" },
+    { "source": "Comfy-Org/SeedVR2", "commit": "673340c8a66db62b84e4099def7d01d337ae12dc", "path": "diffusion_models/seedvr2_3b_nvfp4.safetensors" },
+    { "source": "Comfy-Org/SeedVR2", "commit": "673340c8a66db62b84e4099def7d01d337ae12dc", "path": "vae/ema_vae_fp16.safetensors" }
   ],
   "nodes": [
     { "key": "source", "owner": "vanilla-comfy", "class_type": "GetVideoComponents", "role": "decode source frames and preserve original fps" },
@@ -62,7 +64,7 @@
   ],
   "live_gates": [
     "confirm all native SeedVR2 node contracts through live object_info",
-    "confirm the 3B NVFP4 model and SeedVR2 VAE filenames before queueing",
+    "confirm seedvr2_3b_nvfp4.safetensors and ema_vae_fp16.safetensors plus their locked SHA-256 values before queueing",
     "start with automatic chunk sizing and a conservative temporal overlap, then record actual 32 GB VRAM behavior",
     "assert output frame count equals input frame count and fps remains unchanged",
     "inspect temporal stability, texture invention, color correction, and chunk-boundary behavior before acceptance",

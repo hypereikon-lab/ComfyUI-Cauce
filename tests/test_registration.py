@@ -20,7 +20,7 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 23)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 24)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
@@ -56,9 +56,10 @@ class RegistrationTests(unittest.TestCase):
                 "CauceH3PrepareGuideClip",
                 "CauceH3PrepareReferenceClip",
                 "CauceH3InspectConditioning",
-                "CaucePlanFrameInterpolation",
-                "CauceInspectH3InterleaveProjection",
                 "CaucePlanH3GuideRetime",
+                "CauceH3DilateVisualTokens",
+                "CauceH3ResizeAVLatent",
+                "CauceH3ReplaceVisualStream",
             ):
                 self.assertIn(name, module.NODE_CLASS_MAPPINGS)
         finally:

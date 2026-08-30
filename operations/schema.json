@@ -23,7 +23,7 @@
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" },
     "version": { "type": "integer", "minimum": 1 },
     "title": { "type": "string", "minLength": 1 },
-    "kind": { "enum": ["h3-inference", "decoded-media-transform", "decoded-video-enhancement"] },
+    "kind": { "enum": ["h3-inference", "decoded-media-transform"] },
     "implementation_class": {
       "enum": [
         "official-h3",

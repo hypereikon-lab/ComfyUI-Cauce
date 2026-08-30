@@ -1,0 +1,75 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "densify.temporal",
+  "operation_version": 1,
+  "variant": "token-inpaint",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "MiniMax-AI/MiniMax-H3", "path": "README.md", "section": "H3-Regenerate-2K" },
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy/model_base.py", "feature": "per-token H3 native noise masks" },
+    { "source": "ComfyUI-Cauce", "path": "cauce/av_latent.py", "functions": ["plan_h3_temporal_densification", "densify_h3_video_tokens"] }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "cauce", "class_type": "CauceLoadAVLatent", "role": "load source native H3 AV state" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectAVLatent", "role": "validate source state" },
+    { "key": "dilate", "owner": "cauce", "class_type": "CauceH3DilateVisualTokens", "role": "construct target token lattice and masks" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load the same H3 checkpoint" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "build target-geometry H3 conditioning" },
+    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set H3 shifts" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "bind seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind model and conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "build sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "inpaint missing native visual tokens" },
+    { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed masks" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode the dense H3 visual state" },
+    { "key": "crop", "owner": "cauce", "class_type": "CauceAcceptDecodedRange", "role": "remove legal H3 tail padding" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
+    { "from": { "node": "source", "port": "latent" }, "to": { "node": "dilate", "port": "latent" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
+    { "from": { "node": "sigma", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "sigma", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "dilate", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "clear", "port": "latent" } },
+    { "from": { "node": "clear", "port": "latent" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } },
+    { "from": { "node": "decode", "port": "IMAGE" }, "to": { "node": "crop", "port": "images" } },
+    { "from": { "node": "dilate", "port": "delivery_frames" }, "to": { "node": "crop", "port": "frame_count" } }
+  ],
+  "bindings": [
+    { "name": "source_path", "type": "STRING", "target": { "node": "source", "input": "path_or_folder" }, "required": true },
+    { "name": "factor", "type": "INT", "target": { "node": "dilate", "input": "factor" }, "required": true },
+    { "name": "anchor_denoise", "type": "FLOAT", "target": { "node": "dilate", "input": "anchor_denoise" }, "required": true },
+    { "name": "gap_denoise", "type": "FLOAT", "target": { "node": "dilate", "input": "gap_denoise" }, "required": true },
+    { "name": "feather_tokens", "type": "INT", "target": { "node": "dilate", "input": "feather_tokens" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
+    { "name": "target_height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
+    { "name": "h3_target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "crop_start", "type": "INT", "target": { "node": "crop", "input": "start_frame" }, "required": true },
+    { "name": "clear_origin", "type": "INT", "target": { "node": "clear", "input": "timeline_origin_frame" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "densified_native_av_latent", "type": "LATENT", "source": { "node": "clear", "port": "latent" } },
+    { "name": "densified_frames", "type": "IMAGE", "source": { "node": "crop", "port": "images" } },
+    { "name": "delivery_fps", "type": "INT", "source": { "node": "dilate", "port": "delivery_fps" } },
+    { "name": "delivery_frame_count", "type": "INT", "source": { "node": "dilate", "port": "delivery_frames" } }
+  ],
+  "live_gates": [
+    "verify current ComfyUI H3 per-token noise-mask behavior through live execution",
+    "characterize factor 2 before factors 3 and 4",
+    "keep H3 target windows within the trained 124-362-frame range",
+    "compare source-anchor drift, motion continuity, runtime, and VRAM on fixed seeds"
+  ]
+}

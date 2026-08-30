@@ -1,6 +1,6 @@
 # Operation model
 
-CAUCE exposes twelve orthogonal graph-level operations in four capability
+CAUCE exposes twelve orthogonal graph-level operations in three capability
 families. The families are a classification, not an execution order.
 
 ## H3 conditioning grammar
@@ -22,9 +22,11 @@ does not claim to have implemented the official H3 capability.
 ```text
 continue.native_av
 complete.native_av
+densify.temporal
 edit.masked_video
 reframe.outpaint_video
 refine.video
+regenerate.spatial
 rollback.native_av
 ```
 
@@ -34,9 +36,11 @@ state as a first-class artifact:
 ```text
 state -- extend --------------------------> longer state
 state -- complete[start, end) ------------> completed/replaced state
+state -- dilate visual-token time --------> H3-inpainted denser state
 state + mask -- edit[x, y, t] ------------> selectively edited state
 state -- expand canvas -------------------> reframed/outpaint target state
 state -- bounded second pass -------------> refined state
+state -- spatial resize/VAE graft --------> H3-regenerated larger state
 state -- split[cut] ----------------------> prefix + reversible suffix
 ```
 
@@ -50,6 +54,12 @@ not separate hidden mechanisms.
 `refine.video` reuses the same official mask path at bounded strength; it is
 not a separate sampler.
 
+`densify.temporal` and `regenerate.spatial` are also compositions around the
+ordinary H3 sampler. The former changes the visual-token time lattice and
+delivery clock. The latter changes spatial geometry and performs a bounded
+same-checkpoint second pass. Neither introduces an auxiliary interpolation or
+restoration model.
+
 ## Decoded media algebra
 
 ```text
@@ -58,19 +68,6 @@ frames.assemble
 
 This family performs exact deterministic work after decode. It neither samples
 H3 nor substitutes decoded video for retained native state.
-
-## Decoded video enhancement
-
-```text
-interpolate.frames
-restore.video
-```
-
-`interpolate.frames` combines CAUCE's exact output-clock plan with ComfyUI's
-native, version-locked RIFE/FILM loader and interpolator. `restore.video`
-records the official native SeedVR2 topology without claiming a CAUCE model implementation. Both
-operate on decoded video; neither changes or extends retained H3 native AV
-state.
 
 ## Lifecycle
 

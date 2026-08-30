@@ -12,12 +12,16 @@ from cauce.av_latent import (
     append_av_span,
     build_av_span_keyframes,
     clear_av_denoise_mask,
+    densify_h3_video_tokens,
     extract_av_span,
     expand_av_canvas,
     inspect_av_latent,
     place_av_span,
     plan_av_window,
+    plan_h3_temporal_densification,
     replace_av_span,
+    replace_h3_video_stream,
+    resize_h3_av_latent,
     split_av_latent,
     validate_av_span,
     validate_av_window_layout,
@@ -431,6 +435,93 @@ class AVLatentTests(unittest.TestCase):
                 offset_x=32,
                 offset_y=32,
             )
+
+    def test_plans_and_builds_native_h3_temporal_densification(self):
+        source = self.latent(124)
+        source_video, _ = source["samples"]
+        for index in range(source_video.shape[2]):
+            source_video[:, :, index] = float(index + 1)
+
+        plan = plan_h3_temporal_densification(124, 2)
+        self.assertEqual(plan["delivery_frame_count"], 247)
+        self.assertEqual(plan["h3_target_frame_count"], 260)
+        self.assertEqual(plan["source_video_tokens"], 37)
+        self.assertEqual(plan["h3_target_video_tokens"], 77)
+        self.assertEqual(plan["delivery_fps"], 48)
+        self.assertEqual(plan["decoded_tail_trim_frames"], 13)
+        self.assertTrue(plan["inside_h3_trained_frame_range"])
+
+        densified, report = densify_h3_video_tokens(
+            source,
+            factor=2,
+            feather_tokens=1,
+        )
+        video, audio = densified["samples"]
+        video_mask, audio_mask = densified["noise_mask"]
+        self.assertEqual(video.shape, (1, 24, 77, 2, 3))
+        self.assertEqual(audio.shape, (1, 32, 2, 433))
+        self.assertEqual(video_mask.shape, (1, 1, 77, 2, 3))
+        self.assertEqual(audio_mask.shape, (1, 1, 2, 433))
+        for anchor in report["anchors"]:
+            source_index = anchor["source_token"]
+            target_index = anchor["target_token"]
+            np.testing.assert_array_equal(
+                video[:, :, target_index],
+                source_video[:, :, source_index],
+            )
+            self.assertTrue(np.all(video_mask[:, :, target_index] == 0.0))
+        for target_index in report["generated_target_tokens"]:
+            self.assertTrue(np.all(video[:, :, target_index] == 0.0))
+            self.assertTrue(np.all(video_mask[:, :, target_index] == 1.0))
+        self.assertTrue(np.all(audio == 0.0))
+        self.assertTrue(np.all(audio_mask == 1.0))
+
+    def test_resizes_only_h3_visual_state_for_same_model_second_pass(self):
+        source = self.latent(124, value=2.0)
+        resized, report = resize_h3_av_latent(
+            source,
+            target_width=96,
+            target_height=64,
+            method="bicubic",
+            video_denoise=0.35,
+            audio_denoise=0.0,
+        )
+        video, audio = resized["samples"]
+        video_mask, audio_mask = resized["noise_mask"]
+        self.assertEqual(video.shape, (1, 24, 37, 4, 6))
+        self.assertEqual(audio.shape, source["samples"][1].shape)
+        self.assertTrue(np.all(video == 2.0))
+        np.testing.assert_array_equal(audio, source["samples"][1])
+        self.assertTrue(np.all(video_mask == np.float32(0.35)))
+        self.assertTrue(np.all(audio_mask == 0.0))
+        self.assertEqual(report["source_width"], 48)
+        self.assertEqual(report["source_height"], 32)
+        self.assertEqual(report["target_width"], 96)
+        self.assertEqual(report["target_height"], 64)
+
+    def test_grafts_vae_visual_state_onto_compatible_h3_carrier(self):
+        carrier = self.latent(124, value=1.0)
+        encoded = {
+            "samples": np.full((1, 24, 37, 4, 6), 8.0, dtype=np.float32)
+        }
+        grafted, report = replace_h3_video_stream(
+            carrier,
+            encoded,
+            video_denoise=0.25,
+            audio_denoise=0.0,
+        )
+        video, audio = grafted["samples"]
+        video_mask, audio_mask = grafted["noise_mask"]
+        self.assertEqual(video.shape, (1, 24, 37, 4, 6))
+        self.assertTrue(np.all(video == 8.0))
+        np.testing.assert_array_equal(audio, carrier["samples"][1])
+        self.assertTrue(np.all(video_mask == np.float32(0.25)))
+        self.assertTrue(np.all(audio_mask == 0.0))
+        self.assertEqual(report["method"], "pixel-vae-second-pass")
+
+        malformed = {"samples": np.zeros((1, 24, 36, 4, 6), dtype=np.float32)}
+        with self.assertRaisesRegex(ValueError, "duration differs"):
+            replace_h3_video_stream(carrier, malformed)
 
 
 if __name__ == "__main__":

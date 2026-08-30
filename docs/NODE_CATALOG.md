@@ -25,6 +25,9 @@ outside the node.
 | `CauceH3ExpandAVCanvas` | copy native video state onto a larger 32-pixel-aligned canvas, preserve the interior, and mask newly allocated regions |
 | `CauceH3ReplaceAVSpan` | replace one globally aligned synchronized interval and discard spent mask metadata |
 | `CauceH3ClearAVDenoiseMask` | remove a consumed nested AV denoise mask without changing latent samples |
+| `CauceH3DilateVisualTokens` | map source visual tokens monotonically onto a longer legal H3 lattice, allocate missing tokens, and attach a continuous temporal-inpaint mask |
+| `CauceH3ResizeAVLatent` | resize only native H3 visual state and attach separate video/audio denoise strengths for a same-model high-resolution pass |
+| `CauceH3ReplaceVisualStream` | graft a duration-compatible H3-VAE visual latent onto an existing packed AV carrier for a pixel/VAE second pass |
 
 No node owns prompt, seed, sampler, scheduler, decode, or a continuation/
 completion preset. The mask node owns only deterministic per-token denoise
@@ -48,12 +51,11 @@ accepted IMAGE output is passed to the corresponding official H3 node.
 
 | Node | Operation |
 | --- | --- |
-| `CaucePlanFrameInterpolation` | calculate exact endpoint-preserving output count, target fps, inserted count, and original-frame positions for decoded VFI |
-| `CauceInspectH3InterleaveProjection` | classify the real H3 temporal tokens produced by an alternating known/missing decoded-frame mask |
 | `CaucePlanH3GuideRetime` | map sparse source frames to endpoint-aligned official arbitrary-frame guides on a legal H3 target |
 
-These nodes do not interpolate frames or sample H3. RIFE/FILM and official H3
-remain visible graph stages. See
+This planning node does not sample H3. Native temporal densification lives in
+the packed AV-state nodes above; official H3 remains the visible graph stage
+that performs inference. See
 [Temporal and spatial video enhancement](TEMPORAL_SPATIAL_ENHANCEMENT.md).
 
 ## CAUCE/Persistence

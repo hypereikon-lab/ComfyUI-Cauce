@@ -29,10 +29,10 @@ class OperationContractTests(unittest.TestCase):
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
-                "interpolate.frames",
+                "densify.temporal",
                 "reframe.outpaint_video",
                 "refine.video",
-                "restore.video",
+                "regenerate.spatial",
                 "rollback.native_av",
             },
         )
@@ -59,17 +59,15 @@ class OperationContractTests(unittest.TestCase):
             {
                 "continue.native_av",
                 "complete.native_av",
+                "densify.temporal",
                 "edit.masked_video",
                 "reframe.outpaint_video",
                 "refine.video",
+                "regenerate.spatial",
                 "rollback.native_av",
             },
         )
         self.assertEqual(by_family["decoded-media-algebra"], {"frames.assemble"})
-        self.assertEqual(
-            by_family["decoded-video-enhancement"],
-            {"interpolate.frames", "restore.video"},
-        )
 
     def test_official_operations_do_not_claim_cauce_nodes(self):
         operations = load_operation_catalog(ROOT)
@@ -87,9 +85,11 @@ class OperationContractTests(unittest.TestCase):
         for operation_id in (
             "continue.native_av",
             "complete.native_av",
+            "densify.temporal",
             "edit.masked_video",
             "reframe.outpaint_video",
             "refine.video",
+            "regenerate.spatial",
         ):
             owners = {stage["owner"] for stage in operations[operation_id]["graph_contract"]}
             self.assertTrue({"official-comfy", "cauce"} <= owners)
@@ -99,18 +99,16 @@ class OperationContractTests(unittest.TestCase):
             self.assertEqual(spec["kind"], "decoded-media-transform")
             self.assertNotIn("official-comfy", owners)
 
-        interpolation = operations["interpolate.frames"]
-        self.assertEqual(
-            interpolation["implementation_class"],
-            "official-comfy-with-cauce-planning",
-        )
-        self.assertTrue(
-            {"official-comfy", "cauce"}
-            <= {stage["owner"] for stage in interpolation["graph_contract"]}
-        )
-        restoration = operations["restore.video"]
-        self.assertEqual(restoration["implementation_class"], "official-comfy")
-        self.assertNotIn("cauce", {stage["owner"] for stage in restoration["graph_contract"]})
+        for operation_id in ("densify.temporal", "regenerate.spatial"):
+            operation = operations[operation_id]
+            self.assertEqual(
+                operation["implementation_class"],
+                "official-h3-with-cauce-primitives",
+            )
+            self.assertTrue(
+                {"official-comfy", "cauce"}
+                <= {stage["owner"] for stage in operation["graph_contract"]}
+            )
 
     def test_contract_only_operations_ship_no_graph_pair(self):
         operations = load_operation_catalog(ROOT)

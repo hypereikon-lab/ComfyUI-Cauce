@@ -9,8 +9,9 @@
 | H3 guide-clip preparation | official single-image/floor rule plus resolved target range | unit-validated |
 | H3 reference-clip preparation | official target clamp/floor rule plus 2 fps Qwen sample indices | unit-validated |
 | H3 conditioning inspection | read-only keyframe/reference/range/overlap report | unit-validated |
-| decoded-frame interpolation plan | exact `(N-1)m+1` count, target fps, and source-anchor output indices | unit-validated |
-| H3 interleave-mask projection | per-token preserve/mixed/generate classification using official temporal `amax` geometry | unit-validated |
+| H3 visual-token temporal dilation | exact `(N-1)m+1` delivery count, legal `17k+5` target, monotone native-token anchors, continuous denoise mask, and `24m` delivery clock | unit-validated |
+| H3 visual-latent spatial resize | spatial-only native-state resize with unchanged duration and independent video/audio denoise masks | unit-validated |
+| H3 VAE visual-stream graft | replace only the visual stream of a compatible packed AV carrier after pixel upscale and H3-VAE encode | unit-validated |
 | H3 sparse-guide retime plan | source-frame anchors mapped across a legal endpoint-aligned `17k+5` target | unit-validated |
 | H3 AV inspection | packed stream shapes and absolute frame/token lengths | unit-validated |
 | H3 AV window layout | absolute 24 fps range mapped to visual and 40 Hz audio tokens | unit-validated |
@@ -38,15 +39,15 @@ conditioning grammar      generate.keyframed
 
 native AV state algebra   continue.native_av
                           complete.native_av
+                          densify.temporal
                           edit.masked_video
                           reframe.outpaint_video
                           refine.video
+                          regenerate.spatial
                           rollback.native_av
 
 decoded media algebra     frames.assemble
 
-decoded video enhancement interpolate.frames
-                          restore.video
 ```
 
 | Operation | Composition |
@@ -61,8 +62,8 @@ decoded video enhancement interpolate.frames
 | `refine.video` | full-frame or masked bounded-denoise second pass over existing native state |
 | `rollback.native_av` | exact native split with reversible suffix span |
 | `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
-| `interpolate.frames` | CAUCE exact clock plan + version-locked native ComfyUI RIFE/FILM decoded-frame interpolation |
-| `restore.video` | official native SeedVR2 resize/preprocess/chunk/condition/sample/merge/decode/postprocess graph |
+| `densify.temporal` | CAUCE native-token lattice dilation + official H3 bidirectional temporal inpainting + exact tail crop and delivery clock |
+| `regenerate.spatial` | native latent-hires, pixel/H3-VAE, or overlapping tiled initial state + bounded second pass through the same H3 checkpoint |
 
 All twelve currently remain `contract-only`: no paired reusable UI/API graph is
 shipped. “Composed” means the mechanism can be expressed as a graph. It does not
@@ -75,8 +76,9 @@ runtime with a synthetic packed latent. The run verified absolute planning, allo
 extraction, guide insertion, suffix extraction, append, save, and reload. It did
 not establish production-resolution visual quality.
 
-The new placement/mask/replacement/cleanup nodes, planning/inspection/split
-nodes, decoded-range nodes, and temporal planning nodes are unit-validated only.
+The new placement/mask/replacement/cleanup, temporal dilation, spatial resize,
+visual-stream graft, planning/inspection/split, and decoded-range nodes are
+unit-validated only.
 Their use inside a graph remains a composition possibility until that exact
 graph is schema-validated, executed, and visually evaluated where a visual
 objective is claimed.

@@ -4,7 +4,7 @@ A CAUCE operation is a typed graph-level function over decoded media or native
 H3 state. Operations are orthogonal and composable; their names do not imply a
 production sequence.
 
-The catalog groups them into four non-sequential families. This grouping is
+The catalog groups them into three non-sequential families. This grouping is
 machine-readable in `operations/catalog.json` and does not change any operation
 id or individual contract hash.
 
@@ -17,17 +17,16 @@ H3 conditioning grammar
 native H3 AV state algebra
   continue.native_av
   complete.native_av
+  densify.temporal
   edit.masked_video
   reframe.outpaint_video
   refine.video
+  regenerate.spatial
   rollback.native_av
 
 decoded media algebra
   frames.assemble
 
-decoded video enhancement
-  interpolate.frames
-  restore.video
 ```
 
 ```text
@@ -40,7 +39,7 @@ CAUCE may own the operation contract while owning only some, or none, of the
 nodes that implement it. Every graph stage declares one of these owners:
 
 ```text
-official-comfy   core model-specific conditioning or enhancement
+official-comfy   core H3 model-specific conditioning
 vanilla-comfy    loaders, sampler, decode, batching, and file outputs
 cauce            deterministic range, AV-state, or persistence primitive
 ```
@@ -58,19 +57,19 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `generate.with_guides` | place decoded guides at exact target-frame indices | official H3 / vanilla | contract + offline topology | defined |
 | `continue.native_av` | extend synchronized packed H3 AV state through keyframe or masked overlap | official H3 + CAUCE AV primitives | contract + offline topology | keyframe path executes synthetically; masked paths unit-validated |
 | `complete.native_av` | generate a prefix/interior/replacement while preserving explicit native AV context | official H3 + CAUCE placement/mask/replace primitives | contract + offline topology | deterministic layer unit-validated |
+| `densify.temporal` | generate additional motion samples by dilating native visual tokens and inpainting missing intervals with H3 | official H3 + CAUCE token-lattice primitive | contract + offline topology | deterministic layer unit-validated; visuals unassessed |
 | `edit.masked_video` | regenerate an arbitrary spatial or spatiotemporal region while preserving its complement | official H3 + CAUCE mask projection | contract + offline topology | deterministic layer unit-validated |
 | `reframe.outpaint_video` | expand the latent canvas and generate only new regions | official H3 + CAUCE canvas/mask primitives | contract + offline topology | deterministic layer unit-validated |
 | `refine.video` | bounded-denoise second pass over a complete or masked source state | official H3 + CAUCE continuous masks | contract + offline topology | deterministic layer unit-validated |
+| `regenerate.spatial` | increase resolution/detail through a latent-hires, pixel/H3-VAE, or tiled second pass using the same H3 checkpoint | official H3 + CAUCE spatial state primitives | contract + offline topology | deterministic layer unit-validated; visuals unassessed |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
-| `interpolate.frames` | increase decoded frame rate while preserving source sample positions | CAUCE clock plan + native ComfyUI RIFE/FILM | contract + offline topology | core implementation schema-validated; visuals unassessed |
-| `restore.video` | increase spatial definition with temporal restoration | official native SeedVR2 + vanilla sampling | contract + offline topology | schema-validated; visuals unassessed |
 
 The first family describes supported ways to construct H3 conditioning. The
 second treats packed synchronized AV state as an explicit value that can be
-extended, temporally completed, split, persisted, and recomposed. The third is
-deterministic post-decode work. The fourth owns decoded model-based frame
-interpolation and restoration. See [Operation model](OPERATION_MODEL.md) for
+extended, temporally completed, densified, spatially regenerated, split,
+persisted, and recomposed. The third is deterministic post-decode work. See
+[Operation model](OPERATION_MODEL.md) for
 the lifecycle from primitive through run evidence.
 
 “Contract only” means no paired, import-tested UI graph and executable API
@@ -108,6 +107,13 @@ native AV state + MASK
   -> edit.masked_video
   -> refine.video
   -> reframe.outpaint_video
+```
+
+```text
+native AV state
+  -> densify.temporal
+  -> regenerate.spatial
+  -> denser high-resolution native AV state
 ```
 
 The cumulative native AV latent is an explicit output and input. Persist it
@@ -158,7 +164,8 @@ The catalog now describes temporal completion, continuous masked editing,
 outpainting, and bounded refinement through current official H3 per-token mask
 semantics, but no new masked sampling topology is yet claimed as executed or
 visually accepted. It does not claim automatic intent-to-graph
-synthesis, arbitrary sampler modification, generative audio, training,
-acceleration, or streaming. A new operation enters the catalog only with a
+synthesis, arbitrary sampler modification, generative audio, acceleration, or
+streaming. Training recipes remain a production concern outside this node
+library. A new operation enters the catalog only with a
 typed data contract, explicit node ownership, and honest artifact and evidence
 state.

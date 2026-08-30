@@ -15,7 +15,7 @@ API prompt object. Its required state is `offline-draft`.
 
 `operations/archetypes/catalog.json` adds a narrower structural identity above
 the dossiers. It hashes node keys, owners, class types, and exact edges while
-excluding bindings and descriptive metadata. The 31 dossiers currently form 27
+excluding bindings and descriptive metadata. The 32 dossiers currently form 29
 archetypes. A shared archetype means one eventual paired graph can support
 multiple guarded binding profiles; it does not merge their semantic variants.
 
@@ -28,10 +28,13 @@ multiple guarded binding profiles; it does not merge their semantic variants.
 | `generate.with_guides` | `single-anchor`, `multi-anchor`, `guide-clip`, `first-last-interior` | official endpoint frames plus exact temporal image/clip guides |
 | `continue.native_av` | `keyframe-overlap`, `masked-overlap`, `masked-overlap-future-guide` | explicit native overlap transport around ordinary official sampling |
 | `complete.native_av` | `backward-prefix`, `two-sided-infill`, `local-replacement`, `two-source-connection` | native span placement, independent AV masks, optional exact interval replacement |
+| `densify.temporal` | `token-inpaint` | native visual-token dilation, same-H3 temporal inpainting, exact padding crop, and multiplied delivery clock |
+| `edit.masked_video` | `static-spatial`, `animated-spatiotemporal`, `local-retake` | continuous native visual-token mask composition around official sampling |
+| `reframe.outpaint_video` | `centered`, `offset` | native visual-canvas expansion and masked H3 sampling |
+| `refine.video` | `full-frame`, `masked` | bounded-denoise second H3 pass at unchanged geometry |
+| `regenerate.spatial` | `latent-second-pass`, `pixel-vae-second-pass`, `tiled-pixel-vae` | same-H3 spatial regeneration from resized native state or H3-VAE re-encoding |
 | `rollback.native_av` | `branch-suffix` | exact native split and optional branch persistence |
 | `frames.assemble` | `ordered-concatenation` | exact CAUCE decoded ranges plus vanilla image batching |
-| `interpolate.frames` | `rife-2x`, `film-2x` | exact CAUCE output-clock planning plus version-locked native ComfyUI VFI |
-| `restore.video` | `seedvr2-3b-nvfp4` | official native SeedVR2 video restoration topology |
 
 This catalog is exhaustive over files and complete over operations: tests
 require at least one dossier for every current semantic operation, permit

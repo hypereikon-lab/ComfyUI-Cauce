@@ -13,12 +13,15 @@ from ..cauce.av_latent import (
     append_av_span,
     build_av_span_keyframes,
     clear_av_denoise_mask,
+    densify_h3_video_tokens,
     extract_av_span,
     expand_av_canvas,
     inspect_av_latent,
     place_av_span,
     plan_av_window,
     replace_av_span,
+    replace_h3_video_stream,
+    resize_h3_av_latent,
     split_av_latent,
 )
 
@@ -657,6 +660,171 @@ class CauceH3ClearAVDenoiseMask:
         )
 
 
+class CauceH3DilateVisualTokens:
+    """Create an H3-native slower token lattice for bidirectional infill."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "factor": ([2, 3, 4], {"default": 2}),
+                "anchor_denoise": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "gap_denoise": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "feather_tokens": (
+                    "INT",
+                    {"default": 1, "min": 1, "max": 32},
+                ),
+                "curve": (["smootherstep", "smoothstep", "linear"],),
+                "audio_denoise": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "INT", "INT", "INT", "INT", "STRING")
+    RETURN_NAMES = (
+        "latent",
+        "delivery_frames",
+        "h3_target_frames",
+        "delivery_fps",
+        "trim_tail_frames",
+        "report_json",
+    )
+    FUNCTION = "dilate"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Dilate native H3 visual tokens, retain source tokens as anchors, and mask "
+        "the inserted token intervals for bidirectional H3 temporal inpainting."
+    )
+
+    def dilate(
+        self,
+        latent,
+        factor,
+        anchor_denoise,
+        gap_denoise,
+        feather_tokens,
+        curve,
+        audio_denoise,
+    ):
+        output, report = densify_h3_video_tokens(
+            latent,
+            factor=int(factor),
+            anchor_denoise=float(anchor_denoise),
+            gap_denoise=float(gap_denoise),
+            feather_tokens=int(feather_tokens),
+            curve=str(curve),
+            audio_denoise=float(audio_denoise),
+            nested_factory=_nested_factory,
+        )
+        return (
+            output,
+            int(report["delivery_frame_count"]),
+            int(report["h3_target_frame_count"]),
+            int(report["delivery_fps"]),
+            int(report["decoded_tail_trim_frames"]),
+            _json(report),
+        )
+
+
+class CauceH3ResizeAVLatent:
+    """Resize H3 visual state without changing its time or audio streams."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "target_width": (
+                    "INT",
+                    {"default": 1280, "min": 32, "max": 16384, "step": 32},
+                ),
+                "target_height": (
+                    "INT",
+                    {"default": 768, "min": 32, "max": 16384, "step": 32},
+                ),
+                "method": (["bicubic", "bilinear", "nearest-exact", "area"],),
+                "video_denoise": (
+                    "FLOAT",
+                    {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "audio_denoise": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("latent", "report_json")
+    FUNCTION = "resize"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Resize only native H3 visual state and attach explicit video/audio denoise "
+        "masks for a same-model spatial regeneration pass."
+    )
+
+    def resize(self, latent, target_width, target_height, method, video_denoise, audio_denoise):
+        output, report = resize_h3_av_latent(
+            latent,
+            target_width=int(target_width),
+            target_height=int(target_height),
+            method=str(method),
+            video_denoise=float(video_denoise),
+            audio_denoise=float(audio_denoise),
+            nested_factory=_nested_factory,
+        )
+        return output, _json(report)
+
+
+class CauceH3ReplaceVisualStream:
+    """Replace H3 visual state with a compatible VAE-encoded frame batch."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "target_av_latent": ("LATENT",),
+                "encoded_video_latent": ("LATENT",),
+                "video_denoise": (
+                    "FLOAT",
+                    {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+                "audio_denoise": (
+                    "FLOAT",
+                    {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "STRING")
+    RETURN_NAMES = ("latent", "report_json")
+    FUNCTION = "replace"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Graft a compatible H3-VAE visual latent onto an existing packed AV "
+        "carrier for a pixel-upscale, encode, and same-H3 regeneration pass."
+    )
+
+    def replace(self, target_av_latent, encoded_video_latent, video_denoise, audio_denoise):
+        output, report = replace_h3_video_stream(
+            target_av_latent,
+            encoded_video_latent,
+            video_denoise=float(video_denoise),
+            audio_denoise=float(audio_denoise),
+            nested_factory=_nested_factory,
+        )
+        return output, _json(report)
+
+
 NODE_CLASS_MAPPINGS = {
     "CauceH3InspectAVLatent": CauceH3InspectAVLatent,
     "CauceH3PlanAVWindow": CauceH3PlanAVWindow,
@@ -671,6 +839,9 @@ NODE_CLASS_MAPPINGS = {
     "CauceH3ExpandAVCanvas": CauceH3ExpandAVCanvas,
     "CauceH3ReplaceAVSpan": CauceH3ReplaceAVSpan,
     "CauceH3ClearAVDenoiseMask": CauceH3ClearAVDenoiseMask,
+    "CauceH3DilateVisualTokens": CauceH3DilateVisualTokens,
+    "CauceH3ResizeAVLatent": CauceH3ResizeAVLatent,
+    "CauceH3ReplaceVisualStream": CauceH3ReplaceVisualStream,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -687,4 +858,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceH3ExpandAVCanvas": "CAUCE · Expand H3 AV Canvas",
     "CauceH3ReplaceAVSpan": "CAUCE · Replace H3 AV Span",
     "CauceH3ClearAVDenoiseMask": "CAUCE · Clear H3 AV Denoise Mask",
+    "CauceH3DilateVisualTokens": "CAUCE · Dilate H3 Visual Tokens",
+    "CauceH3ResizeAVLatent": "CAUCE · Resize H3 AV Latent",
+    "CauceH3ReplaceVisualStream": "CAUCE · Replace H3 Visual Stream",
 }

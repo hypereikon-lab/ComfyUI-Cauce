@@ -1,0 +1,54 @@
+{
+  "schema": "cauce.operation/1",
+  "id": "densify.temporal",
+  "version": 1,
+  "title": "Densify native H3 time by visual-token inpainting",
+  "kind": "h3-inference",
+  "implementation_class": "official-h3-with-cauce-primitives",
+  "summary": "Map an existing H3 visual-token stream to a longer 24 fps model-time lattice, preserve source tokens as anchors, let the same H3 model inpaint missing token intervals bidirectionally, crop legal-lattice padding, and deliver at a multiplied frame rate without using an interpolation model.",
+  "inputs": [
+    { "name": "source_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "prompt", "type": "STRING", "required": true },
+    { "name": "factor", "type": "INT", "required": true },
+    { "name": "anchor_denoise", "type": "FLOAT", "required": true },
+    { "name": "gap_denoise", "type": "FLOAT", "required": true },
+    { "name": "generation_config", "type": "CAUCE_H3_GENERATION_BINDINGS", "required": true }
+  ],
+  "outputs": [
+    { "name": "densified_native_av_latent", "type": "LATENT", "required": true },
+    { "name": "densified_frames", "type": "IMAGE", "required": true },
+    { "name": "delivery_fps", "type": "INT", "required": true },
+    { "name": "delivery_frame_count", "type": "INT", "required": true }
+  ],
+  "constraints": {
+    "h3_model_frame_rate": 24,
+    "target_frame_count_rule": "17k+5",
+    "factor_range": [2, 4],
+    "delivery_frame_count_rule": "(source_frames-1)*factor+1",
+    "delivery_frame_rate_rule": "24*factor",
+    "preservation_unit": "native H3 visual token",
+    "decoded_pixel_preservation_exact": false,
+    "special_interpolation_model": false,
+    "fixed_soundtrack_conditioning": false,
+    "sampler_patch": false
+  },
+  "graph_contract": [
+    { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate the source packed H3 AV state" },
+    { "order": 2, "owner": "cauce", "node_type": "CauceH3DilateVisualTokens", "role": "construct the longer H3 token lattice, copy source anchors, and attach continuous native video/audio denoise masks" },
+    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "rebuild official H3 conditioning at the target temporal and spatial geometry" },
+    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
+    { "order": 5, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "sample the missing visual tokens with the source tokens available on both temporal sides" },
+    { "order": 6, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata while preserving generated native state" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the densified visual stream" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "crop only the legal-lattice tail padding from decoded frames" }
+  ],
+  "variants": [
+    { "id": "token-inpaint", "factor_range": [2, 4], "delivery_fps_rule": "24*factor" }
+  ],
+  "artifacts": { "state": "contract-only", "pairs": [] },
+  "evidence": {
+    "level": "unit-validated",
+    "visual_verdict": "unassessed",
+    "summary": "Token placement, native AV shapes, continuous masks, exact delivery count, legal H3 padding, and output clock are unit-validated; live H3 visual characterization remains required."
+  }
+}

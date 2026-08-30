@@ -22,6 +22,7 @@ class TopologyTests(unittest.TestCase):
                 "continue.native_av@keyframe-overlap",
                 "continue.native_av@masked-overlap",
                 "continue.native_av@masked-overlap-future-guide",
+                "densify.temporal@token-inpaint",
                 "edit.masked_video@animated-spatiotemporal",
                 "edit.masked_video@local-retake",
                 "edit.masked_video@static-spatial",
@@ -38,13 +39,13 @@ class TopologyTests(unittest.TestCase):
                 "generate.with_guides@guide-clip",
                 "generate.with_guides@multi-anchor",
                 "generate.with_guides@single-anchor",
-                "interpolate.frames@film-2x",
-                "interpolate.frames@rife-2x",
                 "reframe.outpaint_video@centered",
                 "reframe.outpaint_video@offset",
                 "refine.video@full-frame",
                 "refine.video@masked",
-                "restore.video@seedvr2-3b-nvfp4",
+                "regenerate.spatial@latent-second-pass",
+                "regenerate.spatial@pixel-vae-second-pass",
+                "regenerate.spatial@tiled-pixel-vae",
                 "rollback.native_av@branch-suffix",
             },
         )
@@ -53,15 +54,15 @@ class TopologyTests(unittest.TestCase):
             {
                 "complete.native_av",
                 "continue.native_av",
+                "densify.temporal",
                 "edit.masked_video",
                 "frames.assemble",
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
-                "interpolate.frames",
                 "reframe.outpaint_video",
                 "refine.video",
-                "restore.video",
+                "regenerate.spatial",
                 "rollback.native_av",
             },
         )
@@ -76,7 +77,7 @@ class TopologyTests(unittest.TestCase):
     def test_graph_archetypes_group_only_identical_structures(self):
         archetypes = load_archetype_catalog(ROOT)
         topologies = load_topology_catalog(ROOT)
-        self.assertEqual(len(archetypes), 27)
+        self.assertEqual(len(archetypes), 29)
         self.assertEqual(
             archetypes["references-image"]["topology_keys"],
             [
@@ -89,8 +90,8 @@ class TopologyTests(unittest.TestCase):
             ["reframe.outpaint_video@centered", "reframe.outpaint_video@offset"],
         )
         self.assertEqual(
-            archetypes["interpolate-native"]["topology_keys"],
-            ["interpolate.frames@film-2x", "interpolate.frames@rife-2x"],
+            archetypes["densify-native-token-inpaint"]["topology_keys"],
+            ["densify.temporal@token-inpaint"],
         )
         for archetype in archetypes.values():
             self.assertEqual(

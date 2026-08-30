@@ -17,10 +17,9 @@ OPERATION_FAMILIES = {
     "h3-conditioning-grammar",
     "native-av-state-algebra",
     "decoded-media-algebra",
-    "decoded-video-enhancement",
 }
 OWNERS = {"official-comfy", "vanilla-comfy", "cauce"}
-KINDS = {"h3-inference", "decoded-media-transform", "decoded-video-enhancement"}
+KINDS = {"h3-inference", "decoded-media-transform"}
 IMPLEMENTATION_CLASSES = {
     "official-h3",
     "official-comfy",
@@ -162,9 +161,6 @@ def validate_operation_spec(value: Any) -> list[str]:
         errors.append("h3-inference operation requires an official-comfy stage")
     if value.get("kind") == "decoded-media-transform" and "official-comfy" in stage_owners:
         errors.append("decoded-media-transform cannot contain H3 inference")
-    if value.get("kind") == "decoded-video-enhancement" and "official-comfy" not in stage_owners:
-        errors.append("decoded-video-enhancement requires an enhancement model stage")
-
     artifacts = value.get("artifacts")
     if not isinstance(artifacts, dict):
         errors.append("artifacts must be an object")

@@ -12,8 +12,7 @@
     { "operation": "edit.masked_video", "variant": "local-retake", "path": "plans/edit.masked_video.local-retake.json" },
     { "operation": "edit.masked_video", "variant": "static-spatial", "path": "plans/edit.masked_video.static-spatial.json" },
     { "operation": "frames.assemble", "variant": "ordered-concatenation", "path": "plans/frames.assemble.json" },
-    { "operation": "interpolate.frames", "variant": "film-2x", "path": "plans/interpolate.frames.film-2x.json" },
-    { "operation": "interpolate.frames", "variant": "rife-2x", "path": "plans/interpolate.frames.rife-2x.json" },
+    { "operation": "densify.temporal", "variant": "token-inpaint", "path": "plans/densify.temporal.token-inpaint.json" },
     { "operation": "generate.from_references", "variant": "image-reference-match", "path": "plans/generate.from_references.image-reference-match.json" },
     { "operation": "generate.from_references", "variant": "image-reference-max", "path": "plans/generate.from_references.image-reference-max.json" },
     { "operation": "generate.from_references", "variant": "video-reference", "path": "plans/generate.from_references.json" },
@@ -30,7 +29,9 @@
     { "operation": "reframe.outpaint_video", "variant": "offset", "path": "plans/reframe.outpaint_video.offset.json" },
     { "operation": "refine.video", "variant": "full-frame", "path": "plans/refine.video.full-frame.json" },
     { "operation": "refine.video", "variant": "masked", "path": "plans/refine.video.masked.json" },
-    { "operation": "restore.video", "variant": "seedvr2-3b-nvfp4", "path": "plans/restore.video.seedvr2-3b-nvfp4.json" },
+    { "operation": "regenerate.spatial", "variant": "latent-second-pass", "path": "plans/regenerate.spatial.latent-second-pass.json" },
+    { "operation": "regenerate.spatial", "variant": "pixel-vae-second-pass", "path": "plans/regenerate.spatial.pixel-vae-second-pass.json" },
+    { "operation": "regenerate.spatial", "variant": "tiled-pixel-vae", "path": "plans/regenerate.spatial.tiled-pixel-vae.json" },
     { "operation": "rollback.native_av", "variant": "branch-suffix", "path": "plans/rollback.native_av.json" }
   ]
 }

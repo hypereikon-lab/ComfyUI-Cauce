@@ -61,7 +61,7 @@ decoded video enhancement interpolate.frames
 | `refine.video` | full-frame or masked bounded-denoise second pass over existing native state |
 | `rollback.native_av` | exact native split with reversible suffix span |
 | `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
-| `interpolate.frames` | CAUCE exact clock plan + version-locked external RIFE/FILM decoded-frame interpolation |
+| `interpolate.frames` | CAUCE exact clock plan + version-locked native ComfyUI RIFE/FILM decoded-frame interpolation |
 | `restore.video` | official native SeedVR2 resize/preprocess/chunk/condition/sample/merge/decode/postprocess graph |
 
 All twelve currently remain `contract-only`: no paired reusable UI/API graph is

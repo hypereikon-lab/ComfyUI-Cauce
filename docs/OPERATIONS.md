@@ -40,9 +40,8 @@ CAUCE may own the operation contract while owning only some, or none, of the
 nodes that implement it. Every graph stage declares one of these owners:
 
 ```text
-official-comfy   model-specific H3 conditioning
+official-comfy   core model-specific conditioning or enhancement
 vanilla-comfy    loaders, sampler, decode, batching, and file outputs
-external-comfy   one explicit version-locked public custom-node dependency
 cauce            deterministic range, AV-state, or persistence primitive
 ```
 
@@ -64,7 +63,7 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `refine.video` | bounded-denoise second pass over a complete or masked source state | official H3 + CAUCE continuous masks | contract + offline topology | deterministic layer unit-validated |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
-| `interpolate.frames` | increase decoded frame rate while preserving source sample positions | CAUCE clock plan + external RIFE/FILM | contract + offline topology | clock unit-validated; visuals unassessed |
+| `interpolate.frames` | increase decoded frame rate while preserving source sample positions | CAUCE clock plan + native ComfyUI RIFE/FILM | contract + offline topology | core implementation schema-validated; visuals unassessed |
 | `restore.video` | increase spatial definition with temporal restoration | official native SeedVR2 + vanilla sampling | contract + offline topology | schema-validated; visuals unassessed |
 
 The first family describes supported ways to construct H3 conditioning. The

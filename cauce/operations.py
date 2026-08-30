@@ -19,7 +19,7 @@ OPERATION_FAMILIES = {
     "decoded-media-algebra",
     "decoded-video-enhancement",
 }
-OWNERS = {"official-comfy", "vanilla-comfy", "external-comfy", "cauce"}
+OWNERS = {"official-comfy", "vanilla-comfy", "cauce"}
 KINDS = {"h3-inference", "decoded-media-transform", "decoded-video-enhancement"}
 IMPLEMENTATION_CLASSES = {
     "official-h3",
@@ -27,7 +27,7 @@ IMPLEMENTATION_CLASSES = {
     "official-h3-with-cauce-primitives",
     "cauce-preprocess-to-official-h3",
     "cauce-and-vanilla-deterministic",
-    "external-comfy-with-cauce-planning",
+    "official-comfy-with-cauce-planning",
 }
 ARTIFACT_STATES = {"contract-only", "paired-graphs"}
 EVIDENCE_LEVELS = {
@@ -141,8 +141,8 @@ def validate_operation_spec(value: Any) -> list[str]:
     if implementation == "official-comfy":
         if "official-comfy" not in stage_owners:
             errors.append("official-comfy operation requires an official-comfy stage")
-        if {"cauce", "external-comfy"}.intersection(stage_owners):
-            errors.append("official-comfy operation cannot claim CAUCE or external stages")
+        if "cauce" in stage_owners:
+            errors.append("official-comfy operation cannot claim CAUCE stages")
     if implementation in {
         "official-h3-with-cauce-primitives",
         "cauce-preprocess-to-official-h3",
@@ -153,23 +153,16 @@ def validate_operation_spec(value: Any) -> list[str]:
             errors.append("deterministic CAUCE operation requires a cauce stage")
         if "official-comfy" in stage_owners:
             errors.append("deterministic CAUCE operation cannot contain H3 inference")
-    if implementation == "external-comfy-with-cauce-planning":
-        if not {"external-comfy", "cauce"} <= stage_owners:
+    if implementation == "official-comfy-with-cauce-planning":
+        if not {"official-comfy", "cauce"} <= stage_owners:
             errors.append(
-                "external-comfy-with-cauce-planning requires external-comfy and cauce stages"
+                "official-comfy-with-cauce-planning requires official-comfy and cauce stages"
             )
-        if "official-comfy" in stage_owners:
-            errors.append("external decoded enhancement cannot contain official model inference")
     if value.get("kind") == "h3-inference" and "official-comfy" not in stage_owners:
         errors.append("h3-inference operation requires an official-comfy stage")
     if value.get("kind") == "decoded-media-transform" and "official-comfy" in stage_owners:
         errors.append("decoded-media-transform cannot contain H3 inference")
-    if value.get("kind") == "decoded-media-transform" and "external-comfy" in stage_owners:
-        errors.append("decoded-media-transform cannot contain external model inference")
-    if value.get("kind") == "decoded-video-enhancement" and not {
-        "official-comfy",
-        "external-comfy",
-    }.intersection(stage_owners):
+    if value.get("kind") == "decoded-video-enhancement" and "official-comfy" not in stage_owners:
         errors.append("decoded-video-enhancement requires an enhancement model stage")
 
     artifacts = value.get("artifacts")

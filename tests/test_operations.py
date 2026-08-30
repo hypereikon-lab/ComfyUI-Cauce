@@ -102,10 +102,10 @@ class OperationContractTests(unittest.TestCase):
         interpolation = operations["interpolate.frames"]
         self.assertEqual(
             interpolation["implementation_class"],
-            "external-comfy-with-cauce-planning",
+            "official-comfy-with-cauce-planning",
         )
         self.assertTrue(
-            {"external-comfy", "cauce"}
+            {"official-comfy", "cauce"}
             <= {stage["owner"] for stage in interpolation["graph_contract"]}
         )
         restoration = operations["restore.video"]

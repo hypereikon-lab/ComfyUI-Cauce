@@ -76,7 +76,7 @@ class TopologyTests(unittest.TestCase):
     def test_graph_archetypes_group_only_identical_structures(self):
         archetypes = load_archetype_catalog(ROOT)
         topologies = load_topology_catalog(ROOT)
-        self.assertEqual(len(archetypes), 28)
+        self.assertEqual(len(archetypes), 27)
         self.assertEqual(
             archetypes["references-image"]["topology_keys"],
             [
@@ -87,6 +87,10 @@ class TopologyTests(unittest.TestCase):
         self.assertEqual(
             archetypes["reframe-outpaint"]["topology_keys"],
             ["reframe.outpaint_video@centered", "reframe.outpaint_video@offset"],
+        )
+        self.assertEqual(
+            archetypes["interpolate-native"]["topology_keys"],
+            ["interpolate.frames@film-2x", "interpolate.frames@rife-2x"],
         )
         for archetype in archetypes.values():
             self.assertEqual(

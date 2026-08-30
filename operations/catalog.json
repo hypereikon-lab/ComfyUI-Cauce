@@ -19,7 +19,7 @@
     {
       "id": "decoded-video-enhancement",
       "title": "Decoded video enhancement",
-      "summary": "Frame-rate interpolation and spatial-temporal restoration performed by version-locked official or external ComfyUI model nodes."
+      "summary": "Frame-rate interpolation and spatial-temporal restoration performed by version-locked official ComfyUI model nodes."
     }
   ],
   "operations": [
@@ -27,7 +27,7 @@
     { "id": "continue.native_av", "version": 2, "family": "native-av-state-algebra", "spec": "specs/continue.native_av.json" },
     { "id": "edit.masked_video", "version": 1, "family": "native-av-state-algebra", "spec": "specs/edit.masked_video.json" },
     { "id": "frames.assemble", "version": 2, "family": "decoded-media-algebra", "spec": "specs/frames.assemble.json" },
-    { "id": "interpolate.frames", "version": 1, "family": "decoded-video-enhancement", "spec": "specs/interpolate.frames.json" },
+    { "id": "interpolate.frames", "version": 2, "family": "decoded-video-enhancement", "spec": "specs/interpolate.frames.json" },
     { "id": "generate.from_references", "version": 3, "family": "h3-conditioning-grammar", "spec": "specs/generate.from_references.json" },
     { "id": "generate.keyframed", "version": 1, "family": "h3-conditioning-grammar", "spec": "specs/generate.keyframed.json" },
     { "id": "generate.with_guides", "version": 2, "family": "h3-conditioning-grammar", "spec": "specs/generate.with_guides.json" },

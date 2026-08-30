@@ -23,7 +23,7 @@ decoded video enhancement   frame interpolation / SeedVR2 restoration
 
 Primitives, operations, graph archetypes, binding profiles, workflow pairs,
 invocations, runs, and evidence are distinct lifecycle states. The 31 current
-operation variants resolve to 28 structurally distinct archetypes; variants
+operation variants resolve to 27 structurally distinct archetypes; variants
 that differ only by guarded literals share one graph. See the
 [operation model](docs/OPERATION_MODEL.md).
 

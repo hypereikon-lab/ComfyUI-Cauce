@@ -10,8 +10,8 @@ but have different clocks, failure modes, and owners:
 3. SeedVR2 restoration increases spatial definition while preserving frame
    count and frame rate.
 
-CAUCE plans and audits these operations. RIFE/FILM, official H3, and official
-SeedVR2 own their respective model inference.
+CAUCE plans and audits these operations. ComfyUI's native RIFE/FILM path,
+official H3, and official SeedVR2 own their respective model inference.
 
 ## Why alternating empty H3 frames is not frame interpolation
 
@@ -58,7 +58,8 @@ Use decoded-frame interpolation after the H3 shot is visually accepted.
 accepted 24 fps VIDEO
   -> GetVideoComponents
   -> CAUCE Plan Frame Interpolation
-  -> RIFE VFI, multiplier 2
+  -> native Frame Interpolation Model Loader
+  -> native Frame Interpolate, multiplier 2
   -> CreateVideo at 48 fps
 ```
 
@@ -79,23 +80,22 @@ The first-to-last sample span is invariant:
 ```
 
 The exact output is one sample shorter than the informal `N * m` shorthand.
-The original RIFE/FILM node implementations copy source samples into the output
-buffer and synthesize only intermediate slots.
+ComfyUI 0.34.0's native `FrameInterpolate` copies source samples into the
+output buffer and synthesizes only intermediate slots.
 
 ### RIFE default
 
-Use `RIFE VFI` at 2x first. The locked public integration is
-`ThunderFun/ComfyUI-RIFE-FILM-Only` commit
-`3469aad35d6774bb7943bf30d5ae7b5acd9039bc`, MIT licensed.
+Use native `FrameInterpolate` at 2x first with
+`rife_v4.26.safetensors`. The graph is locked to ComfyUI 0.34.0 commit
+`12d5279438bfefc058a269eae805ceab6047777f`; no interpolation custom-node
+repository is required. The model is the official Comfy-Org repack of RIFE.
 
 Initial characterization matrix:
 
 ```text
 multiplier       2
-precision        bf16 on RTX 5090, with fp32 control
-scale_factor     1.0
-fast_mode        true
-ensemble         false first; compare true where supported
+model            rife_v4.26.safetensors, 22.7 MB
+source anchoring every second output frame
 ```
 
 Judge occlusion reveals, thin branches, texture shimmer, fast zooms, and any
@@ -103,10 +103,10 @@ source-frame alteration. Prefer staged 2x tests before 4x.
 
 ### FILM comparison
 
-Use `FILM VFI` at 2x only when RIFE fails on large displacement. FILM is a
-midpoint model; larger multipliers recursively subdivide intervals and can
-accumulate artifacts. It is a comparison path, not an unconditional second
-pass after RIFE.
+Use the same two native nodes with `film_net_fp16.safetensors` at 2x only when
+RIFE fails on large displacement. FILM is a comparison path, not an
+unconditional second pass after RIFE. Its official Comfy-Org model payload is
+68.9 MB.
 
 ## Pipeline B: creative H3 retiming
 

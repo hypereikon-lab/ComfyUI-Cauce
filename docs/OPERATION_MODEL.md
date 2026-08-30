@@ -66,9 +66,9 @@ interpolate.frames
 restore.video
 ```
 
-`interpolate.frames` combines CAUCE's exact output-clock plan with a
-version-locked external RIFE or FILM node. `restore.video` records the official
-native SeedVR2 topology without claiming a CAUCE model implementation. Both
+`interpolate.frames` combines CAUCE's exact output-clock plan with ComfyUI's
+native, version-locked RIFE/FILM loader and interpolator. `restore.video`
+records the official native SeedVR2 topology without claiming a CAUCE model implementation. Both
 operate on decoded video; neither changes or extends retained H3 native AV
 state.
 

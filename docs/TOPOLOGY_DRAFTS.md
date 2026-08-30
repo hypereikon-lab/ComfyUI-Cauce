@@ -5,8 +5,7 @@ for every operation in the semantic catalog. They answer four narrow questions
 before a live ComfyUI session is available:
 
 1. which node class performs each stage;
-2. whether that stage belongs to official ComfyUI, vanilla ComfyUI, a
-   version-locked external ComfyUI extension, or CAUCE;
+2. whether that stage belongs to official ComfyUI, vanilla ComfyUI, or CAUCE;
 3. which ports and explicit parameters connect the stages;
 4. which live checks still prevent the design from becoming a reusable graph.
 
@@ -16,7 +15,7 @@ API prompt object. Its required state is `offline-draft`.
 
 `operations/archetypes/catalog.json` adds a narrower structural identity above
 the dossiers. It hashes node keys, owners, class types, and exact edges while
-excluding bindings and descriptive metadata. The 31 dossiers currently form 28
+excluding bindings and descriptive metadata. The 31 dossiers currently form 27
 archetypes. A shared archetype means one eventual paired graph can support
 multiple guarded binding profiles; it does not merge their semantic variants.
 
@@ -31,7 +30,7 @@ multiple guarded binding profiles; it does not merge their semantic variants.
 | `complete.native_av` | `backward-prefix`, `two-sided-infill`, `local-replacement`, `two-source-connection` | native span placement, independent AV masks, optional exact interval replacement |
 | `rollback.native_av` | `branch-suffix` | exact native split and optional branch persistence |
 | `frames.assemble` | `ordered-concatenation` | exact CAUCE decoded ranges plus vanilla image batching |
-| `interpolate.frames` | `rife-2x`, `film-2x` | exact CAUCE output-clock planning plus version-locked external decoded VFI |
+| `interpolate.frames` | `rife-2x`, `film-2x` | exact CAUCE output-clock planning plus version-locked native ComfyUI VFI |
 | `restore.video` | `seedvr2-3b-nvfp4` | official native SeedVR2 video restoration topology |
 
 This catalog is exhaustive over files and complete over operations: tests
@@ -58,7 +57,7 @@ for the same structural signature.
 The test suite additionally loads the actual CAUCE node registry. Every edge,
 binding, and operation output that touches a CAUCE node must match that node's
 current `INPUT_TYPES` and `RETURN_NAMES`. This catches drift in our own code.
-Official, vanilla, and external ports are intentionally not asserted from memory; they are
+Official and vanilla ports are intentionally not asserted from memory; they are
 validated against the laboratory runtime's captured `/object_info`.
 
 ## Materialization boundary

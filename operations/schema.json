@@ -31,7 +31,7 @@
         "official-h3-with-cauce-primitives",
         "cauce-preprocess-to-official-h3",
         "cauce-and-vanilla-deterministic",
-        "external-comfy-with-cauce-planning"
+        "official-comfy-with-cauce-planning"
       ]
     },
     "summary": { "type": "string", "minLength": 1 },
@@ -46,7 +46,7 @@
         "required": ["order", "owner", "role"],
         "properties": {
           "order": { "type": "integer", "minimum": 1 },
-          "owner": { "enum": ["official-comfy", "vanilla-comfy", "external-comfy", "cauce"] },
+          "owner": { "enum": ["official-comfy", "vanilla-comfy", "cauce"] },
           "node_type": { "type": ["string", "null"] },
           "role": { "type": "string", "minLength": 1 },
           "repeatable": { "type": "boolean" },

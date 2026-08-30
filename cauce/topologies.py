@@ -80,7 +80,6 @@ def validate_topology(value: Any, operation: dict[str, Any]) -> list[str]:
         if node.get("owner") not in {
             "official-comfy",
             "vanilla-comfy",
-            "external-comfy",
             "cauce",
         }:
             errors.append(f"invalid topology node owner {node.get('owner')!r}")

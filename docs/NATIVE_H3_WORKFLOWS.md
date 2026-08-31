@@ -68,8 +68,11 @@ official MiniMaxH3ImageToVideo positive conditioning
 ```
 
 The allocated target, positive conditioning, sampler, scheduler, seed, model,
-sigma shifts, and decode remain separate visible graph edges. The first
-characterized comparison should retain the upstream reference geometry:
+and decode remain separate visible graph edges. The canonical graph follows
+the current official template and connects the loaded model directly to the
+guider and scheduler. `MiniMaxH3SigmaShift` remains available as an opt-in
+native experiment, but it must not silently enter every CAUCE operation. The
+first characterized comparison should retain the upstream reference geometry:
 
 ```text
 overlap            22 frames

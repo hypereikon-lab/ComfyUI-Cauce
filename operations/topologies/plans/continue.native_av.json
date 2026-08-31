@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "continue.native_av",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "keyframe-overlap",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" },
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "95d755cd8107a72258d452b5d3657273d571f07d" },
     { "source": "ComfyUI-Cauce", "path": "operations/evidence/continue.native_av-smoke.json", "commit": "5a7aab534e1cfec307d1ee7662029d2c0471e43f" }
   ],
   "nodes": [
@@ -19,7 +19,6 @@
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create base prompt conditioning for the planned window length" },
     { "key": "span_guide", "owner": "cauce", "class_type": "CauceH3AddAVSpanGuide", "role": "insert the native AV overlap on the active positive-conditioning edge" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
-    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch explicit flow shifts" },
     { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide seed" },
     { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind the native-span conditioning" },
     { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
@@ -45,10 +44,9 @@
     { "from": { "node": "allocate", "port": "latent" }, "to": { "node": "span_guide", "port": "target_av_latent" } },
     { "from": { "node": "plan", "port": "layout" }, "to": { "node": "span_guide", "port": "target_layout" } },
     { "from": { "node": "tail", "port": "span" }, "to": { "node": "span_guide", "port": "span" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
-    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
     { "from": { "node": "span_guide", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
-    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
     { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
     { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
     { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },

@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "reframe.outpaint_video",
-  "version": 1,
+  "version": 2,
   "title": "Expand and outpaint native H3 video state",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -33,10 +33,9 @@
     { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate source duration and canvas geometry" },
     { "order": 2, "owner": "cauce", "node_type": "CauceH3ExpandAVCanvas", "role": "allocate the larger visual lattice, copy the source exactly, and mask new regions" },
     { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the expanded canvas" },
-    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
-    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "sample only the newly exposed visual regions" },
-    { "order": 6, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata" },
-    { "order": 7, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the reframed visual stream" }
+    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample only the newly exposed visual regions" },
+    { "order": 5, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata" },
+    { "order": 6, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the reframed visual stream" }
   ],
   "variants": [
     { "id": "centered", "placement": "centered on both expanded axes" },

@@ -31,9 +31,13 @@ model files
 width / height / target_frames
 seed
 sampler / scheduler / steps / denoise
-video and structural-audio sigma shifts
 output prefix
 ```
+
+An explicit `MiniMaxH3SigmaShift` node is an optional graph experiment rather
+than part of `CAUCE_H3_GENERATION_BINDINGS`. When used, its video and
+structural-audio shifts belong in the experiment receipt and require a direct
+model-path control.
 
 Operation-specific inputs such as prompt, endpoint frames, references, guides,
 overlap, or extension remain outside this common block. Model paths and enum

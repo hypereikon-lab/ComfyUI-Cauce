@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "generate.with_guides",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "guide-clip",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" },
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "95d755cd8107a72258d452b5d3657273d571f07d" },
     { "source": "ComfyUI-Cauce", "path": "cauce/h3_inputs.py", "commit": "630218affb1c51bf7924e396feee9b540bad6f2e" }
   ],
   "nodes": [
@@ -16,7 +16,6 @@
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create base prompt conditioning and a fresh target" },
     { "key": "prepare_guide", "owner": "cauce", "class_type": "CauceH3PrepareGuideClip", "role": "make lattice trimming, fit, and resolved placement explicit" },
     { "key": "add_guide", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "place the accepted guide clip at the resolved frame" },
-    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch explicit flow shifts" },
     { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide seed" },
     { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind guided conditioning" },
     { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
@@ -34,10 +33,9 @@
     { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "add_guide", "port": "vae" } },
     { "from": { "node": "prepare_guide", "port": "images" }, "to": { "node": "add_guide", "port": "image" } },
     { "from": { "node": "prepare_guide", "port": "resolved_frame_idx" }, "to": { "node": "add_guide", "port": "frame_idx" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
-    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
     { "from": { "node": "add_guide", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
-    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
     { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
     { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
     { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
@@ -54,8 +52,6 @@
     { "name": "width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
     { "name": "height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
     { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
-    { "name": "video_shift", "type": "FLOAT", "target": { "node": "sigma_shift", "input": "video_shift" }, "required": true },
-    { "name": "audio_shift", "type": "FLOAT", "target": { "node": "sigma_shift", "input": "audio_shift" }, "required": true },
     { "name": "steps", "type": "INT", "target": { "node": "scheduler", "input": "steps" }, "required": true },
     { "name": "scheduler_name", "type": "STRING", "target": { "node": "scheduler", "input": "scheduler" }, "required": true },
     { "name": "sampler_name", "type": "STRING", "target": { "node": "sampler", "input": "sampler_name" }, "required": true },

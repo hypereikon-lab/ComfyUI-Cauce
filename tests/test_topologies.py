@@ -74,6 +74,14 @@ class TopologyTests(unittest.TestCase):
             self.assertNotIn("links", topology)
             self.assertTrue(topology["live_gates"])
 
+    def test_canonical_topologies_do_not_force_sigma_shift(self):
+        for topology in load_topology_catalog(ROOT).values():
+            self.assertNotIn(
+                "MiniMaxH3SigmaShift",
+                {node["class_type"] for node in topology["nodes"]},
+                f"{topology['operation']} must keep sigma shift opt-in",
+            )
+
     def test_graph_archetypes_group_only_identical_structures(self):
         archetypes = load_archetype_catalog(ROOT)
         topologies = load_topology_catalog(ROOT)

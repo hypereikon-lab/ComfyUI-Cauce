@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "continue.native_av",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "masked-overlap-future-guide",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/ComfyUI", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054", "path": "comfy_extras/nodes_minimax_h3.py" },
+    { "source": "Comfy-Org/ComfyUI", "commit": "95d755cd8107a72258d452b5d3657273d571f07d", "path": "comfy_extras/nodes_minimax_h3.py" },
     { "source": "Comfy-Org/ComfyUI", "commit": "ff6c8a8af144fc9e9e7bc436b1b202f9316848d8", "path": "comfy/model_base.py" }
   ],
   "nodes": [
@@ -20,7 +20,6 @@
     { "key": "future", "owner": "vanilla-comfy", "class_type": null, "role": "load future image or clip" },
     { "key": "guide", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "anchor future guide" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
-    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
     { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample" },
     { "key": "suffix", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract suffix" },
     { "key": "append", "owner": "cauce", "class_type": "CauceH3AppendAVSpan", "role": "append suffix" },
@@ -41,7 +40,6 @@
     { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "guide", "port": "positive" } },
     { "from": { "node": "mask", "port": "latent" }, "to": { "node": "guide", "port": "latent" } },
     { "from": { "node": "future", "port": "IMAGE" }, "to": { "node": "guide", "port": "image" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
     { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "suffix", "port": "latent" } },
     { "from": { "node": "source", "port": "latent" }, "to": { "node": "append", "port": "base_av_latent" } },

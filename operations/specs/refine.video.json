@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "refine.video",
-  "version": 1,
+  "version": 2,
   "title": "Refine native H3 video state with bounded denoise",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -31,10 +31,9 @@
     { "order": 3, "owner": "cauce", "node_type": "CauceH3ApplyVideoDenoiseMask", "role": "optionally restrict refinement spatially", "optional": true },
     { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create refinement prompt conditioning at the unchanged shape" },
     { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally add visual reference anchors", "optional": true, "repeatable": true },
-    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
-    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample from the source state under bounded per-token denoise" },
-    { "order": 8, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata" },
-    { "order": 9, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the refined visual stream" }
+    { "order": 6, "owner": "vanilla-comfy", "node_type": null, "role": "sample from the source state under bounded per-token denoise" },
+    { "order": 7, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata" },
+    { "order": 8, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the refined visual stream" }
   ],
   "variants": [
     { "id": "full-frame", "mask": false },

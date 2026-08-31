@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "generate.with_guides",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "first-last-interior",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/ComfyUI", "commit": "12d5279438bfefc058a269eae805ceab6047777f", "path": "comfy_extras/nodes_minimax_h3.py" }
+    { "source": "Comfy-Org/ComfyUI", "commit": "95d755cd8107a72258d452b5d3657273d571f07d", "path": "comfy_extras/nodes_minimax_h3.py" }
   ],
   "nodes": [
     { "key": "first", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load first endpoint" },
@@ -16,7 +16,6 @@
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "encode first and last endpoints" },
     { "key": "guide", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "append interior temporal anchor" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
-    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
     { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample target" },
     { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode target" }
   ],
@@ -29,7 +28,6 @@
     { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "guide", "port": "latent" } },
     { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "guide", "port": "vae" } },
     { "from": { "node": "interior", "port": "IMAGE" }, "to": { "node": "guide", "port": "image" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
     { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } }
   ],

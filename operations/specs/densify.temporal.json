@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "densify.temporal",
-  "version": 1,
+  "version": 2,
   "title": "Densify native H3 time by visual-token inpainting",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -36,11 +36,10 @@
     { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate the source packed H3 AV state" },
     { "order": 2, "owner": "cauce", "node_type": "CauceH3DilateVisualTokens", "role": "construct the longer H3 token lattice, copy source anchors, and attach continuous native video/audio denoise masks" },
     { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "rebuild official H3 conditioning at the target temporal and spatial geometry" },
-    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
-    { "order": 5, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "sample the missing visual tokens with the source tokens available on both temporal sides" },
-    { "order": 6, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata while preserving generated native state" },
-    { "order": 7, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the densified visual stream" },
-    { "order": 8, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "crop only the legal-lattice tail padding from decoded frames" }
+    { "order": 4, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "sample the missing visual tokens with the source tokens available on both temporal sides" },
+    { "order": 5, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata while preserving generated native state" },
+    { "order": 6, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the densified visual stream" },
+    { "order": 7, "owner": "cauce", "node_type": "CauceAcceptDecodedRange", "role": "crop only the legal-lattice tail padding from decoded frames" }
   ],
   "variants": [
     { "id": "token-inpaint", "factor_range": [2, 4], "delivery_fps_rule": "24*factor" }

@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "complete.native_av",
-  "operation_version": 1,
+  "operation_version": 2,
   "variant": "local-replacement",
   "state": "offline-draft",
   "basis": [
@@ -14,7 +14,6 @@
     { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "mark replacement interval" },
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "encode replacement prompt" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
-    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
     { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample replacement" },
     { "key": "generated", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract replacement span" },
     { "key": "replace", "owner": "cauce", "class_type": "CauceH3ReplaceAVSpan", "role": "replace exact range in base" },
@@ -24,7 +23,6 @@
   "edges": [
     { "from": { "node": "base", "port": "latent" }, "to": { "node": "inspect", "port": "latent" } },
     { "from": { "node": "base", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
     { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "generated", "port": "latent" } },
     { "from": { "node": "base", "port": "latent" }, "to": { "node": "replace", "port": "base_av_latent" } },

@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "complete.native_av",
-  "version": 1,
+  "version": 2,
   "title": "Complete an unknown interval in native H3 AV state",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -36,11 +36,10 @@
     { "order": 3, "owner": "cauce", "node_type": "CauceH3SetAVDenoiseInterval", "role": "mark the unknown interval for generation and preserve known context on each side" },
     { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the exact target shape" },
     { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally add decoded anchors without replacing native preservation", "repeatable": true, "optional": true },
-    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample the masked AV target with the ordinary official path" },
-    { "order": 8, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract the explicit generated interval" },
-    { "order": 9, "owner": "cauce", "node_type": "CauceH3ReplaceAVSpan", "role": "optionally replace the same interval in an existing cumulative state", "optional": true },
-    { "order": 10, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata before persistence" }
+    { "order": 6, "owner": "vanilla-comfy", "node_type": null, "role": "sample the masked AV target with the ordinary official path" },
+    { "order": 7, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract the explicit generated interval" },
+    { "order": 8, "owner": "cauce", "node_type": "CauceH3ReplaceAVSpan", "role": "optionally replace the same interval in an existing cumulative state", "optional": true },
+    { "order": 9, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata before persistence" }
   ],
   "variants": [
     { "id": "backward-prefix", "unknown_position": "prefix", "known_sides": ["right"], "rebase_required": true },

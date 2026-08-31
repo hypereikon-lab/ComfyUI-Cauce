@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "continue.native_av",
-  "version": 2,
+  "version": 3,
   "title": "Continue native H3 audiovisual state",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -41,11 +41,10 @@
     { "order": 7, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the planned window" },
     { "order": 8, "owner": "cauce", "node_type": "CauceH3AddAVSpanGuide", "role": "optionally expose the overlap as native H3 keyframe conditioning", "optional": true },
     { "order": 9, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally anchor a decoded future image or clip inside the extension", "optional": true },
-    { "order": 10, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 11, "owner": "vanilla-comfy", "node_type": null, "role": "sample the target with the ordinary official path" },
-    { "order": 12, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract only the explicit generated suffix" },
-    { "order": 13, "owner": "cauce", "node_type": "CauceH3AppendAVSpan", "role": "append the globally contiguous suffix to cumulative state" },
-    { "order": 14, "owner": "cauce", "node_type": "CauceSaveAVLatent", "role": "persist cumulative native state for later continuation", "optional": true }
+    { "order": 10, "owner": "vanilla-comfy", "node_type": null, "role": "sample the target with the ordinary official path" },
+    { "order": 11, "owner": "cauce", "node_type": "CauceH3ExtractAVSpan", "role": "extract only the explicit generated suffix" },
+    { "order": 12, "owner": "cauce", "node_type": "CauceH3AppendAVSpan", "role": "append the globally contiguous suffix to cumulative state" },
+    { "order": 13, "owner": "cauce", "node_type": "CauceSaveAVLatent", "role": "persist cumulative native state for later continuation", "optional": true }
   ],
   "variants": [
     { "id": "keyframe-overlap", "overlap_transport": "minimax_keyframes", "future_guide": false },

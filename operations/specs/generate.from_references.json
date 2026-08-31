@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "generate.from_references",
-  "version": 3,
+  "version": 4,
   "title": "Generate from ordered references",
   "kind": "h3-inference",
   "implementation_class": "official-h3",
@@ -34,9 +34,8 @@
     { "order": 1, "owner": "vanilla-comfy", "node_type": null, "role": "load the selected Ref2VA model and required model components" },
     { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3ReferenceToVideo", "role": "encode ordered image and clip references and create a fresh packed AV latent" },
     { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally append an exact temporal guide while preserving reference conditioning", "optional": true },
-    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
-    { "order": 6, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
+    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
+    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
   ],
   "variants": [
     { "id": "image-reference-match", "ref_image_size": "match" },

@@ -22,8 +22,11 @@
 12. Save the cumulative latent only when persistence is useful; decode normal
    visual outputs separately.
 
-Keep prompt, model, resolution, sigma shifts, seed, sampler, scheduler, steps,
-overlap, extension, and output prefix explicit in the workflow/run receipt.
+Keep prompt, model, resolution, seed, sampler, scheduler, steps, overlap,
+extension, and output prefix explicit in the workflow/run receipt. If an
+experiment deliberately inserts the native `MiniMaxH3SigmaShift` patch, record
+both shifts and compare it against the direct-model control; it is not a
+canonical default.
 
 ## Compose `complete.native_av`
 

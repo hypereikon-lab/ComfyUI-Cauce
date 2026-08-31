@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "complete.native_av",
-  "operation_version": 1,
+  "operation_version": 2,
   "variant": "two-source-connection",
   "state": "offline-draft",
   "basis": [
@@ -19,7 +19,6 @@
     { "key": "place_right", "owner": "cauce", "class_type": "CauceH3PlaceAVSpan", "role": "place right context" },
     { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "generate center" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
-    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
     { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample connection" },
     { "key": "generated", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract generated connection" },
     { "key": "clear", "owner": "cauce", "class_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask" },
@@ -34,7 +33,6 @@
     { "from": { "node": "place_left", "port": "latent" }, "to": { "node": "place_right", "port": "target_av_latent" } },
     { "from": { "node": "right_span", "port": "span" }, "to": { "node": "place_right", "port": "span" } },
     { "from": { "node": "place_right", "port": "latent" }, "to": { "node": "mask", "port": "latent" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
     { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "generated", "port": "latent" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "clear", "port": "latent" } },

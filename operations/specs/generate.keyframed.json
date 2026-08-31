@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "generate.keyframed",
-  "version": 1,
+  "version": 2,
   "title": "Generate with optional endpoint frames",
   "kind": "h3-inference",
   "implementation_class": "official-h3",
@@ -26,9 +26,8 @@
   "graph_contract": [
     { "order": 1, "owner": "vanilla-comfy", "node_type": null, "role": "load the selected FL2VA model, text encoder, video VAE, and structural-audio VAE" },
     { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create conditioning and a fresh packed AV latent from prompt and optional endpoint frames" },
-    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
-    { "order": 5, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
+    { "order": 3, "owner": "vanilla-comfy", "node_type": null, "role": "sample with explicit guider, scheduler, sampler, seed, and steps" },
+    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "decode frames while retaining the sampled packed AV latent" }
   ],
   "variants": [
     { "id": "text-only", "first_frame": false, "last_frame": false },

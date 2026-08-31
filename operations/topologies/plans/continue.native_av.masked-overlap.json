@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "continue.native_av",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "masked-overlap",
   "state": "offline-draft",
   "basis": [
@@ -18,7 +18,6 @@
     { "key": "mask", "owner": "cauce", "class_type": "CauceH3SetAVDenoiseInterval", "role": "preserve overlap and generate suffix" },
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "encode prompt for window" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load FL2VA" },
-    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set AV shifts" },
     { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample masked window" },
     { "key": "suffix", "owner": "cauce", "class_type": "CauceH3ExtractAVSpan", "role": "extract new suffix" },
     { "key": "append", "owner": "cauce", "class_type": "CauceH3AppendAVSpan", "role": "append suffix" },
@@ -39,7 +38,6 @@
     { "from": { "node": "plan", "port": "window_start_frame" }, "to": { "node": "mask", "port": "timeline_origin_frame" } },
     { "from": { "node": "plan", "port": "overlap_frames" }, "to": { "node": "mask", "port": "start_frame" } },
     { "from": { "node": "plan", "port": "extension_frames" }, "to": { "node": "mask", "port": "frame_count" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
     { "from": { "node": "mask", "port": "latent" }, "to": { "node": "sample", "port": "latent_image" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "suffix", "port": "latent" } },
     { "from": { "node": "plan", "port": "window_start_frame" }, "to": { "node": "suffix", "port": "timeline_origin_frame" } },

@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "regenerate.spatial",
-  "version": 1,
+  "version": 2,
   "title": "Regenerate spatial detail with the same H3 model",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -34,10 +34,9 @@
     { "order": 2, "owner": "cauce", "node_type": "CauceH3ResizeAVLatent", "role": "resize native visual state for the latent-hires variant", "optional": true },
     { "order": 3, "owner": "cauce", "node_type": "CauceH3ReplaceVisualStream", "role": "graft H3-VAE re-encoded high-resolution frames for pixel/VAE variants", "optional": true },
     { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "rebuild official H3 conditioning at target geometry" },
-    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit H3 flow shifts" },
-    { "order": 6, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "run the bounded same-H3 regeneration pass" },
-    { "order": 7, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed mask metadata" },
-    { "order": 8, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode regenerated frames" }
+    { "order": 5, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "run the bounded same-H3 regeneration pass" },
+    { "order": 6, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed mask metadata" },
+    { "order": 7, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode regenerated frames" }
   ],
   "variants": [
     { "id": "latent-second-pass", "initial_state": "bicubic-resized-H3-visual-latent" },

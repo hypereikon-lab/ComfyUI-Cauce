@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "edit.masked_video",
-  "version": 1,
+  "version": 2,
   "title": "Edit selected regions of native H3 video state",
   "kind": "h3-inference",
   "implementation_class": "official-h3-with-cauce-primitives",
@@ -34,10 +34,9 @@
     { "order": 3, "owner": "cauce", "node_type": "CauceH3ApplyVideoDenoiseMask", "role": "project and compose the continuous spatial or spatiotemporal mask" },
     { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning for the exact source canvas and duration" },
     { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "optionally add decoded visual anchors", "optional": true, "repeatable": true },
-    { "order": 6, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 7, "owner": "vanilla-comfy", "node_type": null, "role": "sample the masked native state through the ordinary H3 path" },
-    { "order": 8, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata before persistence" },
-    { "order": 9, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the edited visual stream" }
+    { "order": 6, "owner": "vanilla-comfy", "node_type": null, "role": "sample the masked native state through the ordinary H3 path" },
+    { "order": 7, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "remove consumed mask metadata before persistence" },
+    { "order": 8, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode the edited visual stream" }
   ],
   "variants": [
     { "id": "static-spatial", "mask_frames": 1, "temporal_scope": "complete target" },

@@ -17,8 +17,12 @@ data transform, and unit tests:
 | `reframe.outpaint_video` | aligned larger-canvas allocation, exact source placement, generated-region mask | unit-validated; live execution pending |
 | `refine.video` | reuse of continuous interval and optional spatial masks for bounded second-pass H3 sampling | unit-validated; live execution pending |
 
-No operation changes the H3 sampler. Official conditioning, sigma shift,
-guider, scheduler, sampler, and VAE decode stay visible in every graph.
+No operation changes the H3 sampler. Official conditioning, model, guider,
+scheduler, sampler, and VAE decode stay visible in every graph. The native
+`MiniMaxH3SigmaShift` patch is not part of the canonical sampling spine: the
+current official template and the characterized lab workflow connect the
+loaded model directly to the guider and scheduler. Keep a sigma-shift node only
+in an explicitly named experiment.
 
 ## Workflow-only patterns
 

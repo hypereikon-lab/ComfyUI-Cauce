@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "generate.from_references",
-  "operation_version": 3,
+  "operation_version": 4,
   "variant": "video-reference-with-guide",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/ComfyUI", "commit": "12d5279438bfefc058a269eae805ceab6047777f", "path": "comfy_extras/nodes_minimax_h3.py" },
+    { "source": "Comfy-Org/ComfyUI", "commit": "95d755cd8107a72258d452b5d3657273d571f07d", "path": "comfy_extras/nodes_minimax_h3.py" },
     { "source": "Comfy-Org/ComfyUI", "commit": "12d5279438bfefc058a269eae805ceab6047777f", "path": "comfy/ldm/minimax/model.py" }
   ],
   "nodes": [
@@ -17,7 +17,6 @@
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ReferenceToVideo", "role": "encode reference and create target" },
     { "key": "guide", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "append exact temporal guide without replacing refs" },
     { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load Ref2VA" },
-    { "key": "sigma", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "set shifts" },
     { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample target" },
     { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode target" }
   ],
@@ -30,7 +29,6 @@
     { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "guide", "port": "latent" } },
     { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "guide", "port": "vae" } },
     { "from": { "node": "guide_media", "port": "IMAGE" }, "to": { "node": "guide", "port": "image" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma", "port": "model" } },
     { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "sample", "port": "latent_image" } },
     { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } }
   ],

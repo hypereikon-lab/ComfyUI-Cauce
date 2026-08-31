@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "generate.with_guides",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "multi-anchor",
   "state": "offline-draft",
   "basis": [
-    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "e01fb4c56b7a88149d469b99cbbfe3223d715054" }
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "95d755cd8107a72258d452b5d3657273d571f07d" }
   ],
   "nodes": [
     { "key": "guide_a", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load the first decoded guide" },
@@ -16,7 +16,6 @@
     { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create the base prompt conditioning and fresh target" },
     { "key": "add_guide_a", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "place the first guide at an exact frame" },
     { "key": "add_guide_b", "owner": "official-comfy", "class_type": "MiniMaxH3AddGuide", "role": "place the second guide on the active conditioning edge" },
-    { "key": "sigma_shift", "owner": "official-comfy", "class_type": "MiniMaxH3SigmaShift", "role": "patch explicit flow shifts" },
     { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "provide seed" },
     { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind final guided conditioning" },
     { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
@@ -35,10 +34,9 @@
     { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "add_guide_b", "port": "latent" } },
     { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "add_guide_b", "port": "vae" } },
     { "from": { "node": "guide_b", "port": "IMAGE" }, "to": { "node": "add_guide_b", "port": "image" } },
-    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "sigma_shift", "port": "model" } },
-    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
     { "from": { "node": "add_guide_b", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
-    { "from": { "node": "sigma_shift", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
     { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
     { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
     { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },

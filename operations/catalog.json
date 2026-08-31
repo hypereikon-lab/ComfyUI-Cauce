@@ -18,17 +18,17 @@
     }
   ],
   "operations": [
-    { "id": "complete.native_av", "version": 1, "family": "native-av-state-algebra", "spec": "specs/complete.native_av.json" },
-    { "id": "continue.native_av", "version": 2, "family": "native-av-state-algebra", "spec": "specs/continue.native_av.json" },
-    { "id": "edit.masked_video", "version": 1, "family": "native-av-state-algebra", "spec": "specs/edit.masked_video.json" },
+    { "id": "complete.native_av", "version": 2, "family": "native-av-state-algebra", "spec": "specs/complete.native_av.json" },
+    { "id": "continue.native_av", "version": 3, "family": "native-av-state-algebra", "spec": "specs/continue.native_av.json" },
+    { "id": "edit.masked_video", "version": 2, "family": "native-av-state-algebra", "spec": "specs/edit.masked_video.json" },
     { "id": "frames.assemble", "version": 2, "family": "decoded-media-algebra", "spec": "specs/frames.assemble.json" },
-    { "id": "densify.temporal", "version": 1, "family": "native-av-state-algebra", "spec": "specs/densify.temporal.json" },
-    { "id": "generate.from_references", "version": 3, "family": "h3-conditioning-grammar", "spec": "specs/generate.from_references.json" },
-    { "id": "generate.keyframed", "version": 1, "family": "h3-conditioning-grammar", "spec": "specs/generate.keyframed.json" },
-    { "id": "generate.with_guides", "version": 2, "family": "h3-conditioning-grammar", "spec": "specs/generate.with_guides.json" },
-    { "id": "reframe.outpaint_video", "version": 1, "family": "native-av-state-algebra", "spec": "specs/reframe.outpaint_video.json" },
-    { "id": "refine.video", "version": 1, "family": "native-av-state-algebra", "spec": "specs/refine.video.json" },
-    { "id": "regenerate.spatial", "version": 1, "family": "native-av-state-algebra", "spec": "specs/regenerate.spatial.json" },
+    { "id": "densify.temporal", "version": 2, "family": "native-av-state-algebra", "spec": "specs/densify.temporal.json" },
+    { "id": "generate.from_references", "version": 4, "family": "h3-conditioning-grammar", "spec": "specs/generate.from_references.json" },
+    { "id": "generate.keyframed", "version": 2, "family": "h3-conditioning-grammar", "spec": "specs/generate.keyframed.json" },
+    { "id": "generate.with_guides", "version": 3, "family": "h3-conditioning-grammar", "spec": "specs/generate.with_guides.json" },
+    { "id": "reframe.outpaint_video", "version": 2, "family": "native-av-state-algebra", "spec": "specs/reframe.outpaint_video.json" },
+    { "id": "refine.video", "version": 2, "family": "native-av-state-algebra", "spec": "specs/refine.video.json" },
+    { "id": "regenerate.spatial", "version": 2, "family": "native-av-state-algebra", "spec": "specs/regenerate.spatial.json" },
     { "id": "rollback.native_av", "version": 1, "family": "native-av-state-algebra", "spec": "specs/rollback.native_av.json" }
   ]
 }

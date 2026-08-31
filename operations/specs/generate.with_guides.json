@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation/1",
   "id": "generate.with_guides",
-  "version": 2,
+  "version": 3,
   "title": "Generate with guides at exact frame indices",
   "kind": "h3-inference",
   "implementation_class": "official-h3",
@@ -29,8 +29,7 @@
   "graph_contract": [
     { "order": 1, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "create base prompt conditioning and a fresh packed AV latent" },
     { "order": 2, "owner": "official-comfy", "node_type": "MiniMaxH3AddGuide", "role": "append one decoded guide at its exact pixel-frame index", "repeatable": true },
-    { "order": 3, "owner": "official-comfy", "node_type": "MiniMaxH3SigmaShift", "role": "apply explicit video and structural-audio flow shifts" },
-    { "order": 4, "owner": "vanilla-comfy", "node_type": null, "role": "sample and decode with explicit parameters while retaining the sampled packed AV latent" }
+    { "order": 3, "owner": "vanilla-comfy", "node_type": null, "role": "sample and decode with explicit parameters while retaining the sampled packed AV latent" }
   ],
   "variants": [
     { "id": "single-anchor", "guide_count": 1 },

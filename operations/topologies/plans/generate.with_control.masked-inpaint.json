@@ -1,0 +1,79 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.with_control",
+  "operation_version": 1,
+  "variant": "masked-inpaint",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "3216c62e9962c3babd28a4dfea6e5aef50b8fe16" },
+    { "source": "alibaba-pai/MiniMax-H3-Fun-Controlnet-Union", "path": "README.md", "section": "video inpainting" }
+  ],
+  "nodes": [
+    { "key": "source", "owner": "vanilla-comfy", "class_type": "LoadVideo", "role": "load the decoded source video behind the mask" },
+    { "key": "source_components", "owner": "vanilla-comfy", "class_type": "GetVideoComponents", "role": "extract source frames" },
+    { "key": "mask", "owner": "vanilla-comfy", "class_type": "LoadImage", "role": "load a mask where 1 marks regeneration" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load the H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load the H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load H3 Base" },
+    { "key": "model_patch", "owner": "vanilla-comfy", "class_type": "ModelPatchLoader", "role": "load the official H3 Fun Control union model patch" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning and fresh target AV state" },
+    { "key": "plan", "owner": "cauce", "class_type": "CauceH3PlanControlClip", "role": "expose source temporal and spatial fitting" },
+    { "key": "apply", "owner": "official-comfy", "class_type": "MiniMaxH3FunControlNetApply", "role": "encode source behind the thresholded inpaint mask" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectPackedSequence", "role": "measure the packed multimodal sequence" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "bind seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind patched model and conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample the inpainted target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode visual frames" }
+  ],
+  "edges": [
+    { "from": { "node": "source", "port": "VIDEO" }, "to": { "node": "source_components", "port": "video" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "source_components", "port": "images" }, "to": { "node": "plan", "port": "images" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "plan", "port": "target_av_latent" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "apply", "port": "model" } },
+    { "from": { "node": "model_patch", "port": "MODEL_PATCH" }, "to": { "node": "apply", "port": "model_patch" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "apply", "port": "vae" } },
+    { "from": { "node": "plan", "port": "images" }, "to": { "node": "apply", "port": "source_video" } },
+    { "from": { "node": "mask", "port": "MASK" }, "to": { "node": "apply", "port": "mask" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "inspect", "port": "positive" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "inspect", "port": "target_av_latent" } },
+    { "from": { "node": "apply", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "inspect", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "apply", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "inspect", "port": "target_av_latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "source_video_filename", "type": "STRING", "target": { "node": "source", "input": "file" }, "required": true },
+    { "name": "mask_filename", "type": "STRING", "target": { "node": "mask", "input": "image" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "model_patch_name", "type": "STRING", "target": { "node": "model_patch", "input": "name" }, "required": true },
+    { "name": "control_strength", "type": "FLOAT", "target": { "node": "apply", "input": "strength" }, "required": true },
+    { "name": "control_start_percent", "type": "FLOAT", "target": { "node": "apply", "input": "start_percent" }, "required": true },
+    { "name": "control_end_percent", "type": "FLOAT", "target": { "node": "apply", "input": "end_percent" }, "required": true },
+    { "name": "steps", "type": "INT", "target": { "node": "scheduler", "input": "steps" }, "required": true },
+    { "name": "scheduler_name", "type": "STRING", "target": { "node": "scheduler", "input": "scheduler" }, "required": true },
+    { "name": "sampler_name", "type": "STRING", "target": { "node": "sampler", "input": "sampler_name" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "noise", "input": "noise_seed" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": [
+    "require the official control node and union patch",
+    "verify the live mask path against ComfyUI#15978, #15981, and #15988",
+    "treat current masks as binary because the official node thresholds at 0.5",
+    "execute a preserved-region reconstruction test before any production edit",
+    "keep source geometry, frame count, seed, and mask hash in the run record"
+  ]
+}

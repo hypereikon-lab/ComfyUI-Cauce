@@ -2,8 +2,9 @@
 
 This document defines enhancement paths that use the same MiniMax H3 model,
 its native packed audiovisual state, its VAE, and ordinary ComfyUI sampling.
-No auxiliary interpolation, restoration, or learned upscaler model belongs to
-these operations.
+The canonical variants use no auxiliary interpolation, restoration, or learned
+upscaler. One separately owned learned 3D visual-latent variant exists only as
+an explicit experimental A/B and cannot silently replace a canonical path.
 
 The two graph-level functions are:
 
@@ -238,6 +239,23 @@ low-resolution global prior plus overlapping local regeneration and weighted
 fusion, as in tiled diffusion research; this topology remains experimental
 until a live implementation proves lower seam energy than the full-frame
 baseline.
+
+### Variant D: learned 3D visual-latent initialization
+
+```text
+source packed AV state
+  -> extract cloned visual-only latent and retain source AV carrier
+  -> external MinimaxH3LatentUpscaler3D at an exact pinned revision
+  -> graft result onto the unchanged structural-audio carrier
+  -> attach bounded visual denoise and zero audio denoise
+  -> same H3 partial-denoise sample
+```
+
+This is not “native because it operates on a latent.” It introduces an
+auxiliary learned model and community implementation. Its only legitimate role
+is an isolated comparison against Variants A and B. Reject it on shape
+incompatibility, terminal-frame flicker, temporal shimmer, motion drift, or an
+unfavorable memory/runtime trade even if still frames appear sharper.
 
 ### Denoise characterization
 

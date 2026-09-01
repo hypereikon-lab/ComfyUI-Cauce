@@ -39,6 +39,8 @@ class TopologyTests(unittest.TestCase):
                 "generate.with_guides@guide-clip",
                 "generate.with_guides@multi-anchor",
                 "generate.with_guides@single-anchor",
+                "generate.with_control@masked-inpaint",
+                "generate.with_control@structural-video",
                 "reframe.outpaint_video@centered",
                 "reframe.outpaint_video@offset",
                 "refine.video@full-frame",
@@ -46,6 +48,7 @@ class TopologyTests(unittest.TestCase):
                 "regenerate.spatial@latent-second-pass",
                 "regenerate.spatial@pixel-vae-second-pass",
                 "regenerate.spatial@tiled-pixel-vae",
+                "regenerate.spatial@learned-latent-second-pass",
                 "rollback.native_av@branch-suffix",
             },
         )
@@ -60,6 +63,7 @@ class TopologyTests(unittest.TestCase):
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
+                "generate.with_control",
                 "reframe.outpaint_video",
                 "refine.video",
                 "regenerate.spatial",
@@ -85,7 +89,7 @@ class TopologyTests(unittest.TestCase):
     def test_graph_archetypes_group_only_identical_structures(self):
         archetypes = load_archetype_catalog(ROOT)
         topologies = load_topology_catalog(ROOT)
-        self.assertEqual(len(archetypes), 29)
+        self.assertEqual(len(archetypes), 32)
         self.assertEqual(
             archetypes["references-image"]["topology_keys"],
             [

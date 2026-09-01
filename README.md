@@ -12,27 +12,28 @@ official/vanilla ComfyUI nodes. An operation is a reusable graph contract, not
 a monolithic custom node and not a claim that CAUCE implemented every model
 capability present in the graph.
 
-The twelve operations form three non-sequential families:
+The thirteen operations form three non-sequential families:
 
 ```text
-H3 conditioning grammar     keyframed / references / guides
+H3 conditioning grammar     keyframed / references / guides / structural control
 native H3 AV state algebra  continue / complete / densify / edit / outpaint / refine / regenerate / rollback
 decoded media algebra       exact frame assembly
 ```
 
 Primitives, operations, graph archetypes, binding profiles, workflow pairs,
-invocations, runs, and evidence are distinct lifecycle states. The 31 current
-operation variants resolve to 29 structurally distinct archetypes; variants
+invocations, runs, and evidence are distinct lifecycle states. The 37 current
+operation variants include 35 topology dossiers resolving to 32 structurally
+distinct archetypes; variants
 that differ only by guarded literals share one graph. See the
 [operation model](docs/OPERATION_MODEL.md).
 
 ## Node surface
 
-The package registers 25 nodes:
+The package registers 28 nodes:
 
 - 2 exact decoded-frame nodes under `CAUCE/Assembly`;
-- 16 packed H3 AV operations under `CAUCE/H3 AV Latent`;
-- 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
+- 17 packed H3 AV operations under `CAUCE/H3 AV Latent`;
+- 6 target/guide/reference/control/conditioning nodes under `CAUCE/H3 Planning`;
 - 1 exact H3 guide-retime planning node under `CAUCE/Temporal Planning`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
 
@@ -66,6 +67,7 @@ The current semantic catalog is open-ended and contains:
 generate.keyframed
 generate.from_references
 generate.with_guides
+generate.with_control
 continue.native_av
 complete.native_av
 densify.temporal
@@ -78,9 +80,9 @@ frames.assemble
 ```
 
 Each operation records typed inputs/outputs, graph-stage ownership, constraints,
-artifact state, and evidence. Thirty-two validated, non-executable topology
+artifact state, and evidence. Thirty-five validated, non-executable topology
 dossiers cover every current operation, including official keyframe/reference/
-guide combinations and native AV continuation, completion, temporal densification,
+guide/control combinations and native AV continuation, completion, temporal densification,
 spatial regeneration, replacement, and rollback variants. A content-addressed archetype catalog groups only dossiers
 whose nodes and edges are identical. None currently ships as a reusable UI/API graph pair;
 materialization requires live paired validation first.
@@ -101,6 +103,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Operation families and lifecycle](docs/OPERATION_MODEL.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Current H3 extensions and experiment boundary](docs/H3_EXTENSION_MAP.md)
+- [Official H3 structural control](docs/STRUCTURAL_CONTROL.md)
 - [Temporal and spatial video enhancement](docs/TEMPORAL_SPATIAL_ENHANCEMENT.md)
 - [Semantic operations](docs/OPERATIONS.md)
 - [Operation topology dossiers](docs/TOPOLOGY_DRAFTS.md)

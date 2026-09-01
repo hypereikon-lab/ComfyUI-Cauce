@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from .contracts import (
+    H3_CONTROL_PLAN_SCHEMA,
     H3_GUIDE_PLAN_SCHEMA,
     H3_REFERENCE_PLAN_SCHEMA,
     H3_TARGET_PLAN_SCHEMA,
@@ -39,6 +40,56 @@ def _image_count(images: Any) -> int:
     if count < 1:
         raise ValueError("images must contain at least one frame")
     return count
+
+
+def plan_h3_control_clip(
+    images: Any,
+    target_av_latent: Mapping[str, Any],
+    *,
+    timeline_origin_frame: int = 0,
+) -> dict[str, Any]:
+    """Expose the current official H3 Fun Control temporal and spatial fit policy.
+
+    The official node always produces a control clip matching the target duration:
+    longer inputs are truncated and shorter inputs repeat their final frame. Spatial
+    fitting is performed by ComfyUI with bilinear resize plus a centered crop.
+    This function only reports that contract; it does not mutate the input images.
+    """
+
+    source_frames = _image_count(images)
+    shape = getattr(images, "shape", None)
+    if shape is None or len(shape) < 3:
+        raise TypeError("images must expose [frames, height, width, channels] geometry")
+    source_height = int(shape[1])
+    source_width = int(shape[2])
+    video, _, target_frames = validate_av_latent(
+        target_av_latent,
+        timeline_origin_frame=int(timeline_origin_frame),
+        name="target_av_latent",
+    )
+    target_height = int(video.shape[3]) * 16
+    target_width = int(video.shape[4]) * 16
+    if source_frames < target_frames:
+        temporal_policy = "repeat-last-frame"
+    elif source_frames > target_frames:
+        temporal_policy = "truncate-tail"
+    else:
+        temporal_policy = "identity"
+    payload: dict[str, Any] = {
+        "schema": H3_CONTROL_PLAN_SCHEMA,
+        "source_frames": source_frames,
+        "target_frames": target_frames,
+        "accepted_source_frames": min(source_frames, target_frames),
+        "discarded_tail_frames": max(0, source_frames - target_frames),
+        "repeated_tail_frames": max(0, target_frames - source_frames),
+        "temporal_policy": temporal_policy,
+        "source_geometry": {"width": source_width, "height": source_height},
+        "target_geometry": {"width": target_width, "height": target_height},
+        "spatial_policy": "bilinear-resize-and-center-crop",
+        "timeline_origin_frame": int(timeline_origin_frame),
+        "mutates_images": False,
+    }
+    return _with_hash(payload, "plan_hash")
 
 
 def resolve_h3_target_shape(

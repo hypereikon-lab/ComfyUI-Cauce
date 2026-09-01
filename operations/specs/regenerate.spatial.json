@@ -1,11 +1,11 @@
 {
   "schema": "cauce.operation/1",
   "id": "regenerate.spatial",
-  "version": 2,
+  "version": 3,
   "title": "Regenerate spatial detail with the same H3 model",
   "kind": "h3-inference",
-  "implementation_class": "official-h3-with-cauce-primitives",
-  "summary": "Increase spatial resolution through a partial-denoise second H3 pass using either resized native visual state or frames re-encoded by the H3 VAE; optional overlapping tiles bound VRAM without introducing a dedicated restoration model.",
+  "implementation_class": "official-h3-with-cauce-and-community-primitives",
+  "summary": "Increase spatial resolution through a partial-denoise second H3 pass using resized native visual state, frames re-encoded by the H3 VAE, or an explicitly gated learned 3D H3 latent upscaler before the same H3 checkpoint.",
   "inputs": [
     { "name": "source_native_av_latent", "type": "LATENT", "required": true },
     { "name": "source_frames", "type": "IMAGE", "required": false },
@@ -24,7 +24,7 @@
     "frame_count_rule": "unchanged 17k+5",
     "target_dimensions_multiple": 32,
     "same_h3_checkpoint": true,
-    "special_upscaler_model": false,
+    "special_upscaler_model": "false for native variants; required and isolated for learned-latent-second-pass",
     "audio_default_denoise": 0.0,
     "conditioning_rebuilt_at_target_geometry": true,
     "sampler_patch": false
@@ -33,20 +33,22 @@
     { "order": 1, "owner": "cauce", "node_type": "CauceH3InspectAVLatent", "role": "validate source native AV state and unchanged duration" },
     { "order": 2, "owner": "cauce", "node_type": "CauceH3ResizeAVLatent", "role": "resize native visual state for the latent-hires variant", "optional": true },
     { "order": 3, "owner": "cauce", "node_type": "CauceH3ReplaceVisualStream", "role": "graft H3-VAE re-encoded high-resolution frames for pixel/VAE variants", "optional": true },
-    { "order": 4, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "rebuild official H3 conditioning at target geometry" },
-    { "order": 5, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "run the bounded same-H3 regeneration pass" },
-    { "order": 6, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed mask metadata" },
-    { "order": 7, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode regenerated frames" }
+    { "order": 4, "owner": "community-nodepack", "node_type": "MinimaxH3LatentUpscaler3D", "role": "optionally resize the visual latent with the separately versioned learned 3D upscaler", "optional": true },
+    { "order": 5, "owner": "official-comfy", "node_type": "MiniMaxH3ImageToVideo", "role": "rebuild official H3 conditioning at target geometry" },
+    { "order": 6, "owner": "vanilla-comfy", "node_type": "SamplerCustomAdvanced", "role": "run the bounded same-H3 regeneration pass" },
+    { "order": 7, "owner": "cauce", "node_type": "CauceH3ClearAVDenoiseMask", "role": "clear consumed mask metadata" },
+    { "order": 8, "owner": "vanilla-comfy", "node_type": "VAEDecode", "role": "decode regenerated frames" }
   ],
   "variants": [
     { "id": "latent-second-pass", "initial_state": "bicubic-resized-H3-visual-latent" },
     { "id": "pixel-vae-second-pass", "initial_state": "pixel-upscale-then-H3-VAE-encode" },
-    { "id": "tiled-pixel-vae", "initial_state": "overlapping-pixel-tiles-then-H3-VAE-encode", "experimental": true }
+    { "id": "tiled-pixel-vae", "initial_state": "overlapping-pixel-tiles-then-H3-VAE-encode", "experimental": true },
+    { "id": "learned-latent-second-pass", "initial_state": "learned-3D-H3-latent-upscale", "experimental": true, "external_dependency": "LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler@d7c01b9011f2e8439493f6c02c29995a27df276f" }
   ],
   "artifacts": { "state": "contract-only", "pairs": [] },
   "evidence": {
     "level": "unit-validated",
     "visual_verdict": "unassessed",
-    "summary": "Spatial-only latent resize, H3-VAE visual-stream graft, unchanged duration, and separate video/audio denoise masks are unit-validated; useful denoise ranges and 5090 memory limits remain live gates."
+    "summary": "Native spatial resize, H3-VAE visual-stream graft, unchanged duration, and separate video/audio denoise masks are unit-validated. The learned 3D variant is contract-only and requires an isolated A/B because upstream reports include FL2VA shape and flicker failures."
   }
 }

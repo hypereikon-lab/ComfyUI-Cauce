@@ -1,6 +1,6 @@
 # Operation model
 
-CAUCE exposes twelve orthogonal graph-level operations in three capability
+CAUCE exposes thirteen orthogonal graph-level operations in three capability
 families. The families are a classification, not an execution order.
 
 ## H3 conditioning grammar
@@ -9,10 +9,12 @@ families. The families are a classification, not an execution order.
 generate.keyframed
 generate.from_references
 generate.with_guides
+generate.with_control
 ```
 
 These operations describe official H3 conditioning configurations: prompt with
-optional endpoints, ordered Ref2VA media, and exact-frame AddGuide chains.
+optional endpoints, ordered Ref2VA media, exact-frame AddGuide chains, and the
+official H3 Fun Control model patch.
 Official ComfyUI owns encoding, conditioning, model inference, and decode.
 CAUCE owns the typed portable contract and optional preflight primitives; it
 does not claim to have implemented the official H3 capability.
@@ -57,8 +59,9 @@ not a separate sampler.
 `densify.temporal` and `regenerate.spatial` are also compositions around the
 ordinary H3 sampler. The former changes the visual-token time lattice and
 delivery clock. The latter changes spatial geometry and performs a bounded
-same-checkpoint second pass. Neither introduces an auxiliary interpolation or
-restoration model.
+same-checkpoint second pass. Its canonical variants introduce no auxiliary
+model; one explicitly marked experimental variant can accept a separately
+owned learned 3D visual-latent initialization for an isolated A/B.
 
 ## Decoded media algebra
 

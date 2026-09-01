@@ -25,6 +25,8 @@
     { "operation": "generate.with_guides", "variant": "first-last-interior", "path": "plans/generate.with_guides.first-last-interior.json" },
     { "operation": "generate.with_guides", "variant": "multi-anchor", "path": "plans/generate.with_guides.json" },
     { "operation": "generate.with_guides", "variant": "single-anchor", "path": "plans/generate.with_guides.single-anchor.json" },
+    { "operation": "generate.with_control", "variant": "masked-inpaint", "path": "plans/generate.with_control.masked-inpaint.json" },
+    { "operation": "generate.with_control", "variant": "structural-video", "path": "plans/generate.with_control.structural-video.json" },
     { "operation": "reframe.outpaint_video", "variant": "centered", "path": "plans/reframe.outpaint_video.centered.json" },
     { "operation": "reframe.outpaint_video", "variant": "offset", "path": "plans/reframe.outpaint_video.offset.json" },
     { "operation": "refine.video", "variant": "full-frame", "path": "plans/refine.video.full-frame.json" },
@@ -32,6 +34,7 @@
     { "operation": "regenerate.spatial", "variant": "latent-second-pass", "path": "plans/regenerate.spatial.latent-second-pass.json" },
     { "operation": "regenerate.spatial", "variant": "pixel-vae-second-pass", "path": "plans/regenerate.spatial.pixel-vae-second-pass.json" },
     { "operation": "regenerate.spatial", "variant": "tiled-pixel-vae", "path": "plans/regenerate.spatial.tiled-pixel-vae.json" },
+    { "operation": "regenerate.spatial", "variant": "learned-latent-second-pass", "path": "plans/regenerate.spatial.learned-latent-second-pass.json" },
     { "operation": "rollback.native_av", "variant": "branch-suffix", "path": "plans/rollback.native_av.json" }
   ]
 }

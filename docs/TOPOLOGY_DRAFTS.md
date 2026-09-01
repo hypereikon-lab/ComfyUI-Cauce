@@ -32,7 +32,8 @@ multiple guarded binding profiles; it does not merge their semantic variants.
 | `edit.masked_video` | `static-spatial`, `animated-spatiotemporal`, `local-retake` | continuous native visual-token mask composition around official sampling |
 | `reframe.outpaint_video` | `centered`, `offset` | native visual-canvas expansion and masked H3 sampling |
 | `refine.video` | `full-frame`, `masked` | bounded-denoise second H3 pass at unchanged geometry |
-| `regenerate.spatial` | `latent-second-pass`, `pixel-vae-second-pass`, `tiled-pixel-vae` | same-H3 spatial regeneration from resized native state or H3-VAE re-encoding |
+| `generate.with_control` | `structural-video`, `masked-inpaint` | official H3 Fun Control patch with visible fitting and packed-row inspection; reference+control remains upstream-gated |
+| `regenerate.spatial` | `latent-second-pass`, `pixel-vae-second-pass`, `tiled-pixel-vae`, `learned-latent-second-pass` | same-H3 spatial regeneration from resized native state, H3-VAE re-encoding, or an isolated learned 3D visual-latent A/B |
 | `rollback.native_av` | `branch-suffix` | exact native split and optional branch persistence |
 | `frames.assemble` | `ordered-concatenation` | exact CAUCE decoded ranges plus vanilla image batching |
 

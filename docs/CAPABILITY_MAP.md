@@ -9,9 +9,12 @@
 | H3 guide-clip preparation | official single-image/floor rule plus resolved target range | unit-validated |
 | H3 reference-clip preparation | official target clamp/floor rule plus 2 fps Qwen sample indices | unit-validated |
 | H3 conditioning inspection | read-only keyframe/reference/range/overlap report | unit-validated |
+| H3 control-clip planning | official repeat-last/truncate-tail and bilinear center-fit behavior | unit-validated |
+| H3 packed-sequence inspection | exact rows for text, keyframes, references, target audio, and target video plus separately calibrated memory estimate | unit-validated |
 | H3 visual-token temporal dilation | exact `(N-1)m+1` delivery count, legal `17k+5` target, monotone native-token anchors, continuous denoise mask, and `24m` delivery clock | unit-validated |
 | H3 visual-latent spatial resize | spatial-only native-state resize with unchanged duration and independent video/audio denoise masks | unit-validated |
 | H3 VAE visual-stream graft | replace only the visual stream of a compatible packed AV carrier after pixel upscale and H3-VAE encode | unit-validated |
+| H3 visual-stream adapter | clone the visual tensor for a visual-only tool while retaining the source AV carrier for explicit graft | unit-validated |
 | H3 sparse-guide retime plan | source-frame anchors mapped across a legal endpoint-aligned `17k+5` target | unit-validated |
 | H3 AV inspection | packed stream shapes and absolute frame/token lengths | unit-validated |
 | H3 AV window layout | absolute 24 fps range mapped to visual and 40 Hz audio tokens | unit-validated |
@@ -36,6 +39,7 @@ The operations are classified by data responsibility, not by presumed order:
 conditioning grammar      generate.keyframed
                           generate.from_references
                           generate.with_guides
+                          generate.with_control
 
 native AV state algebra   continue.native_av
                           complete.native_av
@@ -55,6 +59,7 @@ decoded media algebra     frames.assemble
 | `generate.keyframed` | official FL2VA graph |
 | `generate.from_references` | official Ref2VA graph |
 | `generate.with_guides` | official `MiniMaxH3AddGuide` chain |
+| `generate.with_control` | official H3 Fun Control model patch + CAUCE read-only fitting/packed-row preflight |
 | `continue.native_av` | keyframe or masked native overlap around official sampling; optional future guide |
 | `complete.native_av` | native prefix, interior, local replacement, or two-source completion through official per-token masking |
 | `edit.masked_video` | static spatial, animated spatiotemporal, or bounded local retake through current official mask semantics |
@@ -63,9 +68,9 @@ decoded media algebra     frames.assemble
 | `rollback.native_av` | exact native split with reversible suffix span |
 | `frames.assemble` | CAUCE exact ranges + vanilla ImageBatch |
 | `densify.temporal` | CAUCE native-token lattice dilation + official H3 bidirectional temporal inpainting + exact tail crop and delivery clock |
-| `regenerate.spatial` | native latent-hires, pixel/H3-VAE, or overlapping tiled initial state + bounded second pass through the same H3 checkpoint |
+| `regenerate.spatial` | native latent-hires, pixel/H3-VAE, overlapping tiled, or isolated learned-latent initial state + bounded second pass through the same H3 checkpoint |
 
-All twelve currently remain `contract-only`: no paired reusable UI/API graph is
+All thirteen currently remain `contract-only`: no paired reusable UI/API graph is
 shipped. “Composed” means the mechanism can be expressed as a graph. It does not
 mean a source/prompt pair is visually accepted.
 

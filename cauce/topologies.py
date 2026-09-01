@@ -81,6 +81,7 @@ def validate_topology(value: Any, operation: dict[str, Any]) -> list[str]:
             "official-comfy",
             "vanilla-comfy",
             "cauce",
+            "community-nodepack",
         }:
             errors.append(f"invalid topology node owner {node.get('owner')!r}")
         class_type = node.get("class_type")

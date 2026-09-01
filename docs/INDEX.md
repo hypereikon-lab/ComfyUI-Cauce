@@ -6,7 +6,7 @@
 - [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official
   ComfyUI graphs, and the remote runtime.
 - [Capability map](CAPABILITY_MAP.md): implemented and composable operations.
-- [Node catalog](NODE_CATALOG.md): all 24 registered nodes.
+- [Node catalog](NODE_CATALOG.md): all 28 registered nodes.
 - [Temporal and spatial video enhancement](TEMPORAL_SPATIAL_ENHANCEMENT.md):
   H3-native visual-token densification, same-model spatial regeneration,
   guide retiming, VRAM-bounded variants, and training boundaries.
@@ -14,6 +14,8 @@
   conditioning/sampling nodes.
 - [H3 extension map](H3_EXTENSION_MAP.md): implemented editing/refinement
   operations, workflow-only patterns, isolated experiments, and deferred work.
+- [H3 structural control](STRUCTURAL_CONTROL.md): official Fun Control graph,
+  exact fitting behavior, compatibility gates, and evidence ladder.
 - [Semantic operations](OPERATIONS.md): typed, composable graph-level functions
   and their present artifact/evidence state.
 - [Operation topology dossiers](TOPOLOGY_DRAFTS.md): offline node/edge/binding

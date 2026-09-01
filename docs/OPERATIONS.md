@@ -13,6 +13,7 @@ H3 conditioning grammar
   generate.keyframed
   generate.from_references
   generate.with_guides
+  generate.with_control
 
 native H3 AV state algebra
   continue.native_av
@@ -42,6 +43,7 @@ nodes that implement it. Every graph stage declares one of these owners:
 official-comfy   core H3 model-specific conditioning
 vanilla-comfy    loaders, sampler, decode, batching, and file outputs
 cauce            deterministic range, AV-state, or persistence primitive
+community-nodepack  separately versioned experimental node; never attributed to CAUCE
 ```
 
 The H3 planning and conditioning-inspection nodes are optional graph preflight
@@ -55,13 +57,14 @@ do not create a separate semantic operation or replace official H3 nodes.
 | `generate.keyframed` | generate from prompt and optional endpoint frames | official H3 / vanilla | contract + offline topology | defined |
 | `generate.from_references` | generate from ordered reference images or clips | official H3 / vanilla | contract + offline topology | defined |
 | `generate.with_guides` | place decoded guides at exact target-frame indices | official H3 / vanilla | contract + offline topology | defined |
+| `generate.with_control` | apply official structural video or masked-inpaint control with visible fitting and packed-row cost | official H3 + CAUCE planning | contract + offline topology | deterministic preflight unit-validated; runtime gates pending |
 | `continue.native_av` | extend synchronized packed H3 AV state through keyframe or masked overlap | official H3 + CAUCE AV primitives | contract + offline topology | keyframe path executes synthetically; masked paths unit-validated |
 | `complete.native_av` | generate a prefix/interior/replacement while preserving explicit native AV context | official H3 + CAUCE placement/mask/replace primitives | contract + offline topology | deterministic layer unit-validated |
 | `densify.temporal` | generate additional motion samples by dilating native visual tokens and inpainting missing intervals with H3 | official H3 + CAUCE token-lattice primitive | contract + offline topology | deterministic layer unit-validated; visuals unassessed |
 | `edit.masked_video` | regenerate an arbitrary spatial or spatiotemporal region while preserving its complement | official H3 + CAUCE mask projection | contract + offline topology | deterministic layer unit-validated |
 | `reframe.outpaint_video` | expand the latent canvas and generate only new regions | official H3 + CAUCE canvas/mask primitives | contract + offline topology | deterministic layer unit-validated |
 | `refine.video` | bounded-denoise second pass over a complete or masked source state | official H3 + CAUCE continuous masks | contract + offline topology | deterministic layer unit-validated |
-| `regenerate.spatial` | increase resolution/detail through a latent-hires, pixel/H3-VAE, or tiled second pass using the same H3 checkpoint | official H3 + CAUCE spatial state primitives | contract + offline topology | deterministic layer unit-validated; visuals unassessed |
+| `regenerate.spatial` | increase resolution/detail through native latent-hires, pixel/H3-VAE, tiled, or separately gated learned-latent initialization before a same-H3 second pass | official H3 + CAUCE spatial state primitives; optional community node | contract + offline topology | native deterministic layer unit-validated; learned path and visuals unassessed |
 | `rollback.native_av` | split cumulative AV state into a branchable prefix and reversible suffix | CAUCE split/persistence primitives | contract + offline topology | unit-validated |
 | `frames.assemble` | select and concatenate exact decoded ranges | CAUCE ranges + vanilla assembly | contract + offline topology | deterministic layer unit-validated |
 

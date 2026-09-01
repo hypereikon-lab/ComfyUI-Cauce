@@ -16,6 +16,8 @@
     { "id": "guides-guide-clip", "topology_signature": "5a11f73eb845702e26686c85dd8e37054ac8bf44910c79785a4bb7dbd66070a3", "topology_keys": ["generate.with_guides@guide-clip"] },
     { "id": "guides-multi-anchor", "topology_signature": "4e748a4d782c7885564bfde0811161fa1b67e7c89e6fcb9706f4e223e3988738", "topology_keys": ["generate.with_guides@multi-anchor"] },
     { "id": "guides-single-anchor", "topology_signature": "d038d182dc7afd8a1d2f11db9639f3b0f7d2627f63661f2e417804233c92493c", "topology_keys": ["generate.with_guides@single-anchor"] },
+    { "id": "control-masked-inpaint", "topology_signature": "bc671a3645e8cd846bd7ef2d75df5b487cbe2f20eadc863888d7386968ac1f0e", "topology_keys": ["generate.with_control@masked-inpaint"] },
+    { "id": "control-structural-video", "topology_signature": "f1e44edf5bca511f40d053c898d57655513ca315838b8e4b0d4dd75059e5bf42", "topology_keys": ["generate.with_control@structural-video"] },
     { "id": "keyframed-first-frame", "topology_signature": "cf1b4ec38d6722763969c4ea8e9df00130385261dc97dbc06e550ac68bc7a8d4", "topology_keys": ["generate.keyframed@first-frame"] },
     { "id": "keyframed-first-last", "topology_signature": "9d75f79304b366a7f56d7c7f11b3f60bd4c0dd85593980a17ab7a2fe786555f8", "topology_keys": ["generate.keyframed@first-last"] },
     { "id": "keyframed-last-frame", "topology_signature": "d61a8672cd7728d49227f7011ef46ac6b97f10245b5e0b9a204337a7d8d493f8", "topology_keys": ["generate.keyframed@last-frame"] },
@@ -29,6 +31,7 @@
     { "id": "regenerate-spatial-latent", "topology_signature": "3045d302a6c2e2fa732c474e81155e2626ae4e4911c345cdffe829249e8054cd", "topology_keys": ["regenerate.spatial@latent-second-pass"] },
     { "id": "regenerate-spatial-pixel-vae", "topology_signature": "f2100fe74636d73bfb86f5b6e5abfb1dde452efe268d40c313ec8a38fec12fb1", "topology_keys": ["regenerate.spatial@pixel-vae-second-pass"] },
     { "id": "regenerate-spatial-tiled", "topology_signature": "a5cbcabb6c695fe1a297fd974d5706215d199c6660634d077708137e78ddf1d6", "topology_keys": ["regenerate.spatial@tiled-pixel-vae"] },
+    { "id": "regenerate-spatial-learned", "topology_signature": "ee1dcc57f93b25950b5ba14a37a4980f8ad5e94ea851f02339e01cff481bbf0e", "topology_keys": ["regenerate.spatial@learned-latent-second-pass"] },
     { "id": "rollback-native-branch", "topology_signature": "04032ca56ce4c950a4b3041581ccbafe0cde029d57a63e9ba52aa40f721b5344", "topology_keys": ["rollback.native_av@branch-suffix"] }
   ]
 }

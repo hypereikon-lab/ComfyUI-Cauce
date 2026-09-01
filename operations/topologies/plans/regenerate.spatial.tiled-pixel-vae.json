@@ -1,7 +1,7 @@
 {
   "schema": "cauce.operation-topology/1",
   "operation": "regenerate.spatial",
-  "operation_version": 2,
+  "operation_version": 3,
   "variant": "tiled-pixel-vae",
   "state": "offline-draft",
   "basis": [

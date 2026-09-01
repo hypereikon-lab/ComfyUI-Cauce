@@ -29,6 +29,7 @@ class OperationContractTests(unittest.TestCase):
                 "generate.from_references",
                 "generate.keyframed",
                 "generate.with_guides",
+                "generate.with_control",
                 "densify.temporal",
                 "reframe.outpaint_video",
                 "refine.video",
@@ -52,7 +53,12 @@ class OperationContractTests(unittest.TestCase):
         }
         self.assertEqual(
             by_family["h3-conditioning-grammar"],
-            {"generate.keyframed", "generate.from_references", "generate.with_guides"},
+            {
+                "generate.keyframed",
+                "generate.from_references",
+                "generate.with_guides",
+                "generate.with_control",
+            },
         )
         self.assertEqual(
             by_family["native-av-state-algebra"],
@@ -90,6 +96,7 @@ class OperationContractTests(unittest.TestCase):
             "reframe.outpaint_video",
             "refine.video",
             "regenerate.spatial",
+            "generate.with_control",
         ):
             owners = {stage["owner"] for stage in operations[operation_id]["graph_contract"]}
             self.assertTrue({"official-comfy", "cauce"} <= owners)
@@ -99,7 +106,7 @@ class OperationContractTests(unittest.TestCase):
             self.assertEqual(spec["kind"], "decoded-media-transform")
             self.assertNotIn("official-comfy", owners)
 
-        for operation_id in ("densify.temporal", "regenerate.spatial"):
+        for operation_id in ("densify.temporal",):
             operation = operations[operation_id]
             self.assertEqual(
                 operation["implementation_class"],
@@ -109,6 +116,15 @@ class OperationContractTests(unittest.TestCase):
                 {"official-comfy", "cauce"}
                 <= {stage["owner"] for stage in operation["graph_contract"]}
             )
+        spatial = operations["regenerate.spatial"]
+        self.assertEqual(
+            spatial["implementation_class"],
+            "official-h3-with-cauce-and-community-primitives",
+        )
+        self.assertTrue(
+            {"official-comfy", "cauce", "community-nodepack"}
+            <= {stage["owner"] for stage in spatial["graph_contract"]}
+        )
 
     def test_contract_only_operations_ship_no_graph_pair(self):
         operations = load_operation_catalog(ROOT)

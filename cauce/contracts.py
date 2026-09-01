@@ -12,6 +12,8 @@ AV_SPAN_SCHEMA = "cauce.h3-av-span/1"
 H3_TARGET_PLAN_SCHEMA = "cauce.h3-target-plan/1"
 H3_GUIDE_PLAN_SCHEMA = "cauce.h3-guide-plan/1"
 H3_REFERENCE_PLAN_SCHEMA = "cauce.h3-reference-plan/1"
+H3_CONTROL_PLAN_SCHEMA = "cauce.h3-control-plan/1"
+H3_PACKED_SEQUENCE_REPORT_SCHEMA = "cauce.h3-packed-sequence-report/1"
 
 
 def canonical_json(value: Any) -> str:

@@ -16,6 +16,7 @@ from ..cauce.av_latent import (
     densify_h3_video_tokens,
     extract_av_span,
     expand_av_canvas,
+    extract_h3_visual_stream,
     inspect_av_latent,
     place_av_span,
     plan_av_window,
@@ -825,6 +826,36 @@ class CauceH3ReplaceVisualStream:
         return output, _json(report)
 
 
+class CauceH3ExtractVisualStream:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "LATENT", "STRING")
+    RETURN_NAMES = ("visual_latent", "source_av_latent", "report_json")
+    FUNCTION = "extract"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Expose H3 visual state to a visual-only latent tool while retaining the "
+        "original AV carrier for an explicit graft."
+    )
+
+    def extract(self, latent, timeline_origin_frame):
+        visual, report = extract_h3_visual_stream(
+            latent,
+            timeline_origin_frame=int(timeline_origin_frame),
+        )
+        return visual, latent, _json(report)
+
+
 NODE_CLASS_MAPPINGS = {
     "CauceH3InspectAVLatent": CauceH3InspectAVLatent,
     "CauceH3PlanAVWindow": CauceH3PlanAVWindow,
@@ -842,6 +873,7 @@ NODE_CLASS_MAPPINGS = {
     "CauceH3DilateVisualTokens": CauceH3DilateVisualTokens,
     "CauceH3ResizeAVLatent": CauceH3ResizeAVLatent,
     "CauceH3ReplaceVisualStream": CauceH3ReplaceVisualStream,
+    "CauceH3ExtractVisualStream": CauceH3ExtractVisualStream,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -861,4 +893,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceH3DilateVisualTokens": "CAUCE · Dilate H3 Visual Tokens",
     "CauceH3ResizeAVLatent": "CAUCE · Resize H3 AV Latent",
     "CauceH3ReplaceVisualStream": "CAUCE · Replace H3 Visual Stream",
+    "CauceH3ExtractVisualStream": "CAUCE · Extract H3 Visual Stream",
 }

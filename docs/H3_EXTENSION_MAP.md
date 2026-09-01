@@ -16,6 +16,7 @@ data transform, and unit tests:
 | `edit.masked_video` | continuous MASK projection and composition over native H3 visual tokens | unit-validated; live execution pending |
 | `reframe.outpaint_video` | aligned larger-canvas allocation, exact source placement, generated-region mask | unit-validated; live execution pending |
 | `refine.video` | reuse of continuous interval and optional spatial masks for bounded second-pass H3 sampling | unit-validated; live execution pending |
+| `generate.with_control` | exact reporting of official control-clip fitting plus packed-sequence inspection around the official model patch | unit-validated planning; runtime/model gates pending |
 
 No operation changes the H3 sampler. Official conditioning, model, guider,
 scheduler, sampler, and VAE decode stay visible in every graph. The native
@@ -50,19 +51,22 @@ behavior.
 
 ### Learned H3 visual-latent upscale
 
-Candidate implementation:
+Gated implementation:
 
 ```text
 native AV state
-  -> vanilla Separate AV Latent
+  -> CAUCE Extract H3 Visual Stream
   -> community learned 24-channel visual-latent upscaler
-  -> vanilla Concat AV Latent with unchanged structural-audio state
-  -> bounded refine.video
+  -> CAUCE Replace H3 Visual Stream on unchanged structural-audio carrier
+  -> bounded same-H3 regeneration
 ```
 
-The fp16 weight is approximately 691 MB. Adoption requires an isolated install,
-schema capture, lineage audit, and an A/B comparison against direct-resolution
-H3. It is not part of CAUCE and is not a production dependency.
+The fp16 weight is approximately 691 MB. The external node and weight remain a
+separately owned dependency; only the visual/AV adapters belong to CAUCE.
+Adoption requires an isolated install, schema capture, exact source/weight
+hashes, and an identical-seed A/B against native latent resize and pixel/VAE
+re-encoding. Upstream reports of FL2VA shape mismatch and temporal flicker are
+explicit rejection gates, not minor caveats.
 
 Source: <https://github.com/LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler>
 
@@ -78,16 +82,37 @@ Sources:
 - <https://github.com/MiniMax-AI/MiniMax-H3>
 - <https://github.com/ckinpdx/ComfyUI-MMH3Tools>
 
-## Deferred integrations
+## Official structural control
 
-### H3 Fun ControlNet
+H3 Fun ControlNet support is now merged into ComfyUI through
+`MiniMaxH3FunControlNetApply` and `ModelPatchLoader`. The union checkpoint
+supports Canny, depth, HED, MLSD, pose, and video inpainting. CAUCE does not
+reimplement the control model: `generate.with_control` composes the official
+nodes and only exposes their otherwise implicit input fitting and packed-row
+cost.
 
-Depth, Canny, HED, MLSD, pose, and video-inpaint control are highly relevant,
-but current ComfyUI support is an open draft that requires a core patch. Do not
-install it into the shared laboratory runtime until the integration is merged
-or an isolated compatibility branch has passed the complete runtime gate.
+Do not update the shared runtime merely because the node is merged. Deployment
+still requires live `object_info`, a pinned core commit, a model-patch hash, and
+resolution of the relevant correctness gates:
 
-Tracking source: <https://github.com/Comfy-Org/ComfyUI/pull/15860>
+- [ComfyUI #16020](https://github.com/Comfy-Org/ComfyUI/pull/16020): references/keyframes with control and dynamic-VRAM prefetch correctness;
+- [ComfyUI #15988](https://github.com/Comfy-Org/ComfyUI/pull/15988): denoise-mask velocity conversion;
+- [ComfyUI #15978](https://github.com/Comfy-Org/ComfyUI/issues/15978) and [#15981](https://github.com/Comfy-Org/ComfyUI/issues/15981): mask regressions requiring live verification.
+
+See [H3 structural control](STRUCTURAL_CONTROL.md).
+
+## Studied, not adopted
+
+- `TwoAbove/ComfyUI-H3VideoOutpaint`: useful evidence for phase-aligned,
+  overlap-window chronological outpaint; its monolithic node overlaps CAUCE,
+  and current H3 context windows do not encode absolute global position.
+- `nazgut/ComfyUI-MiniMaxH3-CLSS`: WIP port from another model family; its
+  anchor bank, AdaIN and calibrated re-noise are not yet H3-native evidence.
+- `KJNodes` MiniMax token counter: confirms official `PackedLayout`; CAUCE now
+  counts rows without importing or patching ComfyUI. KJ attention/FFN chunking
+  remains optional only if memory measurements demand it.
+- modality-LoRA loaders, TensorRT VAE, alternative attention, and mega-packs:
+  outside current training/acceleration scope or too broad for the shared lab.
 
 ## Excluded scope
 

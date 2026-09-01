@@ -1,0 +1,78 @@
+{
+  "schema": "cauce.operation-topology/1",
+  "operation": "generate.with_control",
+  "operation_version": 1,
+  "variant": "structural-video",
+  "state": "offline-draft",
+  "basis": [
+    { "source": "Comfy-Org/ComfyUI", "path": "comfy_extras/nodes_minimax_h3.py", "commit": "3216c62e9962c3babd28a4dfea6e5aef50b8fe16" },
+    { "source": "alibaba-pai/MiniMax-H3-Fun-Controlnet-Union", "path": "README.md", "section": "supported controls" }
+  ],
+  "nodes": [
+    { "key": "control", "owner": "vanilla-comfy", "class_type": "LoadVideo", "role": "load a precomputed Canny, depth, pose, HED, MLSD, or arbitrary structural control clip" },
+    { "key": "control_components", "owner": "vanilla-comfy", "class_type": "GetVideoComponents", "role": "extract 24 fps control frames" },
+    { "key": "clip", "owner": "vanilla-comfy", "class_type": "CLIPLoader", "role": "load the H3 text encoder" },
+    { "key": "video_vae", "owner": "vanilla-comfy", "class_type": "VAELoader", "role": "load the H3 video VAE" },
+    { "key": "model", "owner": "vanilla-comfy", "class_type": "UNETLoader", "role": "load H3 Base" },
+    { "key": "model_patch", "owner": "vanilla-comfy", "class_type": "ModelPatchLoader", "role": "load the official H3 Fun Control union model patch" },
+    { "key": "conditioning", "owner": "official-comfy", "class_type": "MiniMaxH3ImageToVideo", "role": "create prompt conditioning and fresh target AV state" },
+    { "key": "plan", "owner": "cauce", "class_type": "CauceH3PlanControlClip", "role": "expose temporal repetition/truncation and spatial fit" },
+    { "key": "apply", "owner": "official-comfy", "class_type": "MiniMaxH3FunControlNetApply", "role": "patch H3 with structural control" },
+    { "key": "inspect", "owner": "cauce", "class_type": "CauceH3InspectPackedSequence", "role": "measure the packed multimodal sequence before sampling" },
+    { "key": "noise", "owner": "vanilla-comfy", "class_type": "RandomNoise", "role": "bind seed" },
+    { "key": "guider", "owner": "vanilla-comfy", "class_type": "BasicGuider", "role": "bind patched model and conditioning" },
+    { "key": "scheduler", "owner": "vanilla-comfy", "class_type": "BasicScheduler", "role": "construct sigmas from the patched model" },
+    { "key": "sampler", "owner": "vanilla-comfy", "class_type": "KSamplerSelect", "role": "select sampler" },
+    { "key": "sample", "owner": "vanilla-comfy", "class_type": "SamplerCustomAdvanced", "role": "sample the controlled target" },
+    { "key": "decode", "owner": "vanilla-comfy", "class_type": "VAEDecode", "role": "decode visual frames" }
+  ],
+  "edges": [
+    { "from": { "node": "control", "port": "VIDEO" }, "to": { "node": "control_components", "port": "video" } },
+    { "from": { "node": "clip", "port": "CLIP" }, "to": { "node": "conditioning", "port": "clip" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "conditioning", "port": "vae" } },
+    { "from": { "node": "control_components", "port": "images" }, "to": { "node": "plan", "port": "images" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "plan", "port": "target_av_latent" } },
+    { "from": { "node": "model", "port": "MODEL" }, "to": { "node": "apply", "port": "model" } },
+    { "from": { "node": "model_patch", "port": "MODEL_PATCH" }, "to": { "node": "apply", "port": "model_patch" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "apply", "port": "vae" } },
+    { "from": { "node": "plan", "port": "images" }, "to": { "node": "apply", "port": "control_video" } },
+    { "from": { "node": "conditioning", "port": "positive" }, "to": { "node": "inspect", "port": "positive" } },
+    { "from": { "node": "conditioning", "port": "LATENT" }, "to": { "node": "inspect", "port": "target_av_latent" } },
+    { "from": { "node": "apply", "port": "MODEL" }, "to": { "node": "guider", "port": "model" } },
+    { "from": { "node": "inspect", "port": "positive" }, "to": { "node": "guider", "port": "conditioning" } },
+    { "from": { "node": "apply", "port": "MODEL" }, "to": { "node": "scheduler", "port": "model" } },
+    { "from": { "node": "noise", "port": "NOISE" }, "to": { "node": "sample", "port": "noise" } },
+    { "from": { "node": "guider", "port": "GUIDER" }, "to": { "node": "sample", "port": "guider" } },
+    { "from": { "node": "sampler", "port": "SAMPLER" }, "to": { "node": "sample", "port": "sampler" } },
+    { "from": { "node": "scheduler", "port": "SIGMAS" }, "to": { "node": "sample", "port": "sigmas" } },
+    { "from": { "node": "inspect", "port": "target_av_latent" }, "to": { "node": "sample", "port": "latent_image" } },
+    { "from": { "node": "sample", "port": "output" }, "to": { "node": "decode", "port": "samples" } },
+    { "from": { "node": "video_vae", "port": "VAE" }, "to": { "node": "decode", "port": "vae" } }
+  ],
+  "bindings": [
+    { "name": "control_video_filename", "type": "STRING", "target": { "node": "control", "input": "file" }, "required": true },
+    { "name": "prompt", "type": "STRING", "target": { "node": "conditioning", "input": "prompt" }, "required": true },
+    { "name": "width", "type": "INT", "target": { "node": "conditioning", "input": "width" }, "required": true },
+    { "name": "height", "type": "INT", "target": { "node": "conditioning", "input": "height" }, "required": true },
+    { "name": "target_frames", "type": "INT", "target": { "node": "conditioning", "input": "length" }, "required": true },
+    { "name": "model_patch_name", "type": "STRING", "target": { "node": "model_patch", "input": "name" }, "required": true },
+    { "name": "control_strength", "type": "FLOAT", "target": { "node": "apply", "input": "strength" }, "required": true },
+    { "name": "control_start_percent", "type": "FLOAT", "target": { "node": "apply", "input": "start_percent" }, "required": true },
+    { "name": "control_end_percent", "type": "FLOAT", "target": { "node": "apply", "input": "end_percent" }, "required": true },
+    { "name": "steps", "type": "INT", "target": { "node": "scheduler", "input": "steps" }, "required": true },
+    { "name": "scheduler_name", "type": "STRING", "target": { "node": "scheduler", "input": "scheduler" }, "required": true },
+    { "name": "sampler_name", "type": "STRING", "target": { "node": "sampler", "input": "sampler_name" }, "required": true },
+    { "name": "seed", "type": "INT", "target": { "node": "noise", "input": "noise_seed" }, "required": true }
+  ],
+  "outputs": [
+    { "name": "generated_frames", "type": "IMAGE", "source": { "node": "decode", "port": "IMAGE" } },
+    { "name": "native_av_latent", "type": "LATENT", "source": { "node": "sample", "port": "output" } }
+  ],
+  "live_gates": [
+    "require MiniMaxH3FunControlNetApply and ModelPatchLoader in live object_info",
+    "pin and hash the union model patch before download",
+    "verify current ComfyUI includes the dynamic-VRAM correctness fix or disable the affected mode",
+    "start at strength 1.0 and characterize lower values plus end_percent release at fixed seed",
+    "measure packed rows and peak VRAM before increasing duration or geometry"
+  ]
+}

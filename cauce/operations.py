@@ -18,7 +18,7 @@ OPERATION_FAMILIES = {
     "native-av-state-algebra",
     "decoded-media-algebra",
 }
-OWNERS = {"official-comfy", "vanilla-comfy", "cauce"}
+OWNERS = {"official-comfy", "vanilla-comfy", "cauce", "community-nodepack"}
 KINDS = {"h3-inference", "decoded-media-transform"}
 IMPLEMENTATION_CLASSES = {
     "official-h3",
@@ -27,6 +27,7 @@ IMPLEMENTATION_CLASSES = {
     "cauce-preprocess-to-official-h3",
     "cauce-and-vanilla-deterministic",
     "official-comfy-with-cauce-planning",
+    "official-h3-with-cauce-and-community-primitives",
 }
 ARTIFACT_STATES = {"contract-only", "paired-graphs"}
 EVIDENCE_LEVELS = {
@@ -156,6 +157,12 @@ def validate_operation_spec(value: Any) -> list[str]:
         if not {"official-comfy", "cauce"} <= stage_owners:
             errors.append(
                 "official-comfy-with-cauce-planning requires official-comfy and cauce stages"
+            )
+    if implementation == "official-h3-with-cauce-and-community-primitives":
+        if not {"official-comfy", "cauce", "community-nodepack"} <= stage_owners:
+            errors.append(
+                "official-h3-with-cauce-and-community-primitives requires official-comfy, "
+                "cauce, and community-nodepack stages"
             )
     if value.get("kind") == "h3-inference" and "official-comfy" not in stage_owners:
         errors.append("h3-inference operation requires an official-comfy stage")

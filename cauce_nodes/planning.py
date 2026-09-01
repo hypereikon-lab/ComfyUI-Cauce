@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 
-from ..cauce.conditioning import inspect_h3_conditioning
+from ..cauce.conditioning import inspect_h3_conditioning, inspect_h3_packed_sequence
 from ..cauce.h3_inputs import (
+    plan_h3_control_clip,
     prepare_h3_guide_clip,
     prepare_h3_reference_clip,
     resolve_h3_target_shape,
@@ -209,11 +210,110 @@ class CauceH3InspectConditioning:
         )
 
 
+class CauceH3PlanControlClip:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "target_av_latent": ("LATENT",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "CAUCE_H3_CONTROL_PLAN", "INT", "INT", "INT", "STRING")
+    RETURN_NAMES = (
+        "images",
+        "plan",
+        "target_frames",
+        "discarded_tail_frames",
+        "repeated_tail_frames",
+        "report_json",
+    )
+    FUNCTION = "plan"
+    CATEGORY = CATEGORY
+    DESCRIPTION = "Report official H3 Fun Control temporal/spatial fitting without mutation."
+
+    def plan(self, images, target_av_latent, timeline_origin_frame):
+        plan = plan_h3_control_clip(
+            images,
+            target_av_latent,
+            timeline_origin_frame=int(timeline_origin_frame),
+        )
+        return (
+            images,
+            plan,
+            int(plan["target_frames"]),
+            int(plan["discarded_tail_frames"]),
+            int(plan["repeated_tail_frames"]),
+            _json(plan),
+        )
+
+
+class CauceH3InspectPackedSequence:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "positive": ("CONDITIONING",),
+                "target_av_latent": ("LATENT",),
+                "timeline_origin_frame": (
+                    "INT",
+                    {"default": 0, "min": 0, "max": 10_000_000},
+                ),
+                "estimated_bytes_per_row": (
+                    "INT",
+                    {"default": 151_000, "min": 1, "max": 10_000_000},
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("CONDITIONING", "LATENT", "INT", "INT", "BOOLEAN", "STRING")
+    RETURN_NAMES = (
+        "positive",
+        "target_av_latent",
+        "packed_rows",
+        "estimated_working_set_bytes",
+        "int32_attention_offset_risk",
+        "report_json",
+    )
+    FUNCTION = "inspect"
+    CATEGORY = CATEGORY
+    DESCRIPTION = "Count exact H3 packed rows and report a separately calibrated memory estimate."
+
+    def inspect(
+        self,
+        positive,
+        target_av_latent,
+        timeline_origin_frame,
+        estimated_bytes_per_row,
+    ):
+        report = inspect_h3_packed_sequence(
+            positive,
+            target_av_latent,
+            timeline_origin_frame=int(timeline_origin_frame),
+            estimated_bytes_per_row=int(estimated_bytes_per_row),
+        )
+        return (
+            positive,
+            target_av_latent,
+            int(report["total_rows"]),
+            int(report["estimated_working_set_bytes"]),
+            bool(report["int32_attention_offset_risk"]),
+            _json(report),
+        )
+
+
 NODE_CLASS_MAPPINGS = {
     "CauceH3ResolveTargetShape": CauceH3ResolveTargetShape,
     "CauceH3PrepareGuideClip": CauceH3PrepareGuideClip,
     "CauceH3PrepareReferenceClip": CauceH3PrepareReferenceClip,
     "CauceH3InspectConditioning": CauceH3InspectConditioning,
+    "CauceH3PlanControlClip": CauceH3PlanControlClip,
+    "CauceH3InspectPackedSequence": CauceH3InspectPackedSequence,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -221,4 +321,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CauceH3PrepareGuideClip": "CAUCE · Prepare H3 Guide Clip",
     "CauceH3PrepareReferenceClip": "CAUCE · Prepare H3 Reference Clip",
     "CauceH3InspectConditioning": "CAUCE · Inspect H3 Conditioning",
+    "CauceH3PlanControlClip": "CAUCE · Plan H3 Control Clip",
+    "CauceH3InspectPackedSequence": "CAUCE · Inspect H3 Packed Sequence",
 }

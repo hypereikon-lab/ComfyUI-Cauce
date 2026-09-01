@@ -36,6 +36,7 @@ maskable inside H3's temporally compressed latent lattice.
 | `CauceH3DilateVisualTokens` | map source visual tokens monotonically onto a longer legal H3 lattice, allocate missing tokens, and attach a continuous temporal-inpaint mask |
 | `CauceH3ResizeAVLatent` | resize only native H3 visual state and attach separate video/audio denoise strengths for a same-model high-resolution pass |
 | `CauceH3ReplaceVisualStream` | graft a duration-compatible H3-VAE visual latent onto an existing packed AV carrier for a pixel/VAE second pass |
+| `CauceH3ExtractVisualStream` | expose a cloned visual-only latent plus the untouched AV carrier so external visual tools require an explicit graft back into H3 state |
 
 No node owns prompt, seed, sampler, scheduler, decode, or a continuation/
 completion preset. The mask node owns only deterministic per-token denoise
@@ -51,6 +52,8 @@ continuous spatial values until the current core's own patch-grid processing.
 | `CauceH3PrepareGuideClip` | make official AddGuide single-image/floor clipping and resolved placement explicit |
 | `CauceH3PrepareReferenceClip` | make Ref2VA target clamp, floor clipping, documented 2–15 s status, and 2 fps Qwen samples explicit |
 | `CauceH3InspectConditioning` | report active H3 keyframes, references, ranges, and overlaps without mutation |
+| `CauceH3PlanControlClip` | report the official Fun Control truncate/repeat-last temporal policy and bilinear center-fit geometry without changing frames |
+| `CauceH3InspectPackedSequence` | count exact H3 packed rows across text, guides, references, target audio, and target video; keep the memory estimate explicitly calibrated and heuristic |
 
 Planning nodes do not encode media, create conditioning, or sample. Their
 accepted IMAGE output is passed to the corresponding official H3 node.

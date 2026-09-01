@@ -15,6 +15,7 @@ from cauce.av_latent import (
     densify_h3_video_tokens,
     extract_av_span,
     expand_av_canvas,
+    extract_h3_visual_stream,
     inspect_av_latent,
     place_av_span,
     plan_av_window,
@@ -56,6 +57,14 @@ class AVLatentTests(unittest.TestCase):
         self.assertEqual(report["video_tokens"], 72)
         self.assertEqual(report["audio_tokens"], 405)
         self.assertEqual(report["video_shape"], [1, 24, 72, 2, 3])
+
+    def test_extracts_visual_stream_without_losing_the_av_carrier_contract(self):
+        visual, report = extract_h3_visual_stream(self.previous)
+        self.assertEqual(visual["samples"].shape, (1, 24, 72, 2, 3))
+        self.assertIsNot(visual["samples"], self.previous["samples"][0])
+        self.assertTrue(report["audio_preserved_in_source_carrier"])
+        self.assertTrue(report["requires_explicit_graft"])
+        self.assertEqual(report["frame_count"], 243)
 
     def test_plans_globally_aligned_window(self):
         self.assertEqual(self.layout["window_start_frame"], 221)

@@ -490,6 +490,36 @@ def plan_av_window(
     return payload
 
 
+def extract_h3_visual_stream(
+    latent: Mapping[str, Any],
+    *,
+    timeline_origin_frame: int = 0,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Expose the visual tensor as a standard LATENT while preserving the AV carrier.
+
+    This is a deterministic adapter for visual-only latent tools. The caller must
+    graft the result back onto the original AV carrier with
+    ``replace_h3_video_stream`` so structural audio and duration remain explicit.
+    """
+
+    video, _, frame_count = validate_av_latent(
+        latent,
+        timeline_origin_frame=int(timeline_origin_frame),
+        name="latent",
+    )
+    visual = {"samples": _clone(video)}
+    payload: dict[str, Any] = {
+        "schema": "cauce.h3-visual-stream-report/1",
+        "timeline_origin_frame": int(timeline_origin_frame),
+        "frame_count": frame_count,
+        "video_shape": [int(item) for item in video.shape],
+        "audio_preserved_in_source_carrier": True,
+        "requires_explicit_graft": True,
+    }
+    payload["report_hash"] = content_hash(payload)
+    return visual, payload
+
+
 def validate_av_window_layout(layout: Mapping[str, Any]) -> None:
     if not isinstance(layout, Mapping) or layout.get("schema") != AV_WINDOW_LAYOUT_SCHEMA:
         raise ValueError(f"AV window layout must use schema {AV_WINDOW_LAYOUT_SCHEMA}")

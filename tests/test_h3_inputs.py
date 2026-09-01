@@ -6,6 +6,7 @@ except ImportError:
     np = None
 
 from cauce.h3_inputs import (
+    plan_h3_control_clip,
     plan_h3_guide_clip,
     plan_h3_reference_clip,
     prepare_h3_guide_clip,
@@ -85,6 +86,24 @@ class H3InputPlanningTests(unittest.TestCase):
             plan_h3_reference_clip(clip[:4], 124)
         with self.assertRaisesRegex(ValueError, "positive"):
             plan_h3_reference_clip(clip, 0)
+
+    def test_control_clip_exposes_repeat_truncate_and_spatial_fit(self):
+        target = self.latent(124)
+        short = np.zeros((100, 720, 1280, 3), dtype=np.float32)
+        repeated = plan_h3_control_clip(short, target)
+        self.assertEqual(repeated["temporal_policy"], "repeat-last-frame")
+        self.assertEqual(repeated["repeated_tail_frames"], 24)
+        self.assertEqual(repeated["discarded_tail_frames"], 0)
+        self.assertEqual(repeated["source_geometry"], {"width": 1280, "height": 720})
+        self.assertEqual(repeated["target_geometry"], {"width": 48, "height": 32})
+        self.assertEqual(repeated["spatial_policy"], "bilinear-resize-and-center-crop")
+        self.assertFalse(repeated["mutates_images"])
+
+        long = np.zeros((140, 32, 48, 3), dtype=np.float32)
+        truncated = plan_h3_control_clip(long, target)
+        self.assertEqual(truncated["temporal_policy"], "truncate-tail")
+        self.assertEqual(truncated["accepted_source_frames"], 124)
+        self.assertEqual(truncated["discarded_tail_frames"], 16)
 
 
 if __name__ == "__main__":

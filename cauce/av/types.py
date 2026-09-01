@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, NotRequired, TypedDict
+from typing import Any, TypedDict
 
 NestedFactory = Callable[[tuple[Any, Any]], Any]
 
 
-class AVLatent(TypedDict):
+class _AVLatentOptional(TypedDict, total=False):
+    """Optional AV carrier fields, expressed without Python 3.11-only typing APIs."""
+
+    noise_mask: Any
+
+
+class AVLatent(_AVLatentOptional):
     samples: Any
-    noise_mask: NotRequired[Any]
 
 
 class AVWindowLayout(TypedDict):

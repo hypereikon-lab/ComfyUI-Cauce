@@ -8,6 +8,14 @@ Returns an exact `[start_frame, start_frame + frame_count)` IMAGE slice and its
 count. Workflow meaning such as “guide,” “accepted center,” or “edit” remains
 outside the node.
 
+### `CauceRestoreDecodedAnchors`
+
+Restores each decoded source frame at positions `0, factor, 2*factor, ...` in a
+densified generated batch and crops legal H3 tail padding. Only the intervening
+decoded frames remain generative. This is an exact delivery operation after
+H3/VAE decode; it does not claim that alternating decoded frames are separately
+maskable inside H3's temporally compressed latent lattice.
+
 ## CAUCE/H3 AV Latent
 
 | Node | Operation |

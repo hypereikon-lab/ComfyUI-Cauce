@@ -116,6 +116,30 @@ is bidirectional temporal inpainting over native state. Preservation is exact
 at the packed visual-token input, not guaranteed pixel-exact after the model
 and VAE decode.
 
+### Exact decoded-anchor delivery
+
+An alternating decoded-frame mask cannot be represented independently inside
+the H3 visual lattice. Its temporal token spans repeat `(1, 4, 4, 4, 4)`, so a
+decoded pattern such as `preserve, generate, preserve, generate` collapses to
+mixed values inside most four-frame tokens. It must not be described as a hard
+per-frame inpaint mask once encoded.
+
+For an anchor-faithful delivery test, keep the native token-inpaint pass above,
+decode and crop it, then apply `CauceRestoreDecodedAnchors`:
+
+```text
+dense_candidate[0 : delivery_frames]
+source_frames
+  -> restore source i at output i * factor
+  -> leave only the intervening decoded frames generative
+```
+
+At factor 2 this produces `2N-1` frames with every even frame copied exactly
+from the source and every odd frame supplied by the H3 temporal-inpaint pass.
+The result has no single packed H3 latent equivalent after restoration; it is
+a deterministic decoded delivery artifact. Judge anchor fidelity and
+intermediate-frame motion separately.
+
 ### Windowing
 
 The released model documents a trained range of 124–362 frames. Target

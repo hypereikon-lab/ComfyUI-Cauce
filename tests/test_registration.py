@@ -20,7 +20,7 @@ class RegistrationTests(unittest.TestCase):
         try:
             assert spec.loader is not None
             spec.loader.exec_module(module)
-            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 24)
+            self.assertEqual(len(module.NODE_CLASS_MAPPINGS), 25)
             self.assertEqual(
                 set(module.NODE_CLASS_MAPPINGS),
                 set(module.NODE_DISPLAY_NAME_MAPPINGS),
@@ -39,6 +39,7 @@ class RegistrationTests(unittest.TestCase):
                 },
             )
             for name in (
+                "CauceRestoreDecodedAnchors",
                 "CauceH3InspectAVLatent",
                 "CauceH3PlanAVWindow",
                 "CauceH3AllocateAVWindow",

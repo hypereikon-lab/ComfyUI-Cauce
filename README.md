@@ -28,9 +28,9 @@ that differ only by guarded literals share one graph. See the
 
 ## Node surface
 
-The package registers 24 nodes:
+The package registers 25 nodes:
 
-- 1 exact decoded-range node under `CAUCE/Assembly`;
+- 2 exact decoded-frame nodes under `CAUCE/Assembly`;
 - 16 packed H3 AV operations under `CAUCE/H3 AV Latent`;
 - 4 target/guide/reference/conditioning nodes under `CAUCE/H3 Planning`;
 - 1 exact H3 guide-retime planning node under `CAUCE/Temporal Planning`;

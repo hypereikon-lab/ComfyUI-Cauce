@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
+from ..cauce.comfy_compat import output_directory
 from ..cauce.persistence import (
     load_av_latent,
     resolve_latest_or_indexed,
@@ -34,9 +33,7 @@ class CauceSaveAVLatent:
     DESCRIPTION = "Atomically write one indexed H3 audiovisual latent."
 
     def save(self, latent, filename_prefix, artifact_index):
-        import folder_paths
-
-        root = Path(folder_paths.get_output_directory()).resolve()
+        root = output_directory()
         prefix = safe_output_path(root, filename_prefix)
         path = prefix.with_name(f"{prefix.name}_{int(artifact_index):05d}.safetensors")
         return (str(save_av_latent_atomic(latent, path)),)
@@ -60,10 +57,8 @@ class CauceLoadAVLatent:
     @classmethod
     def IS_CHANGED(cls, path_or_folder, artifact_index):
         try:
-            import folder_paths
-
             path = resolve_latest_or_indexed(
-                folder_paths.get_output_directory(),
+                output_directory(),
                 path_or_folder,
                 artifact_index=int(artifact_index),
             )
@@ -72,10 +67,8 @@ class CauceLoadAVLatent:
             return float("NaN")
 
     def load(self, path_or_folder, artifact_index):
-        import folder_paths
-
         path = resolve_latest_or_indexed(
-            folder_paths.get_output_directory(),
+            output_directory(),
             path_or_folder,
             artifact_index=int(artifact_index),
         )

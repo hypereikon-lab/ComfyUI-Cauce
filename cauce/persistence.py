@@ -7,18 +7,11 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
+from .comfy_compat import make_nested_tensor
 from .h3 import get_av_streams
 
 
 AV_LATENT_FORMAT = "cauce.h3-av-latent/1"
-
-
-def _nested_tensor(video: Any, audio: Any):
-    try:
-        import comfy.nested_tensor  # type: ignore
-    except ImportError as exc:  # pragma: no cover - requires ComfyUI
-        raise RuntimeError("loading an H3 audiovisual latent requires ComfyUI") from exc
-    return comfy.nested_tensor.NestedTensor((video, audio))
 
 
 def save_av_latent_atomic(latent: dict[str, Any], path: str | Path) -> Path:
@@ -72,7 +65,7 @@ def load_av_latent(path: str | Path) -> dict[str, Any]:
         metadata = handle.metadata() or {}
     if metadata.get("format") != AV_LATENT_FORMAT:
         raise ValueError("unrecognized CAUCE H3 audiovisual latent format")
-    return {"samples": _nested_tensor(data["video"], data["audio"])}
+    return {"samples": make_nested_tensor((data["video"], data["audio"]))}
 
 
 def safe_output_path(root: str | Path, relative: str) -> Path:

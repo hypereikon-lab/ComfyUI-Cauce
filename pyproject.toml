@@ -1,6 +1,6 @@
 [project]
 name = "cauce"
-version = "6.0.0"
+version = "6.1.0"
 description = "Deterministic ComfyUI primitives and semantic H3 operation contracts"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,5 +29,5 @@ target-version = "py310"
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["cauce", "cauce_nodes"]
+[tool.setuptools.packages.find]
+include = ["cauce*", "cauce_nodes*"]

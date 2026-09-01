@@ -100,6 +100,8 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 
 - [Documentation index](docs/INDEX.md)
 - [Architecture and boundaries](docs/ARCHITECTURE.md)
+- [ComfyUI compatibility boundary](docs/COMPATIBILITY.md)
+- [Canonical generated contract bundle](docs/CONTRACT_BUNDLE.md)
 - [Operation families and lifecycle](docs/OPERATION_MODEL.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Current H3 extensions and experiment boundary](docs/H3_EXTENSION_MAP.md)
@@ -117,5 +119,6 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 python3 -m compileall -q cauce cauce_nodes
 python3 -m unittest discover -s tests -v
 python3 tools/verify_full.py  # release gate: requires a pre-existing NumPy runtime
+python3 tools/export_contract_bundle.py --check
 git diff --check
 ```

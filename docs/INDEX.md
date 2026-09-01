@@ -1,6 +1,10 @@
 # Documentation index
 
 - [Architecture](ARCHITECTURE.md): ownership, modules, and data flow.
+- [ComfyUI compatibility](COMPATIBILITY.md): the isolated runtime adapter and
+  fail-closed capability probe.
+- [Canonical contract bundle](CONTRACT_BUNDLE.md): generated current,
+  historical, topology, archetype, and node registry data.
 - [Operation model](OPERATION_MODEL.md): three non-sequential capability
   families and the primitive-to-evidence lifecycle.
 - [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official

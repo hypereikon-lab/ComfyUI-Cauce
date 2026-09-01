@@ -40,8 +40,16 @@ See [Operation model](OPERATION_MODEL.md).
 ```text
 cauce/
   assembly.py      exact decoded-frame selection
-  av_latent.py     absolute AV layouts, spans, placement, masks, replacement,
-                   native guides, split, and append
+  av_latent.py     stable compatibility facade for the typed AV modules
+  av/
+    backend.py     one Torch/NumPy tensor protocol and implementation boundary
+    layout.py      AV inspection, absolute-window planning, and allocation
+    spans.py       native span extraction, placement, branching, and composition
+    masks.py       continuous spatial/temporal denoise-mask algebra
+    spatial.py     canvas and native visual-token transformations
+    types.py       typed latent, layout, span, and factory contracts
+  comfy_compat/    the only adapters allowed to import ComfyUI runtime internals
+  bundle.py        deterministic compilation of all portable contract data
   contracts.py     canonical JSON, schemas, and content hashes
   conditioning.py  read-only H3 conditioning metadata inspection
   h3.py            packed audiovisual-latent validation
@@ -51,12 +59,18 @@ cauce/
 
 cauce_nodes/
   assembly.py      one decoded-range binding
-  av_latent.py     eleven H3 AV bindings
-  planning.py      four H3 input/conditioning planning bindings
+  av_latent.py     stable aggregate facade for four AV binding modules
+  av_inspection.py inspection/window bindings
+  av_spans.py      native span and conditioning bindings
+  av_masks.py      denoise-mask bindings
+  av_spatial.py    canvas and visual-token bindings
+  planning.py      H3 input/conditioning planning bindings
   persistence.py   two persistence bindings
 
 operations/
   catalog.json     open semantic operation catalog
+  contract-bundle.json generated portable current/history/topology/node bundle
+  history/         exact immutable superseded contracts, never version ranges
   archetypes/      structural grouping over topology dossiers
   schema.json      operation data contract
   specs/           typed graph-level operation definitions
@@ -73,7 +87,8 @@ slices plus their absolute frame range. It intentionally is not exposed as a
 standalone `LATENT`: a subrange may inherit a nonzero timeline origin and must
 not silently reset its 40 Hz audio clock.
 
-The eleven AV-state operations remain orthogonal:
+The AV-state operations remain orthogonal. Their exact registered set is
+compiled into `operations/contract-bundle.json` rather than duplicated here:
 
 ```text
 inspect -> plan -> allocate -> extract -> place -> set/clear mask -> replace
@@ -95,6 +110,7 @@ approximate clock.
 
 ## Dependency policy
 
-Core mathematics remains importable without ComfyUI. PyTorch and ComfyUI are
-lazy-imported only at tensor/runtime boundaries. The package adds no pip
-dependencies and never owns the GPU software stack.
+Core mathematics remains importable without ComfyUI. Optional tensor behavior
+is selected through `TensorBackend`; all runtime-owned ComfyUI imports terminate
+inside `cauce.comfy_compat`. The package adds no pip dependencies and never owns
+the GPU software stack.

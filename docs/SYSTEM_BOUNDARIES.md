@@ -10,7 +10,6 @@
 | exact decoded frame-range selection | CAUCE |
 | absolute H3 AV window/span/split/append mathematics | CAUCE |
 | insertion of a compatible native AV span into H3 conditioning | CAUCE |
-| coordinate-map mathematics and warped reference media | CAUCE |
 | packed H3 latent save/load | CAUCE |
 | typed semantic operation contracts | CAUCE operation catalog |
 | official-only H3 operation implementation | official/vanilla graph declared by CAUCE contract |
@@ -19,6 +18,11 @@
 | custom-node install/update/restart | Manager |
 | authentication and HTTP publication | Cloudflare Access/Tunnel |
 | physical power and Windows process startup | laboratory operator/configuration |
+
+CAUCE does not claim sampler patches, procedural-motion warps, latent affine
+control, prompt interpretation, or model behavior that official H3 does not
+expose. Those earlier experimental directions are not part of the present
+architecture.
 
 CAUCE should add a node only when it owns reproducible transformation logic, a
 small data contract, or a safety boundary. Defaults, labels, and wrappers alone

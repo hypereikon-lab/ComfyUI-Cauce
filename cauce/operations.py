@@ -12,6 +12,7 @@ from .contracts import content_hash
 
 OPERATION_SCHEMA = "cauce.operation/1"
 CATALOG_SCHEMA = "cauce.operation-catalog/2"
+HISTORY_CATALOG_SCHEMA = "cauce.operation-history-catalog/1"
 OPERATION_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$")
 OPERATION_FAMILIES = {
     "h3-conditioning-grammar",
@@ -311,4 +312,66 @@ def load_operation_catalog(root: Path) -> dict[str, dict[str, Any]]:
     }
     if spec_paths != loaded_paths:
         raise ValueError("catalog and operation spec directory differ")
+    return loaded
+
+
+def load_operation_history(root: Path) -> dict[tuple[str, int], dict[str, Any]]:
+    """Load immutable, content-addressed superseded operation contracts."""
+
+    current = load_operation_catalog(root)
+    history_root = root / "operations" / "history"
+    catalog = load_json(history_root / "catalog.json")
+    if not isinstance(catalog, dict) or catalog.get("schema") != HISTORY_CATALOG_SCHEMA:
+        raise ValueError("invalid operation history catalog")
+    entries = catalog.get("contracts")
+    if not isinstance(entries, list):
+        raise ValueError("operation history catalog must contain a contract list")
+    loaded: dict[tuple[str, int], dict[str, Any]] = {}
+    loaded_paths: set[Path] = set()
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {
+            "id", "version", "contract_hash", "spec", "source_commit"
+        }:
+            raise ValueError(f"malformed historical contract entry {entry!r}")
+        operation_id = entry["id"]
+        version = entry["version"]
+        key = (operation_id, version)
+        if (
+            operation_id not in current
+            or not isinstance(version, int)
+            or version < 1
+            or version >= current[operation_id]["version"]
+            or key in loaded
+        ):
+            raise ValueError(f"invalid or duplicate historical contract {key!r}")
+        if not isinstance(entry["source_commit"], str) or not re.fullmatch(
+            r"[0-9a-f]{40}", entry["source_commit"]
+        ):
+            raise ValueError(f"historical contract {key!r} needs an exact source commit")
+        relative = PurePosixPath(str(entry["spec"]))
+        if relative.is_absolute() or ".." in relative.parts or relative.parts[0] != "specs":
+            raise ValueError(f"unsafe historical contract path {entry['spec']!r}")
+        path = history_root / Path(*relative.parts)
+        spec = load_json(path)
+        errors = validate_operation_spec(spec)
+        if errors:
+            raise ValueError(f"{path}: {'; '.join(errors)}")
+        if (spec.get("id"), spec.get("version")) != key:
+            raise ValueError(f"historical catalog entry does not match {path}")
+        actual_hash = operation_contract_hash(spec)
+        if entry["contract_hash"] != actual_hash:
+            raise ValueError(f"historical contract hash mismatch for {path}")
+        loaded[key] = {
+            "id": operation_id,
+            "version": version,
+            "contract_hash": actual_hash,
+            "source_commit": entry["source_commit"],
+            "spec": spec,
+        }
+        loaded_paths.add(path.resolve())
+    expected_paths = {
+        path.resolve() for path in (history_root / "specs").glob("*.json")
+    }
+    if loaded_paths != expected_paths:
+        raise ValueError("history catalog and historical spec directory differ")
     return loaded

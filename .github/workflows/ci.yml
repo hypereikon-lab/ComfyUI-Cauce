@@ -21,3 +21,4 @@ jobs:
       - run: python -m pip install --disable-pip-version-check numpy
       - run: python -m compileall -q cauce cauce_nodes
       - run: python tools/verify_full.py
+      - run: python tools/export_contract_bundle.py --check

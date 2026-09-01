@@ -1,0 +1,673 @@
+{
+  "schema": "cauce.contract-bundle/1",
+  "package_version": "6.1.0",
+  "operations": {
+    "catalog_hash": "c23c5b568262e9de8e5079ad16a4edb3afa3a4817ad73df06c2d58aad43c752e",
+    "current": [
+      {
+        "id": "complete.native_av",
+        "version": 2,
+        "contract_hash": "08a4aa23368d53570e432bc0d00df96318214886d5ebbdfb1f25eef4ddd60f01"
+      },
+      {
+        "id": "continue.native_av",
+        "version": 3,
+        "contract_hash": "7990464810ab00136edadb5e3b5f624521fc70681c2fb4b803232ea5496be4cd"
+      },
+      {
+        "id": "densify.temporal",
+        "version": 2,
+        "contract_hash": "64251914e9e72a3b5da1c57e2ec9befc477c0fba75acfe3f07fc9e5c4cad6da0"
+      },
+      {
+        "id": "edit.masked_video",
+        "version": 2,
+        "contract_hash": "755fcd6a413a84420d7980f600beec6b7a310419f5b922dc58f5cbd4c3064d1f"
+      },
+      {
+        "id": "frames.assemble",
+        "version": 2,
+        "contract_hash": "bf6da173fa4785bee22643d838c56cafdaf095a2b33fb43f71ff201308c0f19b"
+      },
+      {
+        "id": "generate.from_references",
+        "version": 4,
+        "contract_hash": "117a99a5622049000c31d15e34b9bd55e8f1ea164a5d9f9935e72548197a9176"
+      },
+      {
+        "id": "generate.keyframed",
+        "version": 2,
+        "contract_hash": "3d9f3d24a99ac78161ea7b7bd2c4e976795b94c37bc890613873bf70d9ce05df"
+      },
+      {
+        "id": "generate.with_control",
+        "version": 1,
+        "contract_hash": "54420901a719ea708848ff24c8c61c0268fa578cfc14c498064aba49687a69fd"
+      },
+      {
+        "id": "generate.with_guides",
+        "version": 3,
+        "contract_hash": "49aa03c63837e7cbc3dd09992e6575196dced0061847986f8643b347cbe98dfc"
+      },
+      {
+        "id": "refine.video",
+        "version": 2,
+        "contract_hash": "d03a8943dd890bb3dba3b0f08fe1dbef251ee3ff91bf00a920db3d299e14c143"
+      },
+      {
+        "id": "reframe.outpaint_video",
+        "version": 2,
+        "contract_hash": "d2bacf6df803fe21217642cb96e1c9c143e60a8f5da6197d2fdbf156cadf7ae8"
+      },
+      {
+        "id": "regenerate.spatial",
+        "version": 3,
+        "contract_hash": "49ed8cf299cbcf3b44c7b61641e0427d71d0d8ffd9010002197dc0f9070f77fa"
+      },
+      {
+        "id": "rollback.native_av",
+        "version": 1,
+        "contract_hash": "e440ecd49654c0f21227593a69af5a009d879c73389bfe6b8c859d64d1d61a1c"
+      }
+    ],
+    "history_catalog_hash": "d9f83e60299b3e4d77be0544a02b972ec2324b4821641c3a0ed919a6ac6493a8",
+    "historical": [
+      {
+        "id": "regenerate.spatial",
+        "version": 2,
+        "contract_hash": "40a801bf58ab20e2757725f961298ba48078d241517f596c7215de4efe7e267d",
+        "source_commit": "9172c30b37fc43272473409e6f42eaacc0a10e60"
+      }
+    ]
+  },
+  "topologies": {
+    "catalog_hash": "dd26af7c4fc298d6a742c383aaa701285aa2a40d95f78e9f0f1b6c888a52f94b",
+    "entries": [
+      {
+        "key": "complete.native_av@backward-prefix",
+        "operation": "complete.native_av",
+        "variant": "backward-prefix",
+        "signature": "21ea200536d9e87a04e6486e791268276de6d52fa02a1850c3bf7b5cf5854fd1"
+      },
+      {
+        "key": "complete.native_av@local-replacement",
+        "operation": "complete.native_av",
+        "variant": "local-replacement",
+        "signature": "087468e4d37b74ebee63c975a5e82960f667a8a060e2bf116fb7c3d88a3fbe68"
+      },
+      {
+        "key": "complete.native_av@two-sided-infill",
+        "operation": "complete.native_av",
+        "variant": "two-sided-infill",
+        "signature": "eba266d901ac7e18169ec2c7135b04ca9f1b0a8a88fc8c109c6a56b8097579ce"
+      },
+      {
+        "key": "complete.native_av@two-source-connection",
+        "operation": "complete.native_av",
+        "variant": "two-source-connection",
+        "signature": "1a12214daa5488568c3bdb294715c2c25b146f2f394d799d61ee6a227a71cece"
+      },
+      {
+        "key": "continue.native_av@keyframe-overlap",
+        "operation": "continue.native_av",
+        "variant": "keyframe-overlap",
+        "signature": "817bb5c3162e7011ee256720f3c955478b953beecb99fe7b2cbc016cf958cc4a"
+      },
+      {
+        "key": "continue.native_av@masked-overlap",
+        "operation": "continue.native_av",
+        "variant": "masked-overlap",
+        "signature": "071dafa79efb7beaa22510524cf785c7d6d187790c968ab5dd3b1202d4208168"
+      },
+      {
+        "key": "continue.native_av@masked-overlap-future-guide",
+        "operation": "continue.native_av",
+        "variant": "masked-overlap-future-guide",
+        "signature": "2ef0e11ec27e2c153f815b2fc69c0b95ad0707699b0dca0423b97ecdaf3c66bb"
+      },
+      {
+        "key": "densify.temporal@token-inpaint",
+        "operation": "densify.temporal",
+        "variant": "token-inpaint",
+        "signature": "72d0f5f5dcb13148d742c1f5068967255a05c3759645fc31ef46927f37abff70"
+      },
+      {
+        "key": "edit.masked_video@animated-spatiotemporal",
+        "operation": "edit.masked_video",
+        "variant": "animated-spatiotemporal",
+        "signature": "ceb3f5691b07c75c52c621e823a67474204dacedc5e080857d10b5c8af4cd531"
+      },
+      {
+        "key": "edit.masked_video@local-retake",
+        "operation": "edit.masked_video",
+        "variant": "local-retake",
+        "signature": "a2ba088d01e7546945802e24e037637e31cc2a109b801d5b6dd92836590cb2ab"
+      },
+      {
+        "key": "edit.masked_video@static-spatial",
+        "operation": "edit.masked_video",
+        "variant": "static-spatial",
+        "signature": "ceb3f5691b07c75c52c621e823a67474204dacedc5e080857d10b5c8af4cd531"
+      },
+      {
+        "key": "frames.assemble@ordered-concatenation",
+        "operation": "frames.assemble",
+        "variant": "ordered-concatenation",
+        "signature": "ad7e5288361fa1edd50b019230a9df336f93ef03890c978fe581c91d2bf97393"
+      },
+      {
+        "key": "generate.from_references@image-reference-match",
+        "operation": "generate.from_references",
+        "variant": "image-reference-match",
+        "signature": "598f46d237077ca3d3fb420ce6e4b5305a329db7bdd8a9000e96f2b58b12e770"
+      },
+      {
+        "key": "generate.from_references@image-reference-max",
+        "operation": "generate.from_references",
+        "variant": "image-reference-max",
+        "signature": "598f46d237077ca3d3fb420ce6e4b5305a329db7bdd8a9000e96f2b58b12e770"
+      },
+      {
+        "key": "generate.from_references@video-reference",
+        "operation": "generate.from_references",
+        "variant": "video-reference",
+        "signature": "8d2ec3d1fa3cd59cf6ca46864dd7a7a7d61643ef8a7afd975e12436fee85baca"
+      },
+      {
+        "key": "generate.from_references@video-reference-with-guide",
+        "operation": "generate.from_references",
+        "variant": "video-reference-with-guide",
+        "signature": "c1467e5f922b6f0cb7e0b8239125b044b82cd4ed350ad452c5fec1fdf5610c6f"
+      },
+      {
+        "key": "generate.keyframed@first-frame",
+        "operation": "generate.keyframed",
+        "variant": "first-frame",
+        "signature": "cf1b4ec38d6722763969c4ea8e9df00130385261dc97dbc06e550ac68bc7a8d4"
+      },
+      {
+        "key": "generate.keyframed@first-last",
+        "operation": "generate.keyframed",
+        "variant": "first-last",
+        "signature": "9d75f79304b366a7f56d7c7f11b3f60bd4c0dd85593980a17ab7a2fe786555f8"
+      },
+      {
+        "key": "generate.keyframed@last-frame",
+        "operation": "generate.keyframed",
+        "variant": "last-frame",
+        "signature": "d61a8672cd7728d49227f7011ef46ac6b97f10245b5e0b9a204337a7d8d493f8"
+      },
+      {
+        "key": "generate.keyframed@text-only",
+        "operation": "generate.keyframed",
+        "variant": "text-only",
+        "signature": "90c20b15500703b01ff8c47d0aa20319268d73c4433daa09b628e5cab8f44f01"
+      },
+      {
+        "key": "generate.with_control@masked-inpaint",
+        "operation": "generate.with_control",
+        "variant": "masked-inpaint",
+        "signature": "bc671a3645e8cd846bd7ef2d75df5b487cbe2f20eadc863888d7386968ac1f0e"
+      },
+      {
+        "key": "generate.with_control@structural-video",
+        "operation": "generate.with_control",
+        "variant": "structural-video",
+        "signature": "f1e44edf5bca511f40d053c898d57655513ca315838b8e4b0d4dd75059e5bf42"
+      },
+      {
+        "key": "generate.with_guides@first-last-interior",
+        "operation": "generate.with_guides",
+        "variant": "first-last-interior",
+        "signature": "09bdba2f61d94360f74626b9ef7fa1d34735502294a22da373291ecd484f6591"
+      },
+      {
+        "key": "generate.with_guides@guide-clip",
+        "operation": "generate.with_guides",
+        "variant": "guide-clip",
+        "signature": "5a11f73eb845702e26686c85dd8e37054ac8bf44910c79785a4bb7dbd66070a3"
+      },
+      {
+        "key": "generate.with_guides@multi-anchor",
+        "operation": "generate.with_guides",
+        "variant": "multi-anchor",
+        "signature": "4e748a4d782c7885564bfde0811161fa1b67e7c89e6fcb9706f4e223e3988738"
+      },
+      {
+        "key": "generate.with_guides@single-anchor",
+        "operation": "generate.with_guides",
+        "variant": "single-anchor",
+        "signature": "d038d182dc7afd8a1d2f11db9639f3b0f7d2627f63661f2e417804233c92493c"
+      },
+      {
+        "key": "refine.video@full-frame",
+        "operation": "refine.video",
+        "variant": "full-frame",
+        "signature": "929e568f644bcd38e6657cad355edf59fa1a82a3b8b2f96f33e8f1bd7bbc71ba"
+      },
+      {
+        "key": "refine.video@masked",
+        "operation": "refine.video",
+        "variant": "masked",
+        "signature": "6888adc16717b79e58494db0f01183d38cab2ac8f7bf0186e058f3db6f5e9bb9"
+      },
+      {
+        "key": "reframe.outpaint_video@centered",
+        "operation": "reframe.outpaint_video",
+        "variant": "centered",
+        "signature": "d883d1a09d76fe2b410ae29a5cccc2d3232bc6008a44a4aab10ac2d44c7f1e45"
+      },
+      {
+        "key": "reframe.outpaint_video@offset",
+        "operation": "reframe.outpaint_video",
+        "variant": "offset",
+        "signature": "d883d1a09d76fe2b410ae29a5cccc2d3232bc6008a44a4aab10ac2d44c7f1e45"
+      },
+      {
+        "key": "regenerate.spatial@latent-second-pass",
+        "operation": "regenerate.spatial",
+        "variant": "latent-second-pass",
+        "signature": "3045d302a6c2e2fa732c474e81155e2626ae4e4911c345cdffe829249e8054cd"
+      },
+      {
+        "key": "regenerate.spatial@learned-latent-second-pass",
+        "operation": "regenerate.spatial",
+        "variant": "learned-latent-second-pass",
+        "signature": "ee1dcc57f93b25950b5ba14a37a4980f8ad5e94ea851f02339e01cff481bbf0e"
+      },
+      {
+        "key": "regenerate.spatial@pixel-vae-second-pass",
+        "operation": "regenerate.spatial",
+        "variant": "pixel-vae-second-pass",
+        "signature": "f2100fe74636d73bfb86f5b6e5abfb1dde452efe268d40c313ec8a38fec12fb1"
+      },
+      {
+        "key": "regenerate.spatial@tiled-pixel-vae",
+        "operation": "regenerate.spatial",
+        "variant": "tiled-pixel-vae",
+        "signature": "a5cbcabb6c695fe1a297fd974d5706215d199c6660634d077708137e78ddf1d6"
+      },
+      {
+        "key": "rollback.native_av@branch-suffix",
+        "operation": "rollback.native_av",
+        "variant": "branch-suffix",
+        "signature": "04032ca56ce4c950a4b3041581ccbafe0cde029d57a63e9ba52aa40f721b5344"
+      }
+    ]
+  },
+  "archetypes": {
+    "catalog_hash": "adb19052056b0ef6b96774bf769ce6845edde27b29e40593615a05046572587a",
+    "entries": [
+      {
+        "id": "complete-backward-prefix",
+        "topology_signature": "21ea200536d9e87a04e6486e791268276de6d52fa02a1850c3bf7b5cf5854fd1",
+        "topology_keys": [
+          "complete.native_av@backward-prefix"
+        ]
+      },
+      {
+        "id": "complete-local-replacement",
+        "topology_signature": "087468e4d37b74ebee63c975a5e82960f667a8a060e2bf116fb7c3d88a3fbe68",
+        "topology_keys": [
+          "complete.native_av@local-replacement"
+        ]
+      },
+      {
+        "id": "complete-two-sided-infill",
+        "topology_signature": "eba266d901ac7e18169ec2c7135b04ca9f1b0a8a88fc8c109c6a56b8097579ce",
+        "topology_keys": [
+          "complete.native_av@two-sided-infill"
+        ]
+      },
+      {
+        "id": "complete-two-source-connection",
+        "topology_signature": "1a12214daa5488568c3bdb294715c2c25b146f2f394d799d61ee6a227a71cece",
+        "topology_keys": [
+          "complete.native_av@two-source-connection"
+        ]
+      },
+      {
+        "id": "continue-keyframe-overlap",
+        "topology_signature": "817bb5c3162e7011ee256720f3c955478b953beecb99fe7b2cbc016cf958cc4a",
+        "topology_keys": [
+          "continue.native_av@keyframe-overlap"
+        ]
+      },
+      {
+        "id": "continue-masked-future-guide",
+        "topology_signature": "2ef0e11ec27e2c153f815b2fc69c0b95ad0707699b0dca0423b97ecdaf3c66bb",
+        "topology_keys": [
+          "continue.native_av@masked-overlap-future-guide"
+        ]
+      },
+      {
+        "id": "continue-masked-overlap",
+        "topology_signature": "071dafa79efb7beaa22510524cf785c7d6d187790c968ab5dd3b1202d4208168",
+        "topology_keys": [
+          "continue.native_av@masked-overlap"
+        ]
+      },
+      {
+        "id": "control-masked-inpaint",
+        "topology_signature": "bc671a3645e8cd846bd7ef2d75df5b487cbe2f20eadc863888d7386968ac1f0e",
+        "topology_keys": [
+          "generate.with_control@masked-inpaint"
+        ]
+      },
+      {
+        "id": "control-structural-video",
+        "topology_signature": "f1e44edf5bca511f40d053c898d57655513ca315838b8e4b0d4dd75059e5bf42",
+        "topology_keys": [
+          "generate.with_control@structural-video"
+        ]
+      },
+      {
+        "id": "densify-native-token-inpaint",
+        "topology_signature": "72d0f5f5dcb13148d742c1f5068967255a05c3759645fc31ef46927f37abff70",
+        "topology_keys": [
+          "densify.temporal@token-inpaint"
+        ]
+      },
+      {
+        "id": "edit-local-retake",
+        "topology_signature": "a2ba088d01e7546945802e24e037637e31cc2a109b801d5b6dd92836590cb2ab",
+        "topology_keys": [
+          "edit.masked_video@local-retake"
+        ]
+      },
+      {
+        "id": "edit-spatiotemporal-mask",
+        "topology_signature": "ceb3f5691b07c75c52c621e823a67474204dacedc5e080857d10b5c8af4cd531",
+        "topology_keys": [
+          "edit.masked_video@animated-spatiotemporal",
+          "edit.masked_video@static-spatial"
+        ]
+      },
+      {
+        "id": "frames-ordered-assembly",
+        "topology_signature": "ad7e5288361fa1edd50b019230a9df336f93ef03890c978fe581c91d2bf97393",
+        "topology_keys": [
+          "frames.assemble@ordered-concatenation"
+        ]
+      },
+      {
+        "id": "guides-first-last-interior",
+        "topology_signature": "09bdba2f61d94360f74626b9ef7fa1d34735502294a22da373291ecd484f6591",
+        "topology_keys": [
+          "generate.with_guides@first-last-interior"
+        ]
+      },
+      {
+        "id": "guides-guide-clip",
+        "topology_signature": "5a11f73eb845702e26686c85dd8e37054ac8bf44910c79785a4bb7dbd66070a3",
+        "topology_keys": [
+          "generate.with_guides@guide-clip"
+        ]
+      },
+      {
+        "id": "guides-multi-anchor",
+        "topology_signature": "4e748a4d782c7885564bfde0811161fa1b67e7c89e6fcb9706f4e223e3988738",
+        "topology_keys": [
+          "generate.with_guides@multi-anchor"
+        ]
+      },
+      {
+        "id": "guides-single-anchor",
+        "topology_signature": "d038d182dc7afd8a1d2f11db9639f3b0f7d2627f63661f2e417804233c92493c",
+        "topology_keys": [
+          "generate.with_guides@single-anchor"
+        ]
+      },
+      {
+        "id": "keyframed-first-frame",
+        "topology_signature": "cf1b4ec38d6722763969c4ea8e9df00130385261dc97dbc06e550ac68bc7a8d4",
+        "topology_keys": [
+          "generate.keyframed@first-frame"
+        ]
+      },
+      {
+        "id": "keyframed-first-last",
+        "topology_signature": "9d75f79304b366a7f56d7c7f11b3f60bd4c0dd85593980a17ab7a2fe786555f8",
+        "topology_keys": [
+          "generate.keyframed@first-last"
+        ]
+      },
+      {
+        "id": "keyframed-last-frame",
+        "topology_signature": "d61a8672cd7728d49227f7011ef46ac6b97f10245b5e0b9a204337a7d8d493f8",
+        "topology_keys": [
+          "generate.keyframed@last-frame"
+        ]
+      },
+      {
+        "id": "keyframed-text-only",
+        "topology_signature": "90c20b15500703b01ff8c47d0aa20319268d73c4433daa09b628e5cab8f44f01",
+        "topology_keys": [
+          "generate.keyframed@text-only"
+        ]
+      },
+      {
+        "id": "references-image",
+        "topology_signature": "598f46d237077ca3d3fb420ce6e4b5305a329db7bdd8a9000e96f2b58b12e770",
+        "topology_keys": [
+          "generate.from_references@image-reference-match",
+          "generate.from_references@image-reference-max"
+        ]
+      },
+      {
+        "id": "references-video",
+        "topology_signature": "8d2ec3d1fa3cd59cf6ca46864dd7a7a7d61643ef8a7afd975e12436fee85baca",
+        "topology_keys": [
+          "generate.from_references@video-reference"
+        ]
+      },
+      {
+        "id": "references-video-with-guide",
+        "topology_signature": "c1467e5f922b6f0cb7e0b8239125b044b82cd4ed350ad452c5fec1fdf5610c6f",
+        "topology_keys": [
+          "generate.from_references@video-reference-with-guide"
+        ]
+      },
+      {
+        "id": "refine-full-frame",
+        "topology_signature": "929e568f644bcd38e6657cad355edf59fa1a82a3b8b2f96f33e8f1bd7bbc71ba",
+        "topology_keys": [
+          "refine.video@full-frame"
+        ]
+      },
+      {
+        "id": "refine-masked",
+        "topology_signature": "6888adc16717b79e58494db0f01183d38cab2ac8f7bf0186e058f3db6f5e9bb9",
+        "topology_keys": [
+          "refine.video@masked"
+        ]
+      },
+      {
+        "id": "reframe-outpaint",
+        "topology_signature": "d883d1a09d76fe2b410ae29a5cccc2d3232bc6008a44a4aab10ac2d44c7f1e45",
+        "topology_keys": [
+          "reframe.outpaint_video@centered",
+          "reframe.outpaint_video@offset"
+        ]
+      },
+      {
+        "id": "regenerate-spatial-latent",
+        "topology_signature": "3045d302a6c2e2fa732c474e81155e2626ae4e4911c345cdffe829249e8054cd",
+        "topology_keys": [
+          "regenerate.spatial@latent-second-pass"
+        ]
+      },
+      {
+        "id": "regenerate-spatial-learned",
+        "topology_signature": "ee1dcc57f93b25950b5ba14a37a4980f8ad5e94ea851f02339e01cff481bbf0e",
+        "topology_keys": [
+          "regenerate.spatial@learned-latent-second-pass"
+        ]
+      },
+      {
+        "id": "regenerate-spatial-pixel-vae",
+        "topology_signature": "f2100fe74636d73bfb86f5b6e5abfb1dde452efe268d40c313ec8a38fec12fb1",
+        "topology_keys": [
+          "regenerate.spatial@pixel-vae-second-pass"
+        ]
+      },
+      {
+        "id": "regenerate-spatial-tiled",
+        "topology_signature": "a5cbcabb6c695fe1a297fd974d5706215d199c6660634d077708137e78ddf1d6",
+        "topology_keys": [
+          "regenerate.spatial@tiled-pixel-vae"
+        ]
+      },
+      {
+        "id": "rollback-native-branch",
+        "topology_signature": "04032ca56ce4c950a4b3041581ccbafe0cde029d57a63e9ba52aa40f721b5344",
+        "topology_keys": [
+          "rollback.native_av@branch-suffix"
+        ]
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "class_type": "CauceAcceptDecodedRange",
+      "display_name": "CAUCE · Accept Decoded Range",
+      "category": "CAUCE/Assembly"
+    },
+    {
+      "class_type": "CauceH3AddAVSpanGuide",
+      "display_name": "CAUCE · Add H3 AV Span Guide",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3AllocateAVWindow",
+      "display_name": "CAUCE · Allocate H3 AV Window",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3AppendAVSpan",
+      "display_name": "CAUCE · Append H3 AV Span",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ApplyVideoDenoiseMask",
+      "display_name": "CAUCE · Apply H3 Video Denoise Mask",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ClearAVDenoiseMask",
+      "display_name": "CAUCE · Clear H3 AV Denoise Mask",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3DilateVisualTokens",
+      "display_name": "CAUCE · Dilate H3 Visual Tokens",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ExpandAVCanvas",
+      "display_name": "CAUCE · Expand H3 AV Canvas",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ExtractAVSpan",
+      "display_name": "CAUCE · Extract H3 AV Span",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ExtractVisualStream",
+      "display_name": "CAUCE · Extract H3 Visual Stream",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3InspectAVLatent",
+      "display_name": "CAUCE · Inspect H3 AV Latent",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3InspectConditioning",
+      "display_name": "CAUCE · Inspect H3 Conditioning",
+      "category": "CAUCE/H3 Planning"
+    },
+    {
+      "class_type": "CauceH3InspectPackedSequence",
+      "display_name": "CAUCE · Inspect H3 Packed Sequence",
+      "category": "CAUCE/H3 Planning"
+    },
+    {
+      "class_type": "CauceH3PlaceAVSpan",
+      "display_name": "CAUCE · Place H3 AV Span",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3PlanAVWindow",
+      "display_name": "CAUCE · Plan H3 AV Window",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3PlanControlClip",
+      "display_name": "CAUCE · Plan H3 Control Clip",
+      "category": "CAUCE/H3 Planning"
+    },
+    {
+      "class_type": "CauceH3PrepareGuideClip",
+      "display_name": "CAUCE · Prepare H3 Guide Clip",
+      "category": "CAUCE/H3 Planning"
+    },
+    {
+      "class_type": "CauceH3PrepareReferenceClip",
+      "display_name": "CAUCE · Prepare H3 Reference Clip",
+      "category": "CAUCE/H3 Planning"
+    },
+    {
+      "class_type": "CauceH3ReplaceAVSpan",
+      "display_name": "CAUCE · Replace H3 AV Span",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ReplaceVisualStream",
+      "display_name": "CAUCE · Replace H3 Visual Stream",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ResizeAVLatent",
+      "display_name": "CAUCE · Resize H3 AV Latent",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3ResolveTargetShape",
+      "display_name": "CAUCE · Resolve H3 Target Shape",
+      "category": "CAUCE/H3 Planning"
+    },
+    {
+      "class_type": "CauceH3SetAVDenoiseInterval",
+      "display_name": "CAUCE · Set H3 AV Denoise Interval",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceH3SplitAVLatent",
+      "display_name": "CAUCE · Split H3 AV Latent",
+      "category": "CAUCE/H3 AV Latent"
+    },
+    {
+      "class_type": "CauceLoadAVLatent",
+      "display_name": "CAUCE · Load H3 AV Latent",
+      "category": "CAUCE/Persistence"
+    },
+    {
+      "class_type": "CaucePlanH3GuideRetime",
+      "display_name": "CAUCE · Plan H3 Guide Retime",
+      "category": "CAUCE/Temporal Planning"
+    },
+    {
+      "class_type": "CauceRestoreDecodedAnchors",
+      "display_name": "CAUCE · Restore Decoded Anchors",
+      "category": "CAUCE/Assembly"
+    },
+    {
+      "class_type": "CauceSaveAVLatent",
+      "display_name": "CAUCE · Save H3 AV Latent",
+      "category": "CAUCE/Persistence"
+    }
+  ],
+  "bundle_hash": "a46beeddd673232b44289e4245cf0fc0a5eaa00cc974cba66f9f7078f0ecbf71"
+}

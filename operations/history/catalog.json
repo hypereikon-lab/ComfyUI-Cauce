@@ -1,0 +1,12 @@
+{
+  "schema": "cauce.operation-history-catalog/1",
+  "contracts": [
+    {
+      "id": "regenerate.spatial",
+      "version": 2,
+      "contract_hash": "40a801bf58ab20e2757725f961298ba48078d241517f596c7215de4efe7e267d",
+      "spec": "specs/regenerate.spatial.v2.json",
+      "source_commit": "9172c30b37fc43272473409e6f42eaacc0a10e60"
+    }
+  ]
+}

@@ -93,9 +93,9 @@ cost.
 
 Do not update the shared runtime merely because the node is merged. Deployment
 still requires live `object_info`, a pinned core commit, a model-patch hash, and
-resolution of the relevant correctness gates:
+verification of the relevant compatibility/correctness gates:
 
-- [ComfyUI #16020](https://github.com/Comfy-Org/ComfyUI/pull/16020): references/keyframes with control and dynamic-VRAM prefetch correctness;
+- [ComfyUI #16020](https://github.com/Comfy-Org/ComfyUI/pull/16020): merged references/keyframes with control and dynamic-VRAM prefetch correctness; the laboratory capture predates it;
 - [ComfyUI #15988](https://github.com/Comfy-Org/ComfyUI/pull/15988): denoise-mask velocity conversion;
 - [ComfyUI #15978](https://github.com/Comfy-Org/ComfyUI/issues/15978) and [#15981](https://github.com/Comfy-Org/ComfyUI/issues/15981): mask regressions requiring live verification.
 
@@ -109,8 +109,10 @@ See [H3 structural control](STRUCTURAL_CONTROL.md).
 - `nazgut/ComfyUI-MiniMaxH3-CLSS`: WIP port from another model family; its
   anchor bank, AdaIN and calibrated re-noise are not yet H3-native evidence.
 - `KJNodes` MiniMax token counter: confirms official `PackedLayout`; CAUCE now
-  counts rows without importing or patching ComfyUI. KJ attention/FFN chunking
-  remains optional only if memory measurements demand it.
+  counts rows without importing or patching ComfyUI. Generic KJNodes mask
+  authoring and preview nodes may compose around CAUCE through standard Comfy
+  datatypes. KJ attention/FFN chunking remains an optional runtime experiment
+  only if baseline memory measurements demand it; it is not CAUCE functionality.
 - modality-LoRA loaders, TensorRT VAE, alternative attention, and mega-packs:
   outside current training/acceleration scope or too broad for the shared lab.
 

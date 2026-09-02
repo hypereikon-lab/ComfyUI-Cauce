@@ -77,16 +77,18 @@ The laboratory runtime may be older than merged core support. Before install:
 1. capture `/object_info` and require `MiniMaxH3FunControlNetApply`,
    `ModelPatchLoader`, and the two CAUCE inspection nodes;
 2. pin the ComfyUI commit and model-patch file hash;
-3. verify reference/control compatibility against ComfyUI #16020 or an
-   equivalent merged implementation;
+3. require a core revision containing merged ComfyUI #16020 and verify the
+   combination live;
 4. verify denoise-mask velocity against #15988 and live mask behavior against
    #15978/#15981;
 5. execute at native pixel bounds and record packed rows, peak VRAM/RAM,
    runtime, seed, strength, start/end percentages, and every input hash.
 
-Reference+control is declared but has no topology dossier yet because current
-merged core rejects `minimax_refs` and `minimax_keyframes` in the control path.
-That absence is intentional evidence hygiene, not an unfinished hidden graph.
+Reference+control is supported by current upstream after #16020, including the
+associated dynamic-VRAM prefetch correction. It has no topology dossier yet
+because the captured laboratory runtime predates that merge. That absence is
+intentional evidence hygiene: add the topology only after an isolated core
+update, fresh `/object_info`, mask-correctness checks and one bounded live run.
 
 ## First empirical matrix
 

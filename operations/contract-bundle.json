@@ -1,6 +1,6 @@
 {
   "schema": "cauce.contract-bundle/1",
-  "package_version": "6.2.0",
+  "package_version": "6.2.1",
   "operations": {
     "catalog_hash": "c23c5b568262e9de8e5079ad16a4edb3afa3a4817ad73df06c2d58aad43c752e",
     "current": [
@@ -674,5 +674,5 @@
       "category": "CAUCE/Persistence"
     }
   ],
-  "bundle_hash": "b7fc42f2ece546eb379db307945e6bde8c5d6911ef5f0866f2fed9b2778279f7"
+  "bundle_hash": "f8f07a586ebf61e10b523b4d839c5360de355a1c27fa05505084e851dc72fb15"
 }

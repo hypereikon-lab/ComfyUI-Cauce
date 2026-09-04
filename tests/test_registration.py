@@ -1,3 +1,4 @@
+import json
 import importlib.util
 from pathlib import Path
 import sys
@@ -68,6 +69,16 @@ class RegistrationTests(unittest.TestCase):
                 "CauceH3DomemasterCoordinates",
             ):
                 self.assertIn(name, module.NODE_CLASS_MAPPINGS)
+
+            sentinel = object()
+            returned_model, raw_report = module.NODE_CLASS_MAPPINGS[
+                "CauceH3DomemasterCoordinates"
+            ]().patch(sentinel, 0.0, True, "stock")
+            report = json.loads(raw_report)
+            self.assertIs(returned_model, sentinel)
+            self.assertTrue(report["bypassed_bit_exactly"])
+            self.assertEqual(report["scope"], [])
+            self.assertEqual(report["mutates"], [])
         finally:
             for key in list(sys.modules):
                 if key == name or key.startswith(name + "."):

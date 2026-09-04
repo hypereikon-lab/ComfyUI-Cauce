@@ -10,7 +10,9 @@
 - [System boundaries](SYSTEM_BOUNDARIES.md): what belongs in CAUCE, official
   ComfyUI graphs, and the remote runtime.
 - [Capability map](CAPABILITY_MAP.md): implemented and composable operations.
-- [Node catalog](NODE_CATALOG.md): all 28 registered nodes.
+- [Node catalog](NODE_CATALOG.md): all 29 registered nodes.
+- [H3 domemaster coordinates](H3_DOMEMASTER_COORDINATES.md): experimental,
+  reversible equidistant-180 token-coordinate ablation and its evidence limits.
 - [Temporal and spatial video enhancement](TEMPORAL_SPATIAL_ENHANCEMENT.md):
   H3-native visual-token densification, same-model spatial regeneration,
   guide retiming, VRAM-bounded variants, and training boundaries.

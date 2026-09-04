@@ -29,10 +29,11 @@ that differ only by guarded literals share one graph. See the
 
 ## Node surface
 
-The package registers 28 nodes:
+The package registers 29 nodes:
 
 - 2 exact decoded-frame nodes under `CAUCE/Assembly`;
 - 17 packed H3 AV operations under `CAUCE/H3 AV Latent`;
+- 1 experimental, reversible H3 model-coordinate patch under `CAUCE/H3 Model`;
 - 6 target/guide/reference/control/conditioning nodes under `CAUCE/H3 Planning`;
 - 1 exact H3 guide-retime planning node under `CAUCE/Temporal Planning`;
 - 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
@@ -105,6 +106,7 @@ https://github.com/hypereikon-lab/ComfyUI-Cauce
 - [Operation families and lifecycle](docs/OPERATION_MODEL.md)
 - [Native H3 workflow recipes](docs/NATIVE_H3_WORKFLOWS.md)
 - [Current H3 extensions and experiment boundary](docs/H3_EXTENSION_MAP.md)
+- [H3 domemaster coordinate experiment](docs/H3_DOMEMASTER_COORDINATES.md)
 - [Official H3 structural control](docs/STRUCTURAL_CONTROL.md)
 - [Temporal and spatial video enhancement](docs/TEMPORAL_SPATIAL_ENHANCEMENT.md)
 - [Semantic operations](docs/OPERATIONS.md)

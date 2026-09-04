@@ -1,6 +1,6 @@
 {
   "schema": "cauce.contract-bundle/1",
-  "package_version": "6.1.0",
+  "package_version": "6.2.0",
   "operations": {
     "catalog_hash": "c23c5b568262e9de8e5079ad16a4edb3afa3a4817ad73df06c2d58aad43c752e",
     "current": [
@@ -564,6 +564,11 @@
       "category": "CAUCE/H3 AV Latent"
     },
     {
+      "class_type": "CauceH3DomemasterCoordinates",
+      "display_name": "CAUCE · H3 Domemaster Coordinates",
+      "category": "CAUCE/H3 Model"
+    },
+    {
       "class_type": "CauceH3ExpandAVCanvas",
       "display_name": "CAUCE · Expand H3 AV Canvas",
       "category": "CAUCE/H3 AV Latent"
@@ -669,5 +674,5 @@
       "category": "CAUCE/Persistence"
     }
   ],
-  "bundle_hash": "a46beeddd673232b44289e4245cf0fc0a5eaa00cc974cba66f9f7078f0ecbf71"
+  "bundle_hash": "b7fc42f2ece546eb379db307945e6bde8c5d6911ef5f0866f2fed9b2778279f7"
 }

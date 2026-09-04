@@ -44,6 +44,22 @@ metadata; the official sampler owns how that metadata affects inference. Mask
 projection uses decoded-frame `amax` inside each H3 visual token and preserves
 continuous spatial values until the current core's own patch-grid processing.
 
+## CAUCE/H3 Model
+
+### `CauceH3DomemasterCoordinates`
+
+Clones an H3 `MODEL` and installs a reversible inference-time coordinate warp
+on `PackedLayout.position_ids`. Target-video rows always receive the warp;
+FL2VA keyframe rows may receive the same warp. Text, audio, Ref2VA reference
+rows, pixels, latent values, weights, prompts, and schedules remain unchanged.
+
+The only current profile maps samples inside a square equidistant 180-degree
+domemaster support to the x/y components of their front-hemisphere camera ray.
+`strength=0` reproduces the stock H3 grid, and `strength=1` applies the complete
+coordinate transform. This node is an experimental inference ablation, not a
+trained lens adapter and not evidence that H3 preserves calibrated projection.
+See [H3 domemaster coordinates](H3_DOMEMASTER_COORDINATES.md).
+
 ## CAUCE/H3 Planning
 
 | Node | Operation |

@@ -30,7 +30,7 @@ reversible state split, exact span placement/rebase, independent continuous AV
 denoise masks, spatial/spatiotemporal mask projection, aligned canvas
 expansion, exact interval replacement, mask cleanup, official target/
 guide/reference preprocessing rules, conditioning inspection,
-persistence paths, the 20-node
+persistence paths, the 29-node
 registry, complete offline topology coverage, and every topology port that
 touches a CAUCE node.
 
@@ -56,6 +56,7 @@ GET /object_info/CauceH3ResolveTargetShape
 GET /object_info/CauceH3PrepareGuideClip
 GET /object_info/CauceH3PrepareReferenceClip
 GET /object_info/CauceH3InspectConditioning
+GET /object_info/CauceH3DomemasterCoordinates
 GET /queue
 ```
 

@@ -24,7 +24,7 @@ class ContractBundleTests(unittest.TestCase):
         serialized = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(serialized, build_contract_bundle(ROOT))
         self.assertEqual(validate_contract_bundle(ROOT, serialized), [])
-        self.assertEqual(len(serialized["nodes"]), 28)
+        self.assertEqual(len(serialized["nodes"]), 29)
         self.assertEqual(len(serialized["operations"]["current"]), 13)
         self.assertEqual(len(serialized["topologies"]["entries"]), 35)
 

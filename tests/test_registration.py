@@ -13,6 +13,7 @@ class RegistrationTests(unittest.TestCase):
     def test_root_registers_every_node_without_importing_comfy(self):
         root = Path(__file__).resolve().parents[1]
         name = "comfyui_cauce_test_plugin"
+        plugin_name = name
         spec = importlib.util.spec_from_file_location(
             name, root / "__init__.py", submodule_search_locations=[str(root)]
         )
@@ -67,6 +68,7 @@ class RegistrationTests(unittest.TestCase):
                 "CauceH3ReplaceVisualStream",
                 "CauceH3ExtractVisualStream",
                 "CauceH3DomemasterCoordinates",
+                "CauceH3ZenithRoPE",
             ):
                 self.assertIn(name, module.NODE_CLASS_MAPPINGS)
 
@@ -79,9 +81,14 @@ class RegistrationTests(unittest.TestCase):
             self.assertTrue(report["bypassed_bit_exactly"])
             self.assertEqual(report["scope"], [])
             self.assertEqual(report["mutates"], [])
+            returned_model, raw_report = module.NODE_CLASS_MAPPINGS[
+                "CauceH3ZenithRoPE"
+            ]().patch(sentinel, 0.0, 8, True)
+            self.assertIs(returned_model, sentinel)
+            self.assertTrue(json.loads(raw_report)["structural_bypass"])
         finally:
             for key in list(sys.modules):
-                if key == name or key.startswith(name + "."):
+                if key == plugin_name or key.startswith(plugin_name + "."):
                     sys.modules.pop(key, None)
 
 

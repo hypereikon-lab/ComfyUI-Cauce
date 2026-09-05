@@ -55,3 +55,29 @@ geometric improvement. Repeat across images/seeds before claiming reliability.
 References: [SpheRoPE](https://arxiv.org/abs/2606.32033) motivates selective
 spectral adaptation in other backbones/ERP. The tilted ray basis here is an
 unvalidated adaptation for Zenith/H3, not that paper's released algorithm.
+
+## Initial live result — 2026-09-04 (Chile)
+
+The node registered and executed on ComfyUI 0.34.0, RTX 5090, native H3 FL2VA
+INT8 ConvRot with its existing PDD-8 LoRA. Three F2V source images were compared
+at strength 0/0.5/1, 768 square, 124 frames at 24 fps, seed 20260903.
+All nine executions completed. Real H3 logs confirmed a 24x24 spatial token
+grid and eight selected inverse frequencies 0.01 through 0.00017782794.
+Maximum phase changes were 0.07630947 rad (strength 0.5) and 0.15261894 rad (1).
+
+Decoded outputs changed, but the screen did not show a clear improvement in
+projection preservation across sources. On A all three variants eventually
+abandoned the initial lens appearance; C/D retained similar trajectories and
+did not demonstrate a geometric advantage from the phase patch.
+
+A separate matched A test added explicit fixed-lens domemaster language. With
+the patch bypassed, the output preserved the circular fisheye appearance much
+better. Eight-band strength 1 offered no clear extra benefit. Increasing to
+twelve bands changed phases by up to 1.52619 rad and visibly degraded support
+preservation. No post-mask or control video was used in these tests.
+
+**Not promoted as a geometry solution.** Default remains zero. These results
+are a negative/inconclusive test of this particular untrained phase basis,
+not a disproof of learned geometry adapters or of spherical RoPE generally.
+Visual frame-sequence inspection and decoded diagnostics do not establish
+calibrated angular accuracy; no reliability claim is made from one seed.

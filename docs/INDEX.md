@@ -33,3 +33,4 @@
 - [Technical language](TECHNICAL_LANGUAGE.md): preferred terms and evidence labels.
 - [Working vocabulary](GLOSSARY.md): canonical names for frames, ranges, graphs,
   latents, and receipts.
+- [H3 Zenith RoPE](H3_ZENITH_ROPE.md): frequency-selective calibrated-ray experiment.

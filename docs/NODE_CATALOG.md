@@ -46,6 +46,15 @@ continuous spatial values until the current core's own patch-grid processing.
 
 ## CAUCE/H3 Model
 
+### `CauceH3ZenithRoPE`
+
+Experimental reversible phase patch using Zenith's equidistant 180-degree ray
+geometry in selected low-frequency spatial RoPE bands. Preserves temporal and
+high-frequency phases, non-video modalities and exterior rows. Zero strength
+returns the original model. No learned weights or latent resampling. Not a
+calibrated-projection guarantee; requires empirical comparison against vanilla.
+See [Zenith hybrid RoPE](H3_ZENITH_ROPE.md) for exact math and limitations.
+
 ### `CauceH3DomemasterCoordinates`
 
 Clones an H3 `MODEL` and installs a reversible inference-time coordinate warp

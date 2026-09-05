@@ -1,6 +1,6 @@
 {
   "schema": "cauce.contract-bundle/1",
-  "package_version": "6.2.1",
+  "package_version": "6.3.0",
   "operations": {
     "catalog_hash": "c23c5b568262e9de8e5079ad16a4edb3afa3a4817ad73df06c2d58aad43c752e",
     "current": [
@@ -654,6 +654,11 @@
       "category": "CAUCE/H3 AV Latent"
     },
     {
+      "class_type": "CauceH3ZenithRoPE",
+      "display_name": "CAUCE · H3 Zenith RoPE (Experimental)",
+      "category": "CAUCE/H3 Model"
+    },
+    {
       "class_type": "CauceLoadAVLatent",
       "display_name": "CAUCE · Load H3 AV Latent",
       "category": "CAUCE/Persistence"
@@ -674,5 +679,5 @@
       "category": "CAUCE/Persistence"
     }
   ],
-  "bundle_hash": "f8f07a586ebf61e10b523b4d839c5360de355a1c27fa05505084e851dc72fb15"
+  "bundle_hash": "4b96ea8d62c970edce0f29d8beefbddfbc635368da87ce18caa8bdea8573976c"
 }

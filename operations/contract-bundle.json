@@ -1,6 +1,6 @@
 {
   "schema": "cauce.contract-bundle/1",
-  "package_version": "6.3.0",
+  "package_version": "6.4.0",
   "operations": {
     "catalog_hash": "c23c5b568262e9de8e5079ad16a4edb3afa3a4817ad73df06c2d58aad43c752e",
     "current": [
@@ -677,7 +677,12 @@
       "class_type": "CauceSaveAVLatent",
       "display_name": "CAUCE · Save H3 AV Latent",
       "category": "CAUCE/Persistence"
+    },
+    {
+      "class_type": "CauceSaveMoGeGeometry",
+      "display_name": "CAUCE · Save Native MoGe Geometry",
+      "category": "CAUCE/Persistence"
     }
   ],
-  "bundle_hash": "4b96ea8d62c970edce0f29d8beefbddfbc635368da87ce18caa8bdea8573976c"
+  "bundle_hash": "82e5d4291b334f05c230064dd19b3813b51d9167a452f839c153deb53418a67d"
 }

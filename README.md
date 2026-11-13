@@ -36,7 +36,15 @@ The package registers 29 nodes:
 - 1 experimental, reversible H3 model-coordinate patch under `CAUCE/H3 Model`;
 - 6 target/guide/reference/control/conditioning nodes under `CAUCE/H3 Planning`;
 - 1 exact H3 guide-retime planning node under `CAUCE/Temporal Planning`;
-- 2 packed H3 AV save/load nodes under `CAUCE/Persistence`.
+- 2 packed H3 AV save/load nodes and a native MoGe geometry exporter under `CAUCE/Persistence`.
+
+`CauceSaveMoGeGeometry` accepts the official `MOGE_GEOMETRY` output and writes
+an indexed NPZ archive containing radial distance, validity mask, intrinsics
+and sparse point samples for auditing. It preserves native scale and sample
+order; it does not infer depth, normalize frames or reconstruct a scene. The
+archive includes per-file hashes and is confined to the ComfyUI output folder.
+Its persistence contract is unit-validated; live inference remains owned by
+the official `LoadMoGeModel` and `MoGeInference` nodes.
 
 ## Native AV continuation as graph composition
 
